@@ -8,10 +8,28 @@
 
 import UIKit
 
-final class ExperimentInfoView: UIView, DescriptorBoundViewModule {
+final class ExperimentInfoView: UIView, DescriptorBoundViewModule, DynamicViewModule {
+    func attachDisplayLink(_ displayLink: DisplayLink) {
+        
+    }
+    
+    var active = false {
+        didSet {
+            displayLink.active = active
+            if active { setNeedsUpdate() }
+        }
+    }
+    
+    func setNeedsUpdate() {
+        
+    }
+
+    
     let descriptor: InfoViewDescriptor
 
     private let label = UILabel()
+    
+    private let displayLink = DisplayLink(refreshRate: 0)
 
     required init?(descriptor: InfoViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
@@ -30,6 +48,7 @@ final class ExperimentInfoView: UIView, DescriptorBoundViewModule {
         }
 
         addSubview(label)
+        attachDisplayLink(displayLink)
     }
 
     @available(*, unavailable)
@@ -59,4 +78,8 @@ final class ExperimentInfoView: UIView, DescriptorBoundViewModule {
             }
         }
     }
+}
+
+extension ExperimentInfoView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
 }

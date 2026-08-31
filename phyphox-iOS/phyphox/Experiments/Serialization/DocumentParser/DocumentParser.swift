@@ -17,6 +17,18 @@ protocol AttributeKey {
     var rawValue: String { get }
 }
 
+///Decodes a floating point number from an experiment file value. The accepted lexical space
+///matches the docs validators (number-invalid-value rule in phyphox-docs) and is narrower than
+///what Swift's Double(String) parses: decimal notation plus NaN and [+-]Infinity with case
+///folded - "inf" or hex floats like "0x1p3" are not portable, as Java cannot parse them.
+///Returns nil for a value outside this space. Used by the numeric attribute readers below and
+///for the entries of a data container's init list.
+func parseExperimentNumber(_ stringValue: String) -> Double? {
+    let pattern = "^(?:[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?|[nN][aA][nN]|[+-]?[iI][nN][fF][iI][nN][iI][tT][yY])$"
+    guard stringValue.range(of: pattern, options: .regularExpression) != nil else { return nil }
+    return Double(stringValue)
+}
+
 /// This structure provides readonly access to attribute values for a specific `AttributeKey` key type.
 struct KeyedAttributeContainer<Key: AttributeKey> {
     /// The raw, underlying attribute dictionary
@@ -55,12 +67,81 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
         return stringValue
     }
 
+    ///Booleans from the experiment file fold case like enumerated values ("True" is true), and
+    ///any other value is an error rather than silently false
+    ///(enum-case-insensitive and enum-invalid-value in phyphox-docs)
+    private func parseBool(_ stringValue: String, key: String) throws -> Bool {
+        switch stringValue.lowercased() {
+        case "true": return true
+        case "false": return false
+        default: throw ElementHandlerError.unexpectedAttributeValue(key)
+        }
+    }
+
+    /// Bool-specific variant of `optionalValue(for:)`, folding case and rejecting non-boolean values.
+    func optionalValue(for key: Key) throws -> Bool? {
+        return try attributes[key.rawValue].map({ try parseBool($0, key: key.rawValue) })
+    }
+
+    /// Bool-specific variant of `value(for:)`, folding case and rejecting non-boolean values.
+    func value(for key: Key) throws -> Bool {
+        guard let stringValue = attributes[key.rawValue] else {
+            throw ElementHandlerError.missingAttribute(key.rawValue)
+        }
+        return try parseBool(stringValue, key: key.rawValue)
+    }
+
+    ///Colour attributes accept a named phyphox colour or exactly six hex digits with an optional
+    ///"#" prefix. A present but unparseable value is an error with Android's exact message rather
+    ///than a silent fall-back to the caller's default (color-invalid-value in phyphox-docs).
+    func optionalColor(for key: Key) throws -> UIColor? {
+        return try attributes[key.rawValue].map({
+            guard let color = mapColorString($0) else {
+                throw ElementHandlerError.message("Could not parse color \"\($0)\" of attribute \"\(key.rawValue)\".")
+            }
+
+            return color
+        })
+    }
+
+    /// Variant of `optionalValue(for:)` for enumerated attribute values, matched case-insensitively.
+    func optionalValue<T: CaseInsensitiveAttributeDecodable>(for key: Key) throws -> T? {
+        return try attributes[key.rawValue].map({
+            guard let value = T.init(attributeValue: $0) else {
+                throw ElementHandlerError.unexpectedAttributeValue(key.rawValue)
+            }
+
+            return value
+        })
+    }
+
+    /// Variant of `value(for:)` for enumerated attribute values, matched case-insensitively.
+    func value<T: CaseInsensitiveAttributeDecodable>(for key: Key) throws -> T {
+        guard let stringValue = attributes[key.rawValue] else {
+            throw ElementHandlerError.missingAttribute(key.rawValue)
+        }
+        guard let value = T.init(attributeValue: stringValue) else {
+            throw ElementHandlerError.unexpectedAttributeValue(key.rawValue)
+        }
+        return value
+    }
+
+    ///Floating point decodes are restricted to the format's number lexical space, which is
+    ///narrower than what T.init(String) accepts (number-invalid-value rule in phyphox-docs,
+    ///see parseExperimentNumber). Other types, i.e. String, pass through unchecked.
+    private func isValidValue<T: LosslessStringConvertible>(_ stringValue: String, for type: T.Type) -> Bool {
+        if T.self == Double.self || T.self == CGFloat.self || T.self == Float.self {
+            return parseExperimentNumber(stringValue) != nil
+        }
+        return true
+    }
+
     /// Returns an optional value of type `T` for the provided key, where `T` is `LosslessStringConvertible`. Throws an error decoding to `T` fails.
     func optionalValue<T: LosslessStringConvertible>(for key: Key) throws -> T? {
         let keyString = key.rawValue
 
         return try attributes[keyString].map({
-            guard let value = T.init($0) else {
+            guard isValidValue($0, for: T.self), let value = T.init($0) else {
                 throw ElementHandlerError.unexpectedAttributeValue(keyString)
             }
 
@@ -74,7 +155,7 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
         guard let stringValue = attributes[keyString] else {
             throw ElementHandlerError.missingAttribute(key.rawValue)
         }
-        guard let value = T.init(stringValue) else {
+        guard isValidValue(stringValue, for: T.self), let value = T.init(stringValue) else {
             throw ElementHandlerError.unexpectedAttributeValue(keyString)
         }
         return value
@@ -140,6 +221,13 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
     /// Used internally to store errors thrown by element handlers
     private var parsingError: Error?
 
+    /// Namespace of the root element (usually none or a default xmlns). Elements from any other
+    /// namespace (i.e. editor metadata) are skipped with their entire subtree instead of being
+    /// treated as unknown elements, matching the Android implementation.
+    private var rootNamespaceURI: String? = nil
+    /// Depth within a skipped foreign-namespace subtree; 0 when not skipping
+    private var skipDepth = 0
+
     /// Initializer for a reusable document parser. The document handler is a result element handler responsible for the entire document. Its `startElement` method is called when parsing the document begins and is provided with empty attributes. The `childHandler` method is called when the root element is encountered. The document handler needs to return the element handler for the root element, if the root element name is known, or throw an error. The `endElement` method is called when parsing the document has finished. This methid is called with empty attributes and empty text content. The implementaiton of `endElement` of the document handler needs to produce its resulting object and append it to its `results` array. The document parser subsequently returns the produced result from the `parse(stream)` method.
     init(documentHandler: DocumentHandler) {
         self.documentHandler = documentHandler
@@ -163,10 +251,14 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
         textStack = [""]
         attributesStack = [.empty]
 
+        rootNamespaceURI = nil
+        skipDepth = 0
+
         documentHandler.clear()
         documentHandler.clearChildHandlers()
 
         let parser = XMLParser(stream: stream)
+        parser.shouldProcessNamespaces = true
         parser.delegate = self
         parser.parse()
 
@@ -200,6 +292,21 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
     }
 
     func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes: [String: String]) {
+        if skipDepth > 0 {
+            skipDepth += 1
+            return
+        }
+        if let rootNamespaceURI = rootNamespaceURI {
+            if (namespaceURI ?? "") != rootNamespaceURI {
+                //This element belongs to a foreign namespace (i.e. from an editor). Ignore it
+                //and its children.
+                skipDepth = 1
+                return
+            }
+        } else {
+            rootNamespaceURI = namespaceURI ?? ""
+        }
+
         guard let (_, currentHandler) = handlerStack.last else {
             parser.abortParsing()
             return
@@ -223,6 +330,9 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
     }
 
     func parser(_ parser: XMLParser, foundCharacters string: String) {
+        if skipDepth > 0 {
+            return
+        }
         guard let currentText = textStack.popLast() else {
             parser.abortParsing()
             return
@@ -232,6 +342,10 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
     }
 
     func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
+        if skipDepth > 0 {
+            skipDepth -= 1
+            return
+        }
         guard let currentText = textStack.popLast(),
             let (currentTagName, elementHandler) = handlerStack.popLast(),
             let attributes = attributesStack.popLast(),

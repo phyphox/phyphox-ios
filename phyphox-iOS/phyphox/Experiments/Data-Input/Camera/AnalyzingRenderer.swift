@@ -50,14 +50,28 @@ class AnalyzingRenderer {
         initializeMetal()
     }
     
-    func initializeCameraBuffer(cameraBuffers: ExperimentCameraBuffers?){
+    func reinitializeSpectroscopyAnalyzer(orientation: SpectrumOrientation){
+        for analysingModule in analysingModules {
+            if let analyzer = analysingModule as? SpectroscopyAnalyzer {
+                analyzer.setAnalysisOrientation(orientation: orientation)
+                analyzer.loadMetal()
+            }
+        }
+    }
+    
+    func initializeCameraBuffer(cameraBuffers: ExperimentCameraBuffers?, feature: CameraFeature){
         self.cameraBuffers = cameraBuffers
         
         AnalyzingModule.initialize(metalDevice: metalDevice)
         
+        exposureAnalyzer.loadMetal()
         
         if(cameraBuffers?.luminanceBuffer != nil){
-            analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.luminanceBuffer))
+            if(feature == CameraFeature.PHOTOMETRIC){
+                analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.luminanceBuffer))
+            } else if(feature == CameraFeature.SPECTROSCOPY){
+                analysingModules.append(SpectroscopyAnalyzer(result: cameraBuffers?.luminanceBuffer, xAxis: cameraBuffers?.pixelPosition))
+            }
         }
         
         if(cameraBuffers?.lumaBuffer != nil){
@@ -76,14 +90,10 @@ class AnalyzingRenderer {
             analysingModules.append(HSVAnalyzer(result: cameraBuffers?.valueBuffer, mode: .Value))
         }
         
-        if(cameraBuffers?.thresholdBuffer != nil){
-           // analysingModules.append(HSVAnalyser(result: cameraBuffers?.thresholdBuffer))
-        }
-        
         for analysingModule in analysingModules {
             analysingModule.loadMetal()
         }
-        exposureAnalyzer.loadMetal()
+        
        
     }
         
@@ -114,24 +124,30 @@ class AnalyzingRenderer {
             
             queue?.async {
                 autoreleasepool(invoking: {
-                    if let tBuffer = self.cameraBuffers?.tBuffer {
-                        tBuffer.append(t)
-                    }
-                    
-                    if let shutterSpeedBuffer = self.cameraBuffers?.shutterSpeedBuffer {
-                        shutterSpeedBuffer.append(Double(cameraSettings.currentShutterSpeed.value)/Double(cameraSettings.currentShutterSpeed.timescale))
-                    }
-                    
-                    if let isoBuffer = self.cameraBuffers?.isoBuffer {
-                        isoBuffer.append(Double(cameraSettings.currentIso))
-                    }
-                    
-                    if let apertureBuffer = self.cameraBuffers?.apertureBuffer {
-                        apertureBuffer.append(Double(cameraSettings.currentApertureValue))
-                    }
-                    
-                    for analysingModule in self.analysingModules {
-                        analysingModule.writeToBuffers()
+                    let b = self.cameraBuffers
+                    //One camera frame's outputs (t, exposure settings and the analyzer results such
+                    //as hue/saturation/value) are written as one atomic group so a remote /get read
+                    //never sees some of them advanced and others not (GitHub issue 22, see BufferLock)
+                    synchronizedBufferWrite([b?.tBuffer, b?.shutterSpeedBuffer, b?.isoBuffer, b?.apertureBuffer, b?.luminanceBuffer, b?.lumaBuffer, b?.hueBuffer, b?.saturationBuffer, b?.valueBuffer, b?.pixelPosition]) {
+                        if let tBuffer = b?.tBuffer {
+                            tBuffer.append(t)
+                        }
+
+                        if let shutterSpeedBuffer = b?.shutterSpeedBuffer {
+                            shutterSpeedBuffer.append(Double(cameraSettings.currentShutterSpeed.value)/Double(cameraSettings.currentShutterSpeed.timescale))
+                        }
+
+                        if let isoBuffer = b?.isoBuffer {
+                            isoBuffer.append(Double(cameraSettings.currentIso))
+                        }
+
+                        if let apertureBuffer = b?.apertureBuffer {
+                            apertureBuffer.append(Double(cameraSettings.currentApertureValue))
+                        }
+
+                        for analysingModule in self.analysingModules {
+                            analysingModule.writeToBuffers()
+                        }
                     }
                 })
             }

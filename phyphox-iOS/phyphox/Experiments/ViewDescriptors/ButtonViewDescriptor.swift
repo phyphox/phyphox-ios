@@ -23,18 +23,20 @@ struct ButtonViewDescriptor: ViewDescriptor, Equatable {
     let triggers: [String]
 
     let label: String
+    var visibilityBuffer: DataBuffer?
     let translation: ExperimentTranslationCollection?
     
     let mappings: [ValueViewMap]
     
     let buffer: DataBuffer?
 
-    init(label: String, translation: ExperimentTranslationCollection?, dataFlow: [(input: ExperimentAnalysisDataInput, output: DataBuffer)], triggers: [String], mappings: [ValueViewMap], buffer: DataBuffer?) {
+    init(label: String, visibilityBuffer: DataBuffer?, translation: ExperimentTranslationCollection?, dataFlow: [(input: ExperimentAnalysisDataInput, output: DataBuffer)], triggers: [String], mappings: [ValueViewMap], buffer: DataBuffer?) {
         self.dataFlow = dataFlow
         self.triggers = triggers
         
         self.label = label
         self.translation = translation
+        self.visibilityBuffer = visibilityBuffer
         
         let translatedMappings = mappings.compactMap { map in (translation?.localizeString(map.replacement) ?? map.replacement).map { ValueViewMap(range: map.range, replacement: $0) } }
         

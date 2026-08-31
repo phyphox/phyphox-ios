@@ -6,12 +6,17 @@
     <link label="l0">http://test.test</link>
     <data-containers>
         <container>buffer</container>
+        <container size="2" init="1,2" clearGroup="g1">buffer2</container>
+        <container clearGroup="_">buffer3</container>
+        <container size="10" init="NaN, nan, Infinity, +infinity, -INFINITY, .5, 5., 1e-3, -0.5">buffer4</container>
     </data-containers>
     <translations>
         <translation locale="de">
             <title>titlede</title>
             <category>categoryde</category>
             <description>descriptionde</description>
+            <link label="l0" translation="l0de" highlight="true">http://test.test/de</link>
+            <link label="l1">http://test.test/added</link>
         </translation>
    </translations>
     <input>
@@ -38,29 +43,69 @@
             <output>buffer</output>
             <output component="rate">buffer</output>
         </audio>
+        <camera x1="0.4" x2="0.6" y1="0.4" y2="0.6" auto_exposure="true" aeStrategy="prioritizeFramerate" aeFPSTarget="30" locked="focus_distance=0" feature="photometric">
+            <output component="luminance">buffer</output>
+            <output component="t">buffer2</output>
+        </camera>
     </input>
     <output>
         <audio>
             <input>buffer</input>
+            <tone waveform="square">
+                <input parameter="frequency" type="value">440</input>
+                <input parameter="amplitude" type="value">1</input>
+                <input parameter="duration" type="value">1</input>
+                <input parameter="pan" type="value">-0.5</input>
+            </tone>
+            <noise>
+                <input parameter="amplitude">buffer</input>
+                <input parameter="duration" type="value">1</input>
+                <input parameter="pan">buffer</input>
+            </noise>
         </audio>
+        <flashlight>
+            <input parameter="intensity">buffer</input>
+            <input parameter="frequency" type="value">10</input>
+            <input parameter="dutycycle" type="value">0.5</input>
+        </flashlight>
+        <bluetooth id="bleout" name="devicename" uuid="cddf0000-30f7-4671-8b43-5e40ba53514a" autoConnect="true">
+            <config char="cddf1003-30f7-4671-8b43-5e40ba53514a" conversion="uInt16LittleEndian">1000</config>
+            <input char="cddf1002-30f7-4671-8b43-5e40ba53514a" conversion="float32LittleEndian" offset="0" keep="false" triggerId="btnSend">buffer</input>
+            <input char="cddf1002-30f7-4671-8b43-5e40ba53514a" conversion="singleByte">buffer</input>
+        </bluetooth>
     </output>
     <views>
         <view label="v1">
             <edit label="l1">
                 <output>buffer</output>
             </edit>
-            <value label="l2">
+            <value label="l2" format="degree-minutes">
                 <input>buffer</input>
             </value>
+            <slider label="l9" type="range" minValue="0" maxValue="10" stepSize="0.5">
+                <output value="lowerValue">buffer</output>
+                <output value="upperValue">buffer2</output>
+            </slider>
             <button label="l3">
                 <input type="value">0</input>
                 <output>buffer</output>
+                <trigger>btnSend</trigger>
             </button>
-            <separator height="1"/>
-            <info label="l4"/>
-            <graph label="l6" labelX="l7" labelY="l8">
+            <separator height="1" visibility="buffer"/>
+            <image src="img.png" scale="0.5" visibility="buffer"/>
+            <info label="l4" visibility="buffer"/>
+            <graph label="l6" labelX="l7" labelY="l8" interpolateMapColors="false" followX="true" minX="0" maxX="10">
+                <input axis="x">buffer</input>
+                <input axis="y" style="dots">buffer</input>
+            </graph>
+            <graph label="l6b" labelX="l7" labelY="l8" pickLabel="l6c">
                 <input axis="x">buffer</input>
                 <input axis="y">buffer</input>
+                <output axis="x" label="l6d">buffer</output>
+                <output axis="xcal" label="l6e">buffer</output>
+                <output axis="y" label="l6f">buffer</output>
+                <output axis="z" label="l6g">buffer</output>
+                <output axis="x" label="l6h">buffer</output>
             </graph>
         </view>
     </views>
@@ -70,6 +115,40 @@
             <output>buffer</output>
         </append>
 
+        <sinh>
+            <input>buffer</input>
+            <output>buffer</output>
+        </sinh>
+        <cosh>
+            <input>buffer</input>
+            <output>buffer</output>
+        </cosh>
+        <tanh>
+            <input>buffer</input>
+            <output>buffer</output>
+        </tanh>
+
+        <butterworth>
+            <input as="y">buffer</input>
+            <input as="x">buffer2</input>
+            <input as="n" type="value">4</input>
+            <input as="cutoff" type="value">10</input>
+            <input as="cutoffLow" type="value">1</input>
+            <output as="filtered">buffer</output>
+        </butterworth>
+
+        <imagedecode>
+            <input>buffer</input>
+            <output as="width">buffer</output>
+            <output as="height">buffer</output>
+            <output as="r">buffer</output>
+            <output as="g">buffer</output>
+            <output as="b">buffer</output>
+            <output as="a">buffer</output>
+            <output as="luma">buffer</output>
+            <output as="luminance">buffer2</output>
+        </imagedecode>
+
         <add>
             <input>buffer</input>
             <output>buffer</output>
@@ -77,6 +156,7 @@
 
         <subtract>
             <input>buffer</input>
+            <input>buffer2</input>
             <output>buffer</output>
         </subtract>
 
@@ -94,6 +174,17 @@
         </if>
 
     </analysis>
+    <network>
+        <connection id="net1" privacy="https://example.org/privacy" address="tcp://broker.example.org:1883" service="mqtt/json" conversion="json" sendTopic="phyphox/send" receiveTopic="phyphox/receive" username="user" password="secret" persistence="true" interval="1">
+            <send id="acc" datatype="number" keep="false">buffer</send>
+            <send id="ver" type="meta">version</send>
+            <send id="clock" type="time"></send>
+            <receive id="rx" append="true">buffer</receive>
+        </connection>
+        <connection address="broker.example.org" service="mqtts/csv" conversion="csv" receiveTopic="phyphox/receive" username="user" password="secret" certificate="ca.pem" interval="1">
+            <receive id="rx2">buffer2</receive>
+        </connection>
+    </network>
     <export>
         <set name="n1">
             <data name="n2">buffer</data>

@@ -9,6 +9,15 @@
 import Foundation
 
 final class BinningAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let dataInSlot = AnalysisIOSlot(name: "in", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let x0InSlot = AnalysisIOSlot(name: "x0", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let dxInSlot = AnalysisIOSlot(name: "dx", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let binStartsOutSlot = AnalysisIOSlot(name: "binStarts", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let binCountsOutSlot = AnalysisIOSlot(name: "binCounts", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.dataInSlot, Self.x0InSlot, Self.dxInSlot], outputs: [Self.binStartsOutSlot, Self.binCountsOutSlot])
+    }
     private let inputBuffer: MutableDoubleArray
     private let x0Input: ExperimentAnalysisDataInput?
     private let dxInput: ExperimentAnalysisDataInput?
@@ -21,68 +30,48 @@ final class BinningAnalysis: AutoClearingExperimentAnalysisModule {
             throw SerializationError.genericError(message: "Binning analysis needs at least one input and ine output.")
         }
 
-        var tIn: ExperimentAnalysisDataInput?
-        var tX0: ExperimentAnalysisDataInput?
-        var tDx: ExperimentAnalysisDataInput?
-        var tBinStarts: ExperimentAnalysisDataOutput?
-        var tBinCounts: ExperimentAnalysisDataOutput?
-        
-        for input in inputs {
-            if input.asString == "x0" {
-                tX0 = input
-            }
-            else if input.asString == "dx" {
-                tDx = input
-            }
-            else if tIn == nil {
-                tIn = input
-            }
-        }
-        
-        for output in outputs {
-            if output.asString == "binCounts" || tBinStarts != nil {
-                tBinCounts = output
-            }
-            else {
-                tBinStarts = output
-            }
-        }
-        
-        guard let tInput = tIn else {
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+
+        guard let inputData = io.data(Self.dataInSlot) else {
             throw SerializationError.genericError(message: "Binning analysis needs a valid input designated as \"in\".")
         }
+        inputBuffer = inputData
 
-        switch tInput {
-        case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-            inputBuffer = data
-        case .value(value: _, usedAs: _):
-            throw SerializationError.genericError(message: "Binning input \"in\" needs to be a buffer.")
-        }
-
-        x0Input = tX0
-        dxInput = tDx
-        binStartsOutput = tBinStarts
-        binCountsOutput = tBinCounts
+        x0Input = io.input(Self.x0InSlot)
+        dxInput = io.input(Self.dxInSlot)
+        binStartsOutput = io.output(Self.binStartsOutSlot)
+        binCountsOutput = io.output(Self.binCountsOutSlot)
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     override func update() {
         let x0 = x0Input?.getSingleValue() ?? 0.0
-        var dx = dxInput?.getSingleValue() ?? 1.0
-        if dx == 0.0 {
-            dx = 1.0
+        let dx = dxInput?.getSingleValue() ?? 1.0
+
+        //Any invalid dx - zero, negative or non-finite - and a non-finite x0 are error states
+        //yielding empty outputs; there is no silent dx = 1 substitution. Only absent inputs (or
+        //empty parameter buffers) keep the documented defaults x0 = 0 and dx = 1.
+        guard x0.isFinite && dx.isFinite && dx > 0 else {
+            return
         }
-        
+
         var binStarts = [Double]()
         var binCounts = [Double]()
-        
+
         for v in inputBuffer.data {
             if !v.isFinite {
                 continue
             }
 
-            let binIndex = Int((v-x0)/dx)
+            //Bins are lower-edge inclusive: floor semantics. Truncation toward zero would give
+            //bin 0 double width, collecting everything in (x0-dx, x0+dx).
+            let ratio = ((v-x0)/dx).rounded(.down)
+            //A finite ratio can still exceed Int - skip the value instead of trapping
+            guard ratio > -9e18 && ratio < 9e18 else {
+                continue
+            }
+            let binIndex = Int(ratio)
             if binStarts.count == 0 {
                 binStarts.append(x0+Double(binIndex)*dx)
                 binCounts.append(1)

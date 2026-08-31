@@ -9,9 +9,16 @@
 import Foundation
 
 final class SortAnalysis: AutoClearingExperimentAnalysisModule {
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [
+            AnalysisIOSlot(name: "in", asRequired: false, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 0)
+        ], outputs: [
+            AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 0)
+        ])
+    }
     
     private var ins: [ExperimentAnalysisDataInput] = []
-    let descending: Bool;
+    var descending: Bool //var and internal for the unit tests, which cannot construct attributes
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         
@@ -46,13 +53,38 @@ final class SortAnalysis: AutoClearingExperimentAnalysisModule {
             return
         }
         
+        //All buffers are truncated to the shortest input before sorting (matching Android) -
+        //no NaN substitution for shorter co-buffers
+        var count = mainArray.count
+        for input in ins {
+            switch input {
+            case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
+                count = Swift.min(count, data.data.count)
+            case .value(value: _, usedAs: _):
+                break
+            }
+        }
+
+        //NaN sorts deterministically as the largest value, like Java's Double.compareTo on
+        //Android. The plain </> closures violate strict weak ordering when NaN is present,
+        //leaving the NaN placement unspecified.
+        func sortsBefore(_ a: Double, _ b: Double) -> Bool {
+            if a.isNaN {
+                return false
+            }
+            if b.isNaN {
+                return true
+            }
+            return a < b
+        }
+
         let offsets: [Int]
         if descending {
-            offsets = mainArray.enumerated().sorted {$0.element > $1.element}.map{$0.offset}
+            offsets = mainArray[0..<count].enumerated().sorted {sortsBefore($1.element, $0.element)}.map{$0.offset}
         } else {
-            offsets = mainArray.enumerated().sorted {$0.element < $1.element}.map{$0.offset}
+            offsets = mainArray[0..<count].enumerated().sorted {sortsBefore($0.element, $1.element)}.map{$0.offset}
         }
-        
+
         var results: [[Double]] = []
         for (i, bufferIn) in ins.enumerated() {
             guard i < outputs.count else { break }
@@ -60,7 +92,7 @@ final class SortAnalysis: AutoClearingExperimentAnalysisModule {
             switch bufferIn {
             case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                 let inArray = data.data
-                results.append(offsets.map{$0 < inArray.count ? inArray[$0] : Double.nan})
+                results.append(offsets.map{inArray[$0]})
             case .value(value: _, usedAs: _):
                 results.append([])
             }

@@ -8,14 +8,15 @@
 
 import UIKit
 import CoreBluetooth
-import ZipZap
+import ZIPFoundation
 
 private let minCellWidth: CGFloat = 320.0
-private let phyphoxCatHintRelease = "1.1.12" //If this is updated to the current version, the hint bubble for the support menu is shown again
+private let phyphoxCatHintRelease = "1.2.1" //If this is updated to the current version, the hint bubble for the support menu is shown again
 private let hintReleaseKey = "supportHintVersion"
 
 protocol ExperimentController {
-    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool
+    ///acceptPartialZip is for the QR scanner and the Bluetooth transfer only, see intakeRoute
+    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?, acceptPartialZip: Bool) -> Bool
     func addExperimentsToCollection(_ list: [Experiment])
     func loadExperimentFromPeripheral(_ peripheral: CBPeripheral)
 }
@@ -28,7 +29,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     private var infoButton: UIButton? = nil
     private var addButton: UIBarButtonItem? = nil
     
-    private var hintBubble: HintBubbleViewController? = nil
+    private var hintTooltip: HintTooltipView? = nil
     
     private var collections: [ExperimentCollection] = []
 
@@ -49,12 +50,24 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             return
         }
         if #available(iOS 13, *) {
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithTransparentBackground()
-            appearance.backgroundColor = kBackgroundColor
-            appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
-            navBar.standardAppearance = appearance;
-            navBar.scrollEdgeAppearance = navBar.standardAppearance
+            //Native iOS look: no bar background at rest, just the floating (Liquid Glass) buttons
+            //over the list, with a large "phyphox" title that is part of the scrollable content and
+            //collapses into a blurred bar as the list scrolls. Colours are left to the system so the
+            //whole bar follows light/dark together with the content — including the glass buttons,
+            //which always track the window appearance and previously clashed with the forced-dark
+            //bar in light mode.
+            //Per-item appearance (not on the shared bar): the experiment page defines its own
+            //opaque branded appearance the same way, and UIKit cross-fades between the two during
+            //the push/pop transition instead of flashing one onto the other's bar metrics.
+            let standard = UINavigationBarAppearance()
+            standard.configureWithDefaultBackground()
+            let scrollEdge = UINavigationBarAppearance()
+            scrollEdge.configureWithTransparentBackground()
+            navigationItem.standardAppearance = standard
+            navigationItem.scrollEdgeAppearance = scrollEdge
+            navBar.prefersLargeTitles = true
+            navBar.tintColor = .label
+            navigationItem.largeTitleDisplayMode = .always
         } else {
             navBar.barTintColor = kBackgroundColor
             navBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
@@ -70,22 +83,36 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setupNavbar()
-        
+
+        //Launch-argument seam: with -phyphoxBleConnect the app goes looking for that device as
+        //soon as it has a screen to show the transfer's progress in
+        if let device = AutomationLaunchOptions.bluetoothDeviceName {
+            connectToBluetoothDeviceForAutomation(named: device)
+        }
+
         let defaults = UserDefaults.standard
         if (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) == phyphoxCatHintRelease && defaults.string(forKey: hintReleaseKey) != phyphoxCatHintRelease {
-            hintBubble = HintBubbleViewController(text: localize("categoryPhyphoxOrgHint"), maxWidth: Int(self.navigationController!.view.frame.width * 0.8), onDismiss: {() -> Void in
+            //A solid tooltip near the bottom of the list, pointing down at the support options at its
+            //end. Replaces the former popover, whose iOS 26 glass background rendered chaotically over
+            //the list text and left the hint text off-centre inside it. Tapping it marks the hint seen
+            //(as does scrolling to the support options at the end of the list) so it does not return.
+            let tooltip = HintTooltipView(text: localize("categoryPhyphoxOrgHint"), pointsDown: true, onDismiss: {
+                UserDefaults.standard.set(phyphoxCatHintRelease, forKey: hintReleaseKey)
             })
-            guard let hintBubble = hintBubble else {
-                return
-            }
-            hintBubble.popoverPresentationController?.delegate = self
-            hintBubble.popoverPresentationController?.sourceView = self.navigationController!.view
-            hintBubble.popoverPresentationController?.sourceRect = CGRect(origin: CGPoint(x: self.navigationController!.view.frame.midX, y: self.navigationController!.view.frame.maxY), size: CGSize(width: 1, height: 1))
-            
-            navigationController!.present(hintBubble, animated: true, completion: nil)
+            let size = tooltip.fittingSize(maxWidth: view.bounds.width * 0.8)
+            tooltip.pointerX = size.width / 2
+            tooltip.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview(tooltip)
+            NSLayoutConstraint.activate([
+                tooltip.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                tooltip.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
+                tooltip.widthAnchor.constraint(equalToConstant: size.width),
+                tooltip.heightAnchor.constraint(equalToConstant: size.height)
+            ])
+            hintTooltip = tooltip
         }
     }
-    
+
     @objc func showHelpMenu(_ item: UIBarButtonItem) {
     
         UIAlertController.PhyphoxUIAlertBuilder()
@@ -140,7 +167,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         reload()
         
         NotificationCenter.default.addObserver(self, selector: #selector(reload), name: .experimentsReloadedNotification, object: nil)
-      
+
         ExperimentManager.shared.reloadUserExperiments()
 
         infoButton = UIButton(type: .infoDark)
@@ -151,7 +178,12 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoButton!)
         navigationItem.rightBarButtonItem = addButton!
-        
+
+        //Long press on a deletable experiment starts the multi-select deletion mode, like on
+        //Android
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        selfView.collectionView.addGestureRecognizer(longPress)
+
         let defaults = UserDefaults.standard
         let key = "donotshowagain"
         if (willBeFirstViewForUser && !defaults.bool(forKey: key)) {
@@ -168,13 +200,13 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
     
     override func viewDidDisappear(_ animated: Bool) {
-        hintBubble?.closeHint()
-        hintBubble = nil
+        hintTooltip?.removeFromSuperview()
+        hintTooltip = nil
     }
     
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
-        hintBubble?.closeHint()
-        hintBubble = nil
+        hintTooltip?.removeFromSuperview()
+        hintTooltip = nil
     }
     
     //Force iPad-style popups (for the hint to the menu)
@@ -185,6 +217,13 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     override func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         if (indexPath.section == collections.count - 1 ) {
             UserDefaults.standard.set(phyphoxCatHintRelease, forKey: hintReleaseKey)
+            //The user has scrolled to the support options the hint points at, so fade the hint out.
+            if let tooltip = hintTooltip {
+                hintTooltip = nil
+                UIView.animate(withDuration: 0.25, animations: { tooltip.alpha = 0 }, completion: { _ in
+                    tooltip.removeFromSuperview()
+                })
+            }
         }
     }
     
@@ -215,8 +254,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         UIAlertController.PhyphoxUIAlertBuilder()
             .title(title: localize("bt_pick_device"))
             .message(message: localize("bt_scanning_generic") + "\n\n" + localize("bt_more_info_link_text"))
-            .preferredStyle(style:  UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiom.pad ? .alert : .actionSheet)
-            .setAlertDialogHeight(height: 550)
+            .preferredStyle(style: .alert)
             .addDefinedAction(action: infoAction)
             .addDefinedAction(action: cancelAction)
             .sourceView(popoverSourceView: self.view)
@@ -260,6 +298,46 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         bluetoothScanResultsTableViewController?.ble.loadExperimentFromPeripheral(peripheral, viewController: self, experimentLauncher: self)
     }
 
+    // MARK: - the Bluetooth seam for unattended automation
+
+    //-phyphoxBleConnect <name> (see AutomationLaunchOptions in AppDelegate) stands in for the
+    //user opening the Bluetooth scan and picking a device: the scan, the name matching, the
+    //transfer of the experiment the device offers and the loading are the app's own code, and
+    //what follows is the same as for any experiment - the page comes up, -phyphoxRemote brings
+    //the remote server up with it (ExperimentPageViewController), and nothing is started, since
+    //the host drives the measurement from there.
+    private var automationBluetoothScan: BluetoothScan?
+    private var didTakeAutomationBluetoothDevice = false
+
+    ///Whether a scanned device is the one the driver named. EXACT, on either the advertised name
+    ///or the peripheral's own: the compatibility suite runs boards side by side, one of them
+    ///deliberately advertising under a different name, so a device that merely contains the name
+    ///is the wrong device. (BluetoothScan's own filter is a substring match, which is right for a
+    ///user picking from a list and not enough here.)
+    static func automationBluetoothMatch(advertisedName: String?, peripheralName: String?, requested: String) -> Bool {
+        return advertisedName == requested || peripheralName == requested
+    }
+
+    private func connectToBluetoothDeviceForAutomation(named name: String) {
+        guard automationBluetoothScan == nil else { return }
+
+        //checkExperiments false: what is wanted is the experiment the DEVICE offers, not the
+        //bundled ones that happen to be registered for its name
+        let scan = BluetoothScan(scanDirectly: true, filterByName: name, filterByUUID: nil,
+                                 checkExperiments: false, autoConnect: true)
+        scan.scanResultsDelegate = self
+        automationBluetoothScan = scan
+
+        //Bounded: a device that never turns up would leave the app scanning for as long as the
+        //suite runs, and the host would see nothing but a remote API that never came up. This
+        //says what happened in the device log and stops draining the phone.
+        after(60) { [weak self] in
+            guard let self = self, !self.didTakeAutomationBluetoothDevice else { return }
+            print("-phyphoxBleConnect: no device advertising as \(name) turned up within 60 s")
+            self.automationBluetoothScan?.stopScan()
+        }
+    }
+
     func infoPressed(_ action: UIAlertAction) {
         let vc = UIViewController()
         vc.modalTransitionStyle = UIModalTransitionStyle.crossDissolve
@@ -279,8 +357,76 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
     }
 
     @objc func reload() {
+        //A changing experiment list invalidates any running selection
+        exitSelectionMode()
         collections = ExperimentManager.shared.experimentCollections
         selfView.collectionView.reloadData()
+    }
+
+    //MARK: - Multi-select deletion
+
+    private var selectionModeActive = false
+    private var selectedSources: Set<URL> = []
+
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began, !selectionModeActive else { return }
+        let point = gesture.location(in: selfView.collectionView)
+        guard let indexPath = selfView.collectionView.indexPathForItem(at: point) else { return }
+        let experiment = collections[indexPath.section].experiments[indexPath.row]
+        guard experiment.custom, let source = experiment.experiment.source else { return }
+
+        selectionModeActive = true
+        selectedSources = [source]
+        let trashButton = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(deleteSelectedExperiments))
+        trashButton.tintColor = .systemRed
+        navigationItem.rightBarButtonItem = trashButton
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(cancelSelectionMode))
+        selfView.collectionView.reloadData()
+    }
+
+    @objc private func cancelSelectionMode() {
+        exitSelectionMode()
+    }
+
+    private func exitSelectionMode() {
+        guard selectionModeActive else { return }
+        selectionModeActive = false
+        selectedSources.removeAll()
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoButton!)
+        navigationItem.rightBarButtonItem = addButton
+        selfView.collectionView.reloadData()
+    }
+
+    @objc private func deleteSelectedExperiments() {
+        let toDelete = collections.flatMap { $0.experiments }.filter { entry in
+            entry.custom && entry.experiment.source.map { selectedSources.contains($0) } ?? false
+        }.map { $0.experiment }
+        guard !toDelete.isEmpty else { return }
+
+        UIAlertController.PhyphoxUIAlertBuilder()
+            .title(title: localize("confirmDeleteTitle"))
+            .message(message: localize("confirmDelete"))
+            .preferredStyle(style: .alert)
+            .addActionWithTitle(localize("delete"), style: .destructive, handler: { [unowned self] action in
+                self.exitSelectionMode()
+                for experiment in toDelete {
+                    do {
+                        try ExperimentManager.shared.deleteExperiment(experiment)
+                    }
+                    catch let error as NSError {
+                        let hud = JGProgressHUD(style: .dark)
+                        hud.interactionType = .blockTouchesOnHUDView
+                        hud.indicatorView = JGProgressHUDErrorIndicatorView()
+                        hud.textLabel.text = "Failed to delete experiment: \(error.localizedDescription)"
+
+                        hud.show(in: self.view)
+
+                        hud.dismiss(afterDelay: 3.0)
+                    }
+                }
+            })
+            .addCancelAction()
+            .show(in: self, animated: true)
     }
     
     init(willBeFirstViewForUser: Bool) {
@@ -486,8 +632,16 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         let experiment = collection.experiments[indexPath.row]
         
         cell.experiment = experiment.experiment
-        
-        if experiment.custom {
+
+        if selectionModeActive {
+            cell.showsOptionsButton = false
+            cell.optionsButtonCallback = nil
+            let selectable = experiment.custom && experiment.experiment.source != nil
+            cell.showsSelectionCheckbox = selectable
+            cell.selectionChecked = selectable && experiment.experiment.source.map { selectedSources.contains($0) } ?? false
+        }
+        else if experiment.custom {
+            cell.showsSelectionCheckbox = false
             cell.showsOptionsButton = true
             let exp = experiment.experiment
             cell.optionsButtonCallback = { [unowned exp, unowned self] button in
@@ -495,10 +649,11 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             }
         }
         else {
+            cell.showsSelectionCheckbox = false
             cell.showsOptionsButton = false
             cell.optionsButtonCallback = nil
         }
-        
+
         return cell
     }
 
@@ -551,6 +706,24 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let experiment = collections[indexPath.section].experiments[indexPath.row]
+
+        if selectionModeActive {
+            //Tapping toggles the selection of deletable experiments; the last deselection ends
+            //the selection mode, like on Android
+            if experiment.custom, let source = experiment.experiment.source {
+                if selectedSources.contains(source) {
+                    selectedSources.remove(source)
+                } else {
+                    selectedSources.insert(source)
+                }
+                if selectedSources.isEmpty {
+                    exitSelectionMode()
+                } else {
+                    selfView.collectionView.reloadData()
+                }
+            }
+            return
+        }
 
         if experiment.experiment.invalid {
             UIAlertController.PhyphoxUIAlertBuilder()
@@ -647,6 +820,10 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
 
         let vc = ExperimentPageViewController(experiment: experiment.experiment)
 
+        //Fold the large-title collapse into the push transition: pushed with the bar still
+        //expanded, the whole large-title area shows as a block of the experiment page's opaque
+        //bar background for the entire animation. setupNavbar restores .always on return.
+        navigationItem.largeTitleDisplayMode = .never
         navigationController?.pushViewController(vc, animated: true)
     }
     
@@ -677,7 +854,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         case partialZip
     }
     
-    func detectFileType(data: Data) -> FileType {
+    static func detectFileType(data: Data) -> FileType {
         if data.count < 20 {
             return .unknown
         }
@@ -690,56 +867,122 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
             //Look for data descriptor of a partial ZIP file
             return .partialZip
         }
-        if data.range(of: "<phyphox".data(using: .utf8)!) != nil {
-            //Naive method to roughly check if this is a phyphox file without actually parsing it.
-            //A false positive will be caught be the parser, but we do not want to parse anything that is obviously not a phyphox file.
+        //Naive method to roughly check if this is a phyphox file without actually parsing it.
+        //A false positive will be caught be the parser, but we do not want to parse anything that
+        //is obviously not a phyphox file. Like the element names in the parser, the root element
+        //is matched case-insensitively (enum-case-insensitive in phyphox-docs); isoLatin1 as the
+        //fallback decoding cannot fail, so an unusual encoding does not bypass the check.
+        if let text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1),
+           text.range(of: "<phyphox", options: .caseInsensitive) != nil {
             return .phyphox
         }
         return .unknown
     }
     
+    //Where a container entry may be written, or nil when it would end up outside the extraction
+    //directory. An archive is free to name an entry "../evil.phyphox", and appendingPathComponent
+    //builds that path without complaint, so every destination is checked before anything is
+    //written - the archive's legitimate entries are extracted either way. Android refuses the
+    //same way in its ZipIntentHandler.
+    static func containerEntryDestination(_ entryPath: String, in directory: URL) -> URL? {
+        let destination = directory.appendingPathComponent(entryPath)
+
+        var base = directory.standardizedFileURL.resolvingSymlinksInPath().path
+        if !base.hasSuffix("/") {
+            base += "/"
+        }
+        guard destination.standardizedFileURL.resolvingSymlinksInPath().path.hasPrefix(base) else {
+            return nil
+        }
+
+        return destination
+    }
+
+    ///Unpacks a container archive into `destination` and returns the experiment files it holds.
+    ///This is the intake route's own unpacking - handleZipFile only decides what to do with the
+    ///result - so a test can drive it without a view controller.
+    static func extractContainer(at url: URL, to destination: URL) throws -> [URL] {
+        let archive = try Archive(url: url, accessMode: .read)
+        var files: [URL] = []
+        for entry in archive {
+            if entry.type != .file {
+                continue
+            }
+            guard let fileName = containerEntryDestination(entry.path, in: destination) else {
+                //An entry pointing outside the extraction directory is evidence that the file was
+                //tampered with, so nothing in it is trustworthy and the remaining entries are not
+                //salvaged: the whole archive is refused and the app's could-not-load path takes
+                //over (ruling 2026-08-26, container-traversal-entry; Android refuses the same way
+                //in its ZipIntentHandler). What was already unpacked goes with it.
+                try? FileManager.default.removeItem(at: destination)
+                throw SerializationError.genericError(message: "Refusing an archive whose entry \(entry.path) points outside the extraction directory.")
+            }
+            if entry.path.hasSuffix(".phyphox") {
+                try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+                try? FileManager.default.removeItem(at: fileName)
+                _ = try archive.extract(entry, to: fileName)
+                files.append(fileName)
+            } else if fileName.deletingLastPathComponent().lastPathComponent == "res" {
+                try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+                try? FileManager.default.removeItem(at: fileName)
+                _ = try archive.extract(entry, to: fileName)
+            }
+        }
+        return files
+    }
+
+    ///What an intake route makes of a sniffed file. The partial (headerless) zip is accepted only
+    ///from the QR scanner and the Bluetooth transfer: those are low-bandwidth paths where
+    ///dropping the zip structure is worth its cost, while everywhere else the form is
+    ///discouraged - what arrives is a file that only phyphox can unpack, where a plain .phyphox
+    ///file or an ordinary zip serves the user better (ruling 2026-08-26,
+    ///partial-zip-intake-scope). Refused, it goes down the app's could-not-load path like any
+    ///other unknown file.
+    static func intakeRoute(for fileType: FileType, acceptPartialZip: Bool) -> FileType {
+        if fileType == .partialZip && !acceptPartialZip {
+            return .unknown
+        }
+        return fileType
+    }
+
+    ///What is done with what an archive turned out to hold
+    enum ContainerDispatch: Equatable {
+        ///The one experiment it carries is opened right away
+        case open(URL)
+        ///Several: the user picks one, or saves them all
+        case choose([URL])
+    }
+
+    ///The decision handleZipFile acts on, kept apart from acting on it so it can be tested: an
+    ///archive without any experiment in it is refused here rather than opening an empty picker.
+    static func containerDispatch(for files: [URL]) throws -> ContainerDispatch {
+        guard let first = files.first else {
+            throw SerializationError.genericError(message: "No phyphox file found in zip archive.")
+        }
+        return files.count == 1 ? .open(first) : .choose(files)
+    }
+
     func handleZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
         let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp")
         try? FileManager.default.removeItem(at: tmp)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: false, attributes: nil)
         
-        let archive = try ZZArchive(url: url)
-        var files: [URL] = []
-        for entry in archive.entries {
-            if (entry.fileMode & S_IFDIR) > 0 {
-                continue
-            }
-            let fileName = tmp.appendingPathComponent(entry.fileName)
-            if entry.fileName.hasSuffix(".phyphox") {
-                try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
-                try entry.newData().write(to: fileName, options: .atomic)
-                files.append(fileName)
-            } else if fileName.deletingLastPathComponent().lastPathComponent == "res" {
-                try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
-                try entry.newData().write(to: fileName, options: .atomic)
-            }
-        }
+        let files = try ExperimentsCollectionViewController.extractContainer(at: url, to: tmp)
         
-        guard files.count > 0 else {
-            throw SerializationError.genericError(message: "No phyphox file found in zip archive.")
-        }
-        
-        if files.count == 1 {
-            _ = launchExperimentByURL(files.first!, chosenPeripheral: chosenPeripheral)
-        } else {
-            var experiments: [URL] = []
-            for file in files {
-                experiments.append(file)
-            }
-            
+        switch try ExperimentsCollectionViewController.containerDispatch(for: files) {
+        case .open(let file):
+            _ = launchExperimentByURL(file, chosenPeripheral: chosenPeripheral)
+        case .choose(let files):
             let dialog = ExperimentPickerDialogView(title: localize("open_zip_title"), message: localize("open_zip_dialog_instructions"), experiments: files, delegate: self, chosenPeripheral: chosenPeripheral, onDevice: false)
             dialog.show(animated: true)
         }
     }
     
-    func handlePartialZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
-        let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp.phyphox")
-        
+    ///Rebuilds a whole zip around a partial one. A QR code or a Bluetooth transfer carries a
+    ///single deflate entry with its trailing data descriptor, without the local file header and
+    ///without a central directory; both are synthesized here around the payload, which becomes
+    ///the entry a.phyphox. Static so the intake route's own rebuilding is testable.
+    static func rebuiltPartialZipData(from payload: Data) -> Data {
         var data = Data()
         
         //Local file header
@@ -757,7 +1000,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         data.append("a.phyphox".data(using: .utf8)!) //File name
         
         //Data (including data descriptor)
-        data.append(try Data(contentsOf: url))
+        data.append(payload)
         
         let i = data.count - 16 //Offset of possible data descriptor
         let crc32 = data.subdata(in: (i+4..<i+8))
@@ -795,12 +1038,30 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         data.append(Data(bytes: &startIndex, count: MemoryLayout.size(ofValue: startIndex))) //Start of central directory
         data.append(Data([0x00, 0x00])) //Comment length
         
+        return data
+    }
+    
+    func handlePartialZipFile(_ url: URL, chosenPeripheral: CBPeripheral?) throws {
+        let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp.phyphox")
+        
+        let data = ExperimentsCollectionViewController.rebuiltPartialZipData(from: try Data(contentsOf: url))
         
         try data.write(to: tmp, options: .atomic)
         try handleZipFile(tmp, chosenPeripheral: chosenPeripheral)
     }
     
-    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?) -> Bool {
+    //Resolves the url-encoded path of a phyphox://asset= link within the bundled experiment
+    //collection. The identifier is the file path within the collection, identical to Android's
+    //assets/experiments/<path>. An empty path, a leading / and any path containing .. are
+    //refused - the link is deliberately limited to the bundled collection.
+    static func bundledExperimentAssetURL(encodedPath: String) -> URL? {
+        guard let path = encodedPath.removingPercentEncoding, !path.isEmpty, !path.hasPrefix("/"), !path.contains("..") else {
+            return nil
+        }
+        return experimentsBaseURL.appendingPathComponent(path)
+    }
+
+    func launchExperimentByURL(_ url: URL, chosenPeripheral: CBPeripheral?, acceptPartialZip: Bool = false) -> Bool {
 print("\(url)")
         var fileType = FileType.unknown
         var experiment: Experiment?
@@ -813,13 +1074,31 @@ print("\(url)")
         _ = url.startAccessingSecurityScopedResource()
         
         //TODO: Replace all instances of Data(contentsOf:...) with non-blocking requests
-        if url.scheme == "phyphox" {
+        if url.scheme == "phyphox", url.absoluteString.hasPrefix("phyphox://asset=") {
+            //phyphox://asset=<url-encoded path> opens an experiment bundled with the app (see
+            //transferring-experiments.md in phyphox-docs) - no server involved. The path is
+            //taken from the raw URL string: URLComponents' host/authority accessors normalize
+            //their case, which would corrupt the case-sensitive asset path. Any other
+            //phyphox:// URL keeps the https-rewrite behavior below. Mirrored on Android
+            //(ExperimentListActivity.handleIntent) - the two must stay in step.
+            let encodedPath = String(url.absoluteString.dropFirst("phyphox://asset=".count))
+            if let assetURL = ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: encodedPath) {
+                //An unknown path fails the load below like any other unreadable file, showing
+                //the app's normal could-not-load message
+                fileType = .phyphox
+                finalURL = assetURL
+            }
+            else {
+                experimentLoadingError = SerializationError.genericError(message: "Invalid experiment asset path.")
+            }
+        }
+        else if url.scheme == "phyphox" {
             //phyphox:// allow to retreive the experiment via https or http. Try both.
             if var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
                 components.scheme = "https"
                 do {
                     let data = try Data(contentsOf: components.url!)
-                    fileType = detectFileType(data: data)
+                    fileType = ExperimentsCollectionViewController.detectFileType(data: data)
                     if fileType == .phyphox || fileType == .zip {
                         try data.write(to: tmp, options: .atomic)
                         finalURL = tmp
@@ -830,7 +1109,7 @@ print("\(url)")
                     components.scheme = "http"
                     do {
                         let data = try Data(contentsOf: components.url!)
-                        fileType = detectFileType(data: data)
+                        fileType = ExperimentsCollectionViewController.detectFileType(data: data)
                         if fileType == .phyphox || fileType == .zip {
                             try data.write(to: tmp, options: .atomic)
                             finalURL = tmp
@@ -848,7 +1127,7 @@ print("\(url)")
             //Specific http or https. We need to download it first as InputStream/XMLParser only handles URLs to local files properly. (See todo above)
             do {
                 let data = try Data(contentsOf: url)
-                fileType = detectFileType(data: data)
+                fileType = ExperimentsCollectionViewController.detectFileType(data: data)
                 if fileType == .phyphox || fileType == .zip {
                     try data.write(to: tmp, options: .atomic)
                     finalURL = tmp
@@ -860,7 +1139,7 @@ print("\(url)")
             //Local file
             do {
                 let data = try Data(contentsOf: url)
-                fileType = detectFileType(data: data)
+                fileType = ExperimentsCollectionViewController.detectFileType(data: data)
                 if fileType == .phyphox || fileType == .zip {
                     if (url.absoluteString.starts(with: FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].absoluteString)) {
                         finalURL = url
@@ -878,7 +1157,7 @@ print("\(url)")
         }
         
         if experimentLoadingError == nil {
-            switch fileType {
+            switch ExperimentsCollectionViewController.intakeRoute(for: fileType, acceptPartialZip: acceptPartialZip) {
             case .phyphox:
                     do {
                         experiment = try ExperimentSerialization.readExperimentFromURL(finalURL)
@@ -928,18 +1207,46 @@ print("\(url)")
             }
             
             
-            UIAlertController.PhyphoxUIAlertBuilder()
-                .title(title: localize("exp_error"))
+            let alertBuilder = UIAlertController.PhyphoxUIAlertBuilder()
+                .title(title: localize("warning"))
                 .message(message: "Could not load experiment: \(message)")
                 .preferredStyle(style: .alert)
-                .addOkAction()
+            if url.scheme == "phyphox" || url.scheme == "http" || url.scheme == "https" {
+                //A load from the network may have failed only because it was the app's first
+                //local network access: iOS shows its permission prompt asynchronously and fails
+                //that first request while the prompt is still on screen. Offer a retry so the
+                //user can simply try again after granting.
+                _ = alertBuilder.addActionWithTitle(localize("tryagain"), style: .default, handler: { [weak self] _ in
+                    _ = self?.launchExperimentByURL(url, chosenPeripheral: chosenPeripheral, acceptPartialZip: acceptPartialZip)
+                })
+            }
+            alertBuilder.addOkAction()
                 .show(in: (navigationController)!, animated: true)
-            
+
             return false
         }
         
         guard let loadedExperiment = experiment else { return false }
-        
+
+        //A link experiment has no views to show - opening its link is what tapping its entry in
+        //the collection does, and it is what a QR code or a file carrying isLink="true" means.
+        //Pushing an experiment page for it used to crash on the missing view descriptors.
+        if loadedExperiment.isLink {
+            guard let linkURL = loadedExperiment.localizedLinks.first?.url else {
+                UIAlertController.PhyphoxUIAlertBuilder()
+                    .title(title: localize("url_invalid"))
+                    .message(message: localize("url_invalid_msg"))
+                    .preferredStyle(style: .alert)
+                    .addOkAction()
+                    .show(in: self, animated: true)
+
+                return false
+            }
+            UIApplication.shared.open(linkURL)
+
+            return true
+        }
+
         if loadedExperiment.appleBan {
             /* Apple does not want us to reveal to the user that the experiment has been deactivated by their request. So we may not even show an info button...
              controller.addAction(UIAlertAction(title: localize("appleBanWarningMoreInfo"), style: .default, handler:{ _ in
@@ -1016,13 +1323,28 @@ print("\(url)")
         }
         
         let controller = ExperimentPageViewController(experiment: loadedExperiment)
+        //See the other push site: collapse the large title together with the push
+        navigationItem.largeTitleDisplayMode = .never
         navigationController?.pushViewController(controller, animated: true)
         
         return true
     }
     
     func addExperimentsToCollection(_ list: [Experiment]) {
+        //Skip experiments that are already in the collection (matched by the CRC32 of their
+        //file), like on Android - including within this batch, so a zip containing identical
+        //files does not create duplicates either
+        var addedCRC32s: Set<UInt> = []
         for experiment in list {
+            if ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32) {
+                continue
+            }
+            if let crc32 = experiment.crc32 {
+                if addedCRC32s.contains(crc32) {
+                    continue
+                }
+                addedCRC32s.insert(crc32)
+            }
             print("Copying \(experiment.localizedTitle)")
             do {
                 try experiment.saveLocally(quiet: true, presenter: nil)
@@ -1097,5 +1419,40 @@ print("\(url)")
                 self.selfView.collectionView.reloadData()
             }
         }
+    }
+}
+
+//The scan started by -phyphoxBleConnect reports its find here. Only the automation scan uses
+//this - the scan the user opens has its own list to fill, in BluetoothScanResultsTableViewController.
+extension ExperimentsCollectionViewController: ScanResultsDelegate {
+    func reloadScanResults(updatedEntry: UUID) {
+        //Nothing to update: the automation scan has no list on screen
+    }
+
+    func autoConnect(device: CBPeripheral, advertisedUUIDs: [CBUUID]?, advertisedName: String?) {
+        guard let requested = AutomationLaunchOptions.bluetoothDeviceName,
+              !didTakeAutomationBluetoothDevice,
+              let scan = automationBluetoothScan else { return }
+
+        //The name comes with the call. Looking it up in scan.discoveredDevices found nothing -
+        //this path returns before that dictionary is written - which left the match to
+        //device.name, the name CoreBluetooth cached for the peripheral; that one is stale the
+        //moment the device is renamed, as the lab's per-flash bench tags do, so the seam never
+        //took a board.
+        guard ExperimentsCollectionViewController.automationBluetoothMatch(advertisedName: advertisedName,
+                                                                          peripheralName: device.name,
+                                                                          requested: requested) else {
+            //A device the substring filter let through, but not the one that was named
+            print("-phyphoxBleConnect: skipping a device advertising as \(advertisedName ?? "nil") "
+                  + "(cached name \(device.name ?? "nil")), waiting for \(requested)")
+            return
+        }
+
+        didTakeAutomationBluetoothDevice = true
+        scan.stopScan()
+        print("-phyphoxBleConnect: taking the device advertising as \(requested)")
+        //The same call the user's tap ends in, and from here nothing about this experiment is
+        //special: it is transferred, loaded, and left waiting for the host to start it
+        scan.loadExperimentFromPeripheral(device, viewController: self, experimentLauncher: self)
     }
 }

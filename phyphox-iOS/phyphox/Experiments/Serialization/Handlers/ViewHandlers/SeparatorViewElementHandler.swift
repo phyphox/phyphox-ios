@@ -13,6 +13,7 @@ import Foundation
 struct SeparatorViewElementDescriptor {
     let height: CGFloat
     let color: UIColor
+    let visibility: String
 }
 
 final class SeparatorViewElementHandler: ResultElementHandler, ChildlessElementHandler, ViewComponentElementHandler {
@@ -23,6 +24,7 @@ final class SeparatorViewElementHandler: ResultElementHandler, ChildlessElementH
     private enum Attribute: String, AttributeKey {
         case height
         case color
+        case visibility
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -30,9 +32,11 @@ final class SeparatorViewElementHandler: ResultElementHandler, ChildlessElementH
 
         let height: CGFloat = try attributes.optionalValue(for: .height) ?? 0.1
 
-        let color = mapColorString(attributes.optionalString(for: .color)) ?? kBackgroundColor
+        let color = try attributes.optionalColor(for: .color) ?? kBackgroundColor
 
-        results.append(.separator(SeparatorViewElementDescriptor(height: height, color: color)))
+        let visibility = attributes.optionalString(for: .visibility) ?? ""
+
+        results.append(.separator(SeparatorViewElementDescriptor(height: height, color: color, visibility: visibility)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

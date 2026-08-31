@@ -166,9 +166,15 @@ final class CameraModel {
         
     var autoExposureEnabled: Bool = true
     var aeStrategy = ExperimentCameraInput.AutoExposureStrategy.mean
+    var aeFPSTarget: Double = 0.0
     
     var locked: [String:Float?] = [:]
     
+    var feature: CameraFeature = CameraFeature.PHOTOMETRIC
+
+    //User-selected orientation of the device relative to the spectrum in spectroscopy experiments
+    var spectrumOrientation: SpectrumOrientation = .landscape
+
     private let service = CameraService()
     var cameraSettingsModel : CameraSettingsModel
     
@@ -214,6 +220,7 @@ final class CameraModel {
     }
     
     func endSession(){
+        service.releaseConfigurationLocks()
         service.session.stopRunning()
     }
 }

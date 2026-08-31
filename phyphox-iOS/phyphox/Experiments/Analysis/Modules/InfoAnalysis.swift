@@ -11,7 +11,17 @@ import NetworkExtension
 import AVFAudio
 
 final class InfoAnalysis: AutoClearingExperimentAnalysisModule {
-    
+    private static let batteryLevelOutSlot = AnalysisIOSlot(name: "batteryLevel", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let wifiSignalStrengthOutSlot = AnalysisIOSlot(name: "wifiSignalStrength", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let systemVolumeOutSlot = AnalysisIOSlot(name: "systemVolume", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let batteryVoltageOutSlot = AnalysisIOSlot(name: "batteryVoltage", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let batteryCurrentOutSlot = AnalysisIOSlot(name: "batteryCurrent", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let batteryTemperatureOutSlot = AnalysisIOSlot(name: "batteryTemperature", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [], outputs: [Self.batteryLevelOutSlot, Self.wifiSignalStrengthOutSlot, Self.systemVolumeOutSlot, Self.batteryVoltageOutSlot, Self.batteryCurrentOutSlot, Self.batteryTemperatureOutSlot])
+    }
+
     private var batteryLevelOutput: ExperimentAnalysisDataOutput?
     private var systemVolumeOutput: ExperimentAnalysisDataOutput?
     
@@ -21,16 +31,11 @@ final class InfoAnalysis: AutoClearingExperimentAnalysisModule {
     
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
-      
-        for output in outputs {
-            if output.asString == "batteryLevel" {
-                batteryLevelOutput = output
-                
-            }  else if output.asString == "systemVolume" {
-                systemVolumeOutput = output
-            }
-        }
-        
+
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        batteryLevelOutput = io.output(Self.batteryLevelOutSlot)
+        systemVolumeOutput = io.output(Self.systemVolumeOutSlot)
+
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     

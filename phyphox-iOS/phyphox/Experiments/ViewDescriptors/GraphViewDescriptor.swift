@@ -128,11 +128,11 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     
     let suppressScientificNotation: Bool
     
-    enum ScaleMode: String, LosslessStringConvertible {
+    enum ScaleMode: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case auto, extend, fixed
     }
     
-    enum GraphStyle: String, LosslessStringConvertible {
+    enum GraphStyle: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case lines
         case dots
         case hbars
@@ -172,11 +172,28 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     let mapWidth: UInt
     let colorMap: [UIColor]
     let showColorScale: Bool
+    let interpolateMapColors: Bool
     
+    //Data picker configuration: slots of six (x, xcal, y, ycal, z, zcal),
+    //repeating for further picks on the same axis. A cal slot prompts the user
+    //for a value assigned to the pick written by the preceding plain slot.
+    struct PickOutput: Equatable {
+        let label: String
+        let buffer: DataBuffer
+    }
+    let pickLabel: String
+    let pickOutputs: [PickOutput?]
+
+    var localizedPickLabel: String? {
+        guard !pickLabel.isEmpty else { return nil }
+        return translation?.localizeString(pickLabel) ?? pickLabel
+    }
+
     let label: String
     let translation: ExperimentTranslationCollection?
+    var visibilityBuffer: DataBuffer?
 
-    init(label: String, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, zLabel: String?, xUnit: String?, yUnit: String?, zUnit: String?, yxUnit: String?, timeReference: ExperimentTimeReference, timeOnX: Bool, timeOnY: Bool, systemTime: Bool, linearTime: Bool, hideTimeMarkers: Bool, xInputBuffers: [DataBuffer?], yInputBuffers: [DataBuffer], zInputBuffers: [DataBuffer?], logX: Bool, logY: Bool, logZ: Bool, xPrecision: Int, yPrecision: Int, zPrecision: Int, suppressScientificNotation: Bool, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, scaleMinZ: ScaleMode, scaleMaxZ: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, minZ: CGFloat, maxZ: CGFloat, followX: Bool, aspectRatio: CGFloat, partialUpdate: Bool, history: UInt, style: [GraphViewDescriptor.GraphStyle], lineWidth: [CGFloat], color: [UIColor], mapWidth: UInt, colorMap: [UIColor], showColorScale: Bool) {
+    init(label: String, visibilityBuffer: DataBuffer?, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, zLabel: String?, xUnit: String?, yUnit: String?, zUnit: String?, yxUnit: String?, timeReference: ExperimentTimeReference, timeOnX: Bool, timeOnY: Bool, systemTime: Bool, linearTime: Bool, hideTimeMarkers: Bool, xInputBuffers: [DataBuffer?], yInputBuffers: [DataBuffer], zInputBuffers: [DataBuffer?], logX: Bool, logY: Bool, logZ: Bool, xPrecision: Int, yPrecision: Int, zPrecision: Int, suppressScientificNotation: Bool, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, scaleMinZ: ScaleMode, scaleMaxZ: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, minZ: CGFloat, maxZ: CGFloat, followX: Bool, aspectRatio: CGFloat, partialUpdate: Bool, history: UInt, style: [GraphViewDescriptor.GraphStyle], lineWidth: [CGFloat], color: [UIColor], mapWidth: UInt, colorMap: [UIColor], showColorScale: Bool, interpolateMapColors: Bool, pickLabel: String, pickOutputs: [PickOutput?]) {
         self.xLabel = xLabel
         self.yLabel = yLabel
         self.zLabel = zLabel
@@ -264,9 +281,14 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
             self.colorMap = [UIColor(white: 0.0, alpha: 1.0), kHighlightColor, UIColor(white: 1.0, alpha: 1.0)]
         }
         self.showColorScale = showColorScale
+        self.interpolateMapColors = interpolateMapColors
         
         self.label = label
+        self.visibilityBuffer = visibilityBuffer
         self.translation = translation
+        
+        self.pickLabel = pickLabel
+        self.pickOutputs = pickOutputs
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {
@@ -277,15 +299,27 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     func generateDataCompleteHTMLWithID(_ id: Int) -> String {
         var rescale = ""
         var scaleX = ""
-        if scaleMinX == .fixed && minX.isFinite {
-            scaleX += "\"min\":\(minX), "
-        } else {
-            rescale += "elementData[\(id)][\"graph\"].options.scales.xAxes[0].ticks.min = minX;"
-        }
-        if scaleMaxX == .fixed && maxX.isFinite {
-            scaleX += "\"max\":\(maxX), "
-        } else {
+        if followX && minX.isFinite && maxX.isFinite {
+            //The graph follows the data: Keep the window width given by the minX and maxX
+            //attributes, but anchor its end at the newest x value of the data, mirroring the
+            //behavior of the graph view in the app. Before any data arrives (or after the data
+            //has been cleared) the initial range from the attributes is used.
+            scaleX += "\"min\":\(minX), \"max\":\(maxX), "
+            rescale += "if (elementData[\(id)][\"datasets\"][0][\"data\"].length > 0) {"
             rescale += "elementData[\(id)][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;"
+            rescale += "elementData[\(id)][\"graph\"].options.scales.xAxes[0].ticks.min = maxX - \(maxX - minX);"
+            rescale += "}"
+        } else {
+            if scaleMinX == .fixed && minX.isFinite {
+                scaleX += "\"min\":\(minX), "
+            } else {
+                rescale += "elementData[\(id)][\"graph\"].options.scales.xAxes[0].ticks.min = minX;"
+            }
+            if scaleMaxX == .fixed && maxX.isFinite {
+                scaleX += "\"max\":\(maxX), "
+            } else {
+                rescale += "elementData[\(id)][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;"
+            }
         }
         var scaleY = ""
         if scaleMinY == .fixed && minY.isFinite {

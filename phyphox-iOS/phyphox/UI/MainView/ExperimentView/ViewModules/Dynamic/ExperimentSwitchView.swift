@@ -32,6 +32,9 @@ final class ExperimentSwitchView: UIView, DynamicViewModule, DescriptorBoundView
     }
     
     private func update(){
+        //Seeded by Experiment.seedInputDefaults() - see the note there; this path only runs
+        //for the view collection that is on screen
+
         let value = descriptor.value
         var state = false
         
@@ -133,4 +136,9 @@ extension ExperimentSwitchView: DisplayLinkListener {
             update()
         }
     }
+}
+
+
+extension ExperimentSwitchView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
 }

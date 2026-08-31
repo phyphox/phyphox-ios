@@ -41,7 +41,7 @@ extension FormulaFunction2  {
 }
 
 final class FormulaParser {
-    var base: Source? = nil
+    let base: Source
     
     enum FormulaError: Error {
         case parseError(_ message: String)
@@ -316,7 +316,7 @@ final class FormulaParser {
         }
     }
     
-    private func parse(formula: String, start: String.Index, end: String.Index) throws -> Source? {
+    private static func parse(formula: String, start: String.Index, end: String.Index) throws -> Source? {
         var s = start
         var e = end
         
@@ -379,11 +379,6 @@ final class FormulaParser {
             }
         }
         
-        if formula[s] == "-" {
-            s = formula.index(after: s)
-            return Source(FormulaNode(function: MinusFunction(), in1: try parse(formula: formula, start: s, end: e), in2: nil))
-        }
-        
         var s1 = s
         var s2 = s
         var e1 = e
@@ -414,6 +409,11 @@ final class FormulaParser {
                         s2 = formula.index(after: i)
                     }
                 case "-":
+                    //A minus at the start of the term or after an operator is a unary minus,
+                    //handled below - only the rest is a binary subtraction
+                    if i == s {
+                        break
+                    }
                     let prev = formula[formula.index(before: i)]
                     if previousPriority >= 1 && prev != "e" && prev != "+" && prev != "*" && prev != "-" && prev != "/" && prev != "%" && prev != "^" {
                         previousPriority = 1
@@ -451,7 +451,9 @@ final class FormulaParser {
                         s2 = formula.index(after: i)
                     }
                 case "^":
-                    if previousPriority >= 3 {
+                    //Strictly greater: the FIRST ^ splits, making ^ right-associative
+                    //(2^3^2 = 2^(3^2) = 512)
+                    if previousPriority > 3 {
                         previousPriority = 3
                         function = PowerFunction()
                         s1 = s
@@ -548,9 +550,32 @@ final class FormulaParser {
         if brackets != 0 {
             throw FormulaError.parseError("Brackets do not match!")
         }
-        
+
+        //A leading minus is a unary minus binding tighter than + - * / % but looser than ^
+        //and function calls: it applies to the immediately following operand only, so
+        //-2+3 = 1 and -2^2 = -(2^2) = -4
+        if formula[s] == "-" && (function == nil || previousPriority >= 3) {
+            guard let operand = try parse(formula: formula, start: formula.index(after: s), end: e) else {
+                throw FormulaError.parseError("Missing operand for unary minus.")
+            }
+            return Source(FormulaNode(function: MinusFunction(), in1: operand, in2: nil))
+        }
+
         if let fun = function {
-            return Source(FormulaNode(function: fun, in1: try parse(formula: formula, start: s1, end: e1), in2: try parse(formula: formula, start: s2, end: e2)))
+            let in1 = try parse(formula: formula, start: s1, end: e1)
+            let in2 = try parse(formula: formula, start: s2, end: e2)
+            //Structurally broken formulas - wrong arity, dangling operands - are a permanent
+            //failure state and reject the file at load instead of producing NaN at runtime
+            if fun is FormulaFunction2 {
+                guard in1 != nil && in2 != nil else {
+                    throw FormulaError.parseError("Missing operand in: " + formula[s..<e])
+                }
+            } else {
+                guard in1 != nil && in2 == nil else {
+                    throw FormulaError.parseError("Wrong number of arguments in: " + formula[s..<e])
+                }
+            }
+            return Source(FormulaNode(function: fun, in1: in1, in2: in2))
         } else {
             if let v = Double(formula[s..<e]) {
                 return Source(v)
@@ -562,27 +587,29 @@ final class FormulaParser {
     
     init(formula: String) throws {
         let strippedFormula = formula.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "\t", with: "").replacingOccurrences(of: "\n", with: "").lowercased()
-        base = try parse(formula: strippedFormula, start: strippedFormula.startIndex, end: strippedFormula.endIndex)
-    }
-    
-    public func execute(buffers: [[Double]]) -> [Double] {
-        guard let parsed = base else {
-            return []
+        //An empty formula is a permanent failure state and rejects the file at load, like any
+        //other structurally broken formula
+        guard let parsed = try Self.parse(formula: strippedFormula, start: strippedFormula.startIndex, end: strippedFormula.endIndex) else {
+            throw FormulaError.parseError("Empty formula.")
         }
+        base = parsed
+    }
+
+    public func execute(buffers: [[Double]]) -> [Double] {
         var n = 0
         for buffer in buffers {
             n = max(buffer.count, n)
         }
-        
+
         var result: [Double] = []
         for i in 0..<n {
             do {
-                result.append(try parsed.get(buffers: buffers, i: i))
+                result.append(try base.get(buffers: buffers, i: i))
             } catch {
                 break
             }
         }
-        
+
         return result
     }
 }

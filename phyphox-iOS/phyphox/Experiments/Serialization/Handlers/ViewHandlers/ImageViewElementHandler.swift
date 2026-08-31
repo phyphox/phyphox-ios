@@ -9,13 +9,14 @@
 import Foundation
 
 struct ImageViewElementDescriptor {
+    let visibility: String
     let src: String
     let scale: CGFloat
     
     let darkFilter: Filter
     let lightFilter: Filter
     
-    enum Filter: String, LosslessStringConvertible {
+    enum Filter: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case none, invert
     }
 }
@@ -26,6 +27,7 @@ final class ImageViewElementHandler: ResultElementHandler, ChildlessElementHandl
     func startElement(attributes: AttributeContainer) throws {}
 
     private enum Attribute: String, AttributeKey {
+        case visibility
         case scale
         case src
         case darkFilter
@@ -36,6 +38,8 @@ final class ImageViewElementHandler: ResultElementHandler, ChildlessElementHandl
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
         let scale: CGFloat = try attributes.optionalValue(for: .scale) ?? 1.0
+        
+        let visibility: String = attributes.optionalString(for: .visibility) ?? ""
 
         let src = try attributes.string(for: .src)
         
@@ -43,7 +47,7 @@ final class ImageViewElementHandler: ResultElementHandler, ChildlessElementHandl
         
         let lightFilter: ImageViewElementDescriptor.Filter = try attributes.optionalValue(for: .lightFilter) ?? .none
 
-        results.append(.image(ImageViewElementDescriptor(src: src, scale: scale, darkFilter: darkFilter, lightFilter: lightFilter)))
+        results.append(.image(ImageViewElementDescriptor(visibility: visibility, src: src, scale: scale, darkFilter: darkFilter, lightFilter: lightFilter)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

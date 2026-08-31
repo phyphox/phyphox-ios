@@ -1,0 +1,44 @@
+<phyphox xmlns="http://phyphox.org/xml" version="1.20" locale="en">
+    <!-- Generated fixture: the decided translated-link semantics. Covers
+         every form: a full replacement with translated button text and an
+         explicit highlight, a text-only change that inherits the base URL, a
+         removal (label only, empty URL), and an added link that exists only
+         in the translation. Both apps implement this on their development
+         branches (iOS 2026-08-18, Android 2026-08-18); this file pins the
+         parser surface. -->
+    <title>Corpus: translated links</title>
+    <category>Corpus</category>
+    <description>Generated coverage fixture for the link elements of a translation block.</description>
+    <link label="Wiki" highlight="true">https://phyphox.org/wiki</link>
+    <link label="Contact">https://example.org/contact</link>
+    <link label="Survey">https://example.org/survey</link>
+    <translations>
+        <translation locale="de">
+            <title>Korpus: übersetzte Links</title>
+            <link label="Wiki" translation="Wiki (deutsch)" highlight="true">https://phyphox.org/de/wiki</link>
+            <link label="Contact" translation="Kontakt" />
+            <link label="Survey" />
+            <link label="Impressum">https://example.org/impressum</link>
+        </translation>
+    </translations>
+    <data-containers>
+        <container size="100">values</container>
+    </data-containers>
+    <input>
+        <sensor type="accelerometer">
+            <output component="x">values</output>
+        </sensor>
+    </input>
+    <views>
+        <view label="Data">
+            <value label="x">
+                <input>values</input>
+            </value>
+        </view>
+    </views>
+    <export>
+        <set name="Data">
+            <data name="x">values</data>
+        </set>
+    </export>
+</phyphox>

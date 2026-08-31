@@ -16,6 +16,28 @@ struct SensorOutputDescriptor {
     let bufferName: String
 }
 
+//The component tables of the input elements, mirroring the ioMapping arrays in Android's
+//PhyphoxFile.java. They live here, next to the handlers that enforce them, so the component
+//vocabulary is defined in one file only (the buffer wiring in PhyphoxElementHandler receives
+//components already normalized to these names).
+private let sensorComponents = ["x", "y", "z", "t", "abs", "accuracy"].map {
+    AnalysisIOSlot(name: $0, asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+}
+private let locationComponents = ["lat", "lon", "z", "zwgs84", "v", "dir", "t", "accuracy", "zAccuracy", "status", "satellites"].map {
+    AnalysisIOSlot(name: $0, asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+}
+private let audioComponents = [
+    AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1),
+    AnalysisIOSlot(name: "rate", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+]
+private let depthComponents = [
+    AnalysisIOSlot(name: "z", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1),
+    AnalysisIOSlot(name: "t", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+]
+private let cameraComponents = ["t", "luma", "luminance", "hue", "saturation", "value", "shutterSpeed", "iso", "aperture", "pixelPosition"].map {
+    AnalysisIOSlot(name: $0, asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+}
+
 protocol SensorDescriptor {
     var outputs: [SensorOutputDescriptor] { get }
 }
@@ -34,7 +56,9 @@ private final class SensorOutputElementHandler: ResultElementHandler, ChildlessE
 
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        let component = attributes.optionalString(for: .component) ?? "output"
+        //An absent component attribute stays nil: whether an unnamed output is allowed - and
+        //which component it then fills - is decided by the element's component table
+        let component = attributes.optionalString(for: .component)
         results.append(SensorOutputDescriptor(component: component, bufferName: text))
     }
 
@@ -61,7 +85,8 @@ private final class LocationElementHandler: ResultElementHandler, LookupElementH
     func startElement(attributes: AttributeContainer) throws {}
 
     func endElement(text: String, attributes: AttributeContainer) throws {
-        results.append(LocationInputDescriptor(outputs: outputHandler.results))
+        let outputs = try IOMappingValidation.validateComponents(element: "location", slots: locationComponents, outputs: outputHandler.results)
+        results.append(LocationInputDescriptor(outputs: outputs))
     }
 }
 
@@ -113,8 +138,11 @@ private final class DepthElementHandler: ResultElementHandler, LookupElementHand
         let y2 = 1.0-x2user
         
         let smooth: Bool = try attributes.optionalValue(for: .smooth) ?? true
-        
-        results.append(DepthInputDescriptor(mode: mode, x1: x1, x2: x2, y1: y1, y2: y2, smooth: smooth, outputs: outputHandler.results))
+
+        //The depth output is required; an unnamed output fills it ("z")
+        let outputs = try IOMappingValidation.validateComponents(element: "depth", slots: depthComponents, outputs: outputHandler.results)
+
+        results.append(DepthInputDescriptor(mode: mode, x1: x1, x2: x2, y1: y1, y2: y2, smooth: smooth, outputs: outputs))
     }
 }
 
@@ -125,8 +153,9 @@ struct CameraInputDescriptor: SensorDescriptor {
     let y2: Float
     let autoExposure: Bool
     let aeStrategy: ExperimentCameraInput.AutoExposureStrategy
+    let aeFPSTarget: Double
     let locked: [String:Float?]
-    let feature: String
+    let feature: CameraFeature
     let outputs: [SensorOutputDescriptor]
 }
 
@@ -151,6 +180,7 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
         case y2
         case auto_exposure
         case aeStrategy
+        case aeFPSTarget
         case locked
         case feature
     }
@@ -176,7 +206,9 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
         for lockedSetting in lockedStr.split(separator: ",") {
             if lockedSetting.contains("=") {
                 let parts = lockedSetting.split(separator: "=", maxSplits: 1)
-                let setting = String(parts[0]).trimmingCharacters(in: .whitespaces)
+                //Setting names are matched case-insensitively; storing them lowercased normalizes
+                //them for every later lookup (enum-case-insensitive in phyphox-docs)
+                let setting = String(parts[0]).trimmingCharacters(in: .whitespaces).lowercased()
                 var value: Float? = nil
                 if setting == "shutter_speed" && parts[1].contains("/") {
                     let fraction = parts[1].split(separator: "/")
@@ -190,19 +222,27 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
                 }
                 locked[setting] = value
             } else {
-                locked[String(lockedSetting.trimmingCharacters(in: .whitespaces))] = nil
+                locked[String(lockedSetting.trimmingCharacters(in: .whitespaces)).lowercased()] = nil
             }
         }
         
-        let feature: String = attributes.optionalString(for: .feature) ?? "photometric"
-        if feature != "photometric" {
-            throw ElementHandlerError.unexpectedAttributeValue("Unsupported camera feature \"\(feature)\"")
-        }
-        
-        let aeStrategy: ExperimentCameraInput.AutoExposureStrategy = (try? attributes.value(for: .aeStrategy) as ExperimentCameraInput.AutoExposureStrategy) ?? .mean
-                
-        results.append(CameraInputDescriptor(x1: x1, x2: x2, y1: y1, y2: y2, autoExposure: autoExposure, aeStrategy: aeStrategy, locked: locked, feature: feature, outputs: outputHandler.results))
+        //An invalid enumerated value is an error, only an absent attribute selects the default
+        //(enum-invalid-value in phyphox-docs, matching Android)
+        let feature_: CameraFeature = try attributes.optionalValue(for: .feature) ?? .PHOTOMETRIC
+
+        let aeStrategy: ExperimentCameraInput.AutoExposureStrategy = try attributes.optionalValue(for: .aeStrategy) ?? .mean
+
+        let aeFPSTarget: Double = try attributes.optionalValue(for: .aeFPSTarget) ?? 0.0
+
+        let outputs = try IOMappingValidation.validateComponents(element: "camera", slots: cameraComponents, outputs: outputHandler.results)
+
+        results.append(CameraInputDescriptor(x1: x1, x2: x2, y1: y1, y2: y2, autoExposure: autoExposure, aeStrategy: aeStrategy, aeFPSTarget: aeFPSTarget, locked: locked, feature: feature_, outputs: outputs))
     }
+}
+
+enum CameraFeature: String, CaseInsensitiveAttributeDecodable, CaseIterable {
+    case PHOTOMETRIC = "photometric"
+    case SPECTROSCOPY = "spectroscopy"
 }
 
 struct SensorInputDescriptor: SensorDescriptor {
@@ -260,14 +300,20 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         let sensor: SensorType = try attributes.value(for: .type)
 
         let frequency = try attributes.optionalValue(for: .rate) ?? 0.0
-        let rateStrategy: ExperimentSensorInput.RateStrategy? = try? attributes.value(for: .rateStrategy)
+        //An invalid rate strategy is an error; only an absent attribute selects the
+        //version-dependent default (enum-invalid-value in phyphox-docs, matching Android)
+        let rateStrategy: ExperimentSensorInput.RateStrategy? = try attributes.optionalValue(for: .rateStrategy)
         let average = try attributes.optionalValue(for: .average) ?? false
         let stride = try attributes.optionalValue(for: .stride) ?? 1
         let ignoreUnavailable = try attributes.optionalValue(for: .ignoreUnavailable) ?? false
 
         let rate = frequency.isNormal ? 1.0/frequency : 0.0
 
-        results.append(SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: rateStrategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, outputs: outputHandler.results))
+        //Each output's component must be in the element's component list, once at most
+        //(matching Android)
+        let outputs = try IOMappingValidation.validateComponents(element: "sensor", slots: sensorComponents, outputs: outputHandler.results)
+
+        results.append(SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: rateStrategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, outputs: outputs))
     }
 }
 
@@ -301,12 +347,14 @@ private final class AudioElementHandler: ResultElementHandler, LookupElementHand
         let rate: UInt = try attributes.optionalValue(for: .rate) ?? 48000
         let appendData: Bool = try attributes.optionalValue(for: .append) ?? false
 
+        //The recording output is required; an unnamed output fills it ("out")
+        let outputs = try IOMappingValidation.validateComponents(element: "audio", slots: audioComponents, outputs: outputHandler.results)
 
-        results.append(AudioInputDescriptor(rate: rate, outputs: outputHandler.results, appendData: appendData))
+        results.append(AudioInputDescriptor(rate: rate, outputs: outputs, appendData: appendData))
     }
 }
 
-enum BluetoothOutputExtra: String, LosslessStringConvertible {
+enum BluetoothOutputExtra: String, CaseInsensitiveAttributeDecodable, CaseIterable {
     case time
     case none
 }
@@ -352,19 +400,19 @@ private final class BluetoothOutputElementHandler: ResultElementHandler, Childle
         if extra == .none {
             let conversionName = try attributes.nonEmptyString(for: .conversion)
             
-            switch conversionName {
+            switch conversionName.lowercased() { //Conversion function names are matched case-insensitively
             case "string":
                 let decimalPoint: String? = attributes.optionalString(for: .decimalPoint)
                 let offset: Int = try attributes.optionalValue(for: .offset) ?? 0
                 let repeating: Int = try attributes.optionalValue(for: .repeating) ?? 0
                 let length: Int? = try attributes.optionalValue(for: .length)
                 conversion = StringInputConversion(decimalPoint: decimalPoint, offset: offset, repeating: repeating, length: length)
-            case "formattedString":
+            case "formattedstring":
                 let separator: String? = attributes.optionalString(for: .separator)
                 let label: String? = attributes.optionalString(for: .label)
                 let index: Int = try attributes.optionalValue(for: .index) ?? 0
                 conversion = FormattedStringInputConversion(separator: separator, label: label, index: index)
-            case "singleByte":
+            case "singlebyte":
                 let offset: Int = try attributes.optionalValue(for: .offset) ?? 0
                 let repeating: Int = try attributes.optionalValue(for: .repeating) ?? 0
                 let length: Int? = try attributes.optionalValue(for: .length)
@@ -413,8 +461,8 @@ final class BluetoothConfigElementHandler: ResultElementHandler, ChildlessElemen
         
         let conversionName = try attributes.nonEmptyString(for: .conversion)
         let conversion: ConfigConversion
-        switch conversionName {
-        case "singleByte":
+        switch conversionName.lowercased() { //Conversion function names are matched case-insensitively
+        case "singlebyte":
             conversion = SimpleConfigConversion(function: .uInt8)
         default:
             let conversionFunction: SimpleConfigConversion.ConversionFunction = try attributes.value(for: .conversion)
@@ -429,7 +477,7 @@ final class BluetoothConfigElementHandler: ResultElementHandler, ChildlessElemen
     }
 }
 
-enum BluetoothMode: String, LosslessStringConvertible {
+enum BluetoothMode: String, CaseInsensitiveAttributeDecodable, CaseIterable {
     case notification
     case indication
     case poll
@@ -470,11 +518,20 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
         case rate
         case autoConnect
         case mtu
+        case address
     }
-    
+
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
-        
+
+        //address is an Android-only scan criterion: iOS gives no access to a BLE device's
+        //hardware address, so the criterion cannot be honoured here. Reject rather than silently
+        //connecting to whatever device matches the remaining criteria
+        //(ble-address-ios-must-reject in phyphox-docs)
+        if attributes.optionalString(for: .address) != nil {
+            throw ElementHandlerError.message("The bluetooth address attribute is not supported on iOS, which does not expose hardware addresses. Experiments using it are Android-only.")
+        }
+
         let id: String? = attributes.optionalString(for: .id)
         let name: String? = attributes.optionalString(for: .name)
         let uuidString: String? = attributes.optionalString(for: .uuid)

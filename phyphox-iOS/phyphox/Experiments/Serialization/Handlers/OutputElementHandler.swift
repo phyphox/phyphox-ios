@@ -23,7 +23,6 @@ final class AudioOutputSubInputElementHandler: ResultElementHandler, ChildlessEl
 
     private enum Attribute: String, AttributeKey {
         case type
-        case clear
         case usedAs = "parameter"
     }
 
@@ -77,7 +76,9 @@ private final class AudioToneElementHandler: ResultElementHandler, LookupElement
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
         
-        let waveform: AudioWaveform = (try? attributes.value(for: .waveform) as AudioWaveform) ?? .sine
+        //An invalid waveform is an error, only an absent attribute selects the default
+        //(enum-invalid-value in phyphox-docs)
+        let waveform: AudioWaveform = try attributes.optionalValue(for: .waveform) ?? .sine
         
         let inputs = inputsHandler.results
         
@@ -161,6 +162,7 @@ struct BluetoothInputDescriptor {
     let offset: UInt16
     let bufferName: String
     let keep: Bool
+    let triggerId: String?
 }
 
 private final class BluetoothInputElementHandler: ResultElementHandler, ChildlessElementHandler {
@@ -173,6 +175,7 @@ private final class BluetoothInputElementHandler: ResultElementHandler, Childles
         case conversion
         case offset
         case keep
+        case triggerId
     }
     
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -189,18 +192,20 @@ private final class BluetoothInputElementHandler: ResultElementHandler, Childles
         let offset: UInt16 = try attributes.optionalValue(for: .offset) ?? 0
         
         let keep: Bool = try attributes.optionalValue(for: .keep) ?? true
-        
-        switch conversionName {
-        case "byteArray":
+
+        let triggerId: String? = attributes.optionalString(for: .triggerId)
+
+        switch conversionName.lowercased() { //Conversion function names are matched case-insensitively
+        case "bytearray":
             conversion = ByteArrayOutputConversion()
-        case "singleByte":
+        case "singlebyte":
             conversion = SimpleOutputConversion(function: .uInt8)
         default:
             let conversionFunction: SimpleOutputConversion.ConversionFunction = try attributes.value(for: .conversion)
             conversion = SimpleOutputConversion(function: conversionFunction)
         }
         
-        results.append(BluetoothInputDescriptor(char: uuid, conversion: conversion, offset: offset, bufferName: text, keep: keep))
+        results.append(BluetoothInputDescriptor(char: uuid, conversion: conversion, offset: offset, bufferName: text, keep: keep, triggerId: triggerId))
     }
     
     func clear() {
@@ -236,11 +241,17 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
         case name
         case uuid
         case autoConnect
+        case address
     }
-    
+
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
-        
+
+        //address is an Android-only scan criterion (ble-address-ios-must-reject in phyphox-docs)
+        if attributes.optionalString(for: .address) != nil {
+            throw ElementHandlerError.message("The bluetooth address attribute is not supported on iOS, which does not expose hardware addresses. Experiments using it are Android-only.")
+        }
+
         let id: String? = attributes.optionalString(for: .id)
         let name: String? = attributes.optionalString(for: .name)
         let uuidString: String? = attributes.optionalString(for: .uuid)
@@ -257,9 +268,34 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
     }
 }
 
+struct FlashlightOutputDescriptor {
+    let inputs: [AudioOutputSubInputDescriptor]
+}
+
+private final class FlashlightElementHandler: ResultElementHandler, LookupElementHandler {
+    var results = [FlashlightOutputDescriptor]()
+
+    //The input element of the flashlight is identical to the parameter inputs of the audio
+    //output plugins, so their handler is reused
+    private let inputHandler = AudioOutputSubInputElementHandler()
+
+    var childHandlers: [String : ElementHandler]
+
+    init() {
+        childHandlers = ["input": inputHandler]
+    }
+
+    func startElement(attributes: AttributeContainer) throws {}
+
+    func endElement(text: String, attributes: AttributeContainer) throws {
+        results.append(FlashlightOutputDescriptor(inputs: inputHandler.results))
+    }
+}
+
 struct OutputDescriptor {
     let audioOutput: AudioOutputDescriptor?
     let bluetooth: [BluetoothOutputBlockDescriptor]
+    let flashlight: FlashlightOutputDescriptor?
 }
 
 final class OutputElementHandler: ResultElementHandler, LookupElementHandler, AttributelessElementHandler {
@@ -269,14 +305,15 @@ final class OutputElementHandler: ResultElementHandler, LookupElementHandler, At
 
     private let audioHandler = AudioElementHandler()
     private let bluetoothHandler = BluetoothElementHandler()
+    private let flashlightHandler = FlashlightElementHandler()
 
     var childHandlers: [String : ElementHandler]
 
     init() {
-        childHandlers = ["audio": audioHandler, "bluetooth": bluetoothHandler]
+        childHandlers = ["audio": audioHandler, "bluetooth": bluetoothHandler, "flashlight": flashlightHandler]
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
-        results.append(OutputDescriptor(audioOutput: try audioHandler.expectOptionalResult(), bluetooth: bluetoothHandler.results))
+        results.append(OutputDescriptor(audioOutput: try audioHandler.expectOptionalResult(), bluetooth: bluetoothHandler.results, flashlight: try flashlightHandler.expectOptionalResult()))
     }
 }

@@ -9,6 +9,20 @@
 import Foundation
 
 final class EventStreamAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let dataInSlot = AnalysisIOSlot(name: "data", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let thresholdInSlot = AnalysisIOSlot(name: "threshold", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let distanceInSlot = AnalysisIOSlot(name: "distance", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let indexInSlot = AnalysisIOSlot(name: "index", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let skipInSlot = AnalysisIOSlot(name: "skip", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let lastInSlot = AnalysisIOSlot(name: "last", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let eventsOutSlot = AnalysisIOSlot(name: "events", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let indexOutSlot = AnalysisIOSlot(name: "index", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let skipOutSlot = AnalysisIOSlot(name: "skip", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let lastOutSlot = AnalysisIOSlot(name: "last", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.dataInSlot, Self.thresholdInSlot, Self.distanceInSlot, Self.indexInSlot, Self.skipInSlot, Self.lastInSlot], outputs: [Self.eventsOutSlot, Self.indexOutSlot, Self.skipOutSlot, Self.lastOutSlot])
+    }
     private var dataIn: MutableDoubleArray!
     private var thresholdIn: ExperimentAnalysisDataInput?
     private var distanceIn: ExperimentAnalysisDataInput?
@@ -21,7 +35,7 @@ final class EventStreamAnalysis: AutoClearingExperimentAnalysisModule {
     private var skipOut: ExperimentAnalysisDataOutput?
     private var lastOut: ExperimentAnalysisDataOutput?
     
-    enum TriggerMode: String, LosslessStringConvertible, Equatable, CaseIterable {
+    enum TriggerMode: String, CaseInsensitiveAttributeDecodable, Equatable, CaseIterable {
         case above
         case below
         case aboveAbsolute
@@ -39,52 +53,18 @@ final class EventStreamAnalysis: AutoClearingExperimentAnalysisModule {
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
         triggerMode = try attributes.optionalValue(for: "mode") ?? TriggerMode.above
         
-        for input in inputs {
-            if input.asString == "data" {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    dataIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            else if input.asString == "threshold" {
-                thresholdIn = input
-            }
-            else if input.asString == "distance" {
-                distanceIn = input
-            }
-            else if input.asString == "index" {
-                indexIn = input
-            }
-            else if input.asString == "skip" {
-                skipIn = input
-            }
-            else if input.asString == "last" {
-                lastIn = input
-            }
-            else {
-                print("Error: Invalid analysis input: \(String(describing: input.asString))")
-            }
-        }
-        
-        for output in outputs {
-            if output.asString == "events" {
-                eventsOut = output
-            }
-            else if output.asString == "index" {
-                indexOut = output
-            }
-            else if output.asString == "skip" {
-                skipOut = output
-            }
-            else if output.asString == "last" {
-                lastOut = output
-            }
-            else {
-                print("Error: Invalid analysis output: \(String(describing: output.asString))")
-            }
-        }
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        dataIn = io.data(Self.dataInSlot)
+        thresholdIn = io.input(Self.thresholdInSlot)
+        distanceIn = io.input(Self.distanceInSlot)
+        indexIn = io.input(Self.indexInSlot)
+        skipIn = io.input(Self.skipInSlot)
+        lastIn = io.input(Self.lastInSlot)
+
+        eventsOut = io.output(Self.eventsOutSlot)
+        indexOut = io.output(Self.indexOutSlot)
+        skipOut = io.output(Self.skipOutSlot)
+        lastOut = io.output(Self.lastOutSlot)
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
@@ -93,10 +73,24 @@ final class EventStreamAnalysis: AutoClearingExperimentAnalysisModule {
         
         let inArray = dataIn.data
         
+        //A NaN threshold participates in the comparisons like any number (no trigger ever
+        //fires); only an absent input or an empty buffer selects the default of 0.
         let threshold = thresholdIn?.getSingleValue() ?? 0.0
-        let distance = Int(distanceIn?.getSingleValue() ?? 0.0)
-        let index = Int(indexIn?.getSingleValue() ?? 0.0)
-        var skip = Int(skipIn?.getSingleValue() ?? 0.0)
+
+        //index/skip/last are the module's own state loop: absent inputs or empty buffers keep
+        //the documented start defaults (0/0/NaN). A non-finite value reaching one of the Int
+        //conversions is an error state yielding empty outputs - which resets the state loop to
+        //its start defaults on the next run instead of trapping.
+        let distanceValue = distanceIn?.getSingleValue() ?? 0.0
+        let indexValue = indexIn?.getSingleValue() ?? 0.0
+        let skipValue = skipIn?.getSingleValue() ?? 0.0
+        guard distanceValue.isFinite && indexValue.isFinite && skipValue.isFinite
+                && abs(distanceValue) < 9e18 && abs(indexValue) < 9e18 && abs(skipValue) < 9e18 else {
+            return
+        }
+        let distance = Int(distanceValue)
+        let index = Int(indexValue)
+        var skip = Int(skipValue)
         var last = lastIn?.getSingleValue() ?? Double.nan
         
         let n = inArray.count

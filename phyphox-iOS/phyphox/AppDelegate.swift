@@ -9,6 +9,65 @@
 import UIKit
 
 
+//Launch-argument seam for unattended automation (the lab driver of the cross-platform test
+//strategy). Launch arguments can only be set through simctl, devicectl or Xcode - never by
+//another app or by a user of an installed build - so these switches ship ungated in release
+//builds:
+//
+//  -phyphoxUrl <url>          opens the URL exactly as if it had been opened from outside the
+//                             app, but without the system's open-in confirmation dialog, which
+//                             cannot be suppressed and would block every scripted
+//                             phyphox://asset= launch. The URL goes through the same handler as
+//                             a real open, so the semantics cannot drift. Android needs no
+//                             counterpart - "adb shell am start" opens URLs without a dialog.
+//  -phyphoxRemote             enables remote access for the launched experiment session, exactly
+//                             as the menu toggle would but without its confirmation dialog.
+//                             Android mirrors this with the shell-only system property
+//                             "debug.phyphox.remote" - one host-controlled switch, two platform
+//                             idioms.
+//  -phyphoxRemotePort <n>     serves remote access on this port instead of the configured one,
+//                             so a host script does not have to discover the port the fallback
+//                             ladder picked.
+//  -phyphoxBleConnect <name>  opens the Bluetooth scan and loads the experiment offered by the
+//                             device advertising under that name, which is what the Bluetooth
+//                             compatibility suite needs: picking a device out of a scan has no
+//                             remote-API equivalent, and the boards it drives sit next to each
+//                             other, so the name decides. It replaces the tapping and nothing
+//                             else - the scan, the name matching, the transfer and the loading
+//                             are the app's own, the experiment is left NOT started, and the
+//                             host takes over through the remote API from there. Android has
+//                             the same seam as an instrumentation argument (bleDevice).
+//  -phyphoxAutoConfirm        confirms the notices an experiment shows when it opens - the
+//                             network privacy warning, the photosensitivity warning - and
+//                             declines the offer to save a downloaded experiment locally. They
+//                             are informational (their only action is OK), but unattended they
+//                             stall the run: the network privacy notice in particular gates the
+//                             connection setup, so the network fixture experiments cannot run
+//                             without this. It skips no user choice and no system permission
+//                             dialog, which the app cannot dismiss anyway.
+//
+//Example:
+//xcrun simctl launch <udid> de.rwth-aachen.physics.phyphox -phyphoxUrl "phyphox://asset=accelerometer.phyphox" -phyphoxRemote
+enum AutomationLaunchOptions {
+    private static let arguments = ProcessInfo.processInfo.arguments
+
+    private static func value(after flag: String) -> String? {
+        guard let index = arguments.firstIndex(of: flag), index + 1 < arguments.count else { return nil }
+        return arguments[index + 1]
+    }
+
+    static let url: URL? = value(after: "-phyphoxUrl").flatMap { URL(string: $0) }
+
+    static let remoteEnabled = arguments.contains("-phyphoxRemote")
+
+    static let remotePort: UInt? = value(after: "-phyphoxRemotePort").flatMap { UInt($0) }
+
+    static let autoConfirm = arguments.contains("-phyphoxAutoConfirm")
+
+    ///The Bluetooth device to take an experiment from, for the compatibility suite
+    static let bluetoothDeviceName: String? = value(after: "-phyphoxBleConnect")
+}
+
 @UIApplicationMain
 final class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
@@ -19,26 +78,34 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func initApp(url: URL?) -> Bool {
         KeyboardTracker.startTracking()
-        
+
         window = UIWindow(frame: UIScreen.main.bounds)
         window!.tintColor = UIColor(named: "textColor")
 
         UILabel.appearance().adjustsFontForContentSizeCategory = true
-        
-        experimentsCollectionViewController = ExperimentsCollectionViewController(willBeFirstViewForUser: url == nil || ProcessInfo.processInfo.arguments.contains("screenshot"))
-        
+
+        //The automation launch arguments are documented at AutomationLaunchOptions above
+        let arguments = ProcessInfo.processInfo.arguments
+        let automationURL = AutomationLaunchOptions.url
+
+        experimentsCollectionViewController = ExperimentsCollectionViewController(willBeFirstViewForUser: (url == nil && automationURL == nil) || arguments.contains("screenshot"))
+
         main = MainNavigationViewController(navigationBarClass: MainNavigationBar.self, toolbarClass: nil)
         main.pushViewController(experimentsCollectionViewController, animated: false)
-        
+
         mainNavViewController = ScalableViewController(hostedVC: main)
         window!.rootViewController = mainNavViewController
         window!.makeKeyAndVisible()
 
         //The following is used by the UI test to automatically generate screenshots for the App Store using fastlane. The UI test sets the argument "screenshot" and the app will launch a pre-recorded experiment to allow for screenshots with data.
-        if ProcessInfo.processInfo.arguments.contains("screenshot") {
+        if arguments.contains("screenshot") {
             return experimentsCollectionViewController.launchExperimentByURL(URL(string: "https://rwth-aachen.sciebo.de/s/5MzNo8IIe8bJuoD/download")!, chosenPeripheral: nil)
         }
-        
+
+        if let automationURL = automationURL {
+            return experimentsCollectionViewController.launchExperimentByURL(automationURL, chosenPeripheral: nil)
+        }
+
         return true
     }
 

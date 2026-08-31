@@ -10,12 +10,14 @@ import Foundation
 
 struct DepthGUIViewDescriptor: ViewDescriptor, Equatable {
     let label: String
+    let visibilityBuffer: DataBuffer?
     let aspectRatio: CGFloat
 
     let translation: ExperimentTranslationCollection?
 
-    init(label: String, aspectRatio: CGFloat, translation: ExperimentTranslationCollection?) {
+    init(label: String, visibilityBuffer: DataBuffer?, aspectRatio: CGFloat, translation: ExperimentTranslationCollection?) {
         self.label = label
+        self.visibilityBuffer = visibilityBuffer
         self.aspectRatio = aspectRatio
         self.translation = translation
     }

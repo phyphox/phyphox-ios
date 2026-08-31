@@ -260,7 +260,7 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
             return
         }
         dismiss(animated: true,  completion: {() in _ =
-            self.delegate?.launchExperimentByURL(url, chosenPeripheral: self.chosenPeripheral)
+            self.delegate?.launchExperimentByURL(url, chosenPeripheral: self.chosenPeripheral, acceptPartialZip: false)
         })
     }
     

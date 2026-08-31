@@ -37,6 +37,7 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     var drawableSize: CGSize = CGSize()
     var drawableSizeDidChange: Bool = false
     var cameraOrientation: AVCaptureDevice.Position? = nil
+    var interfaceOrientation: UIInterfaceOrientation = .unknown
     
     var isOverlayEditable: Bool = false
     
@@ -150,8 +151,15 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
             return false
         }
         
-        guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor),
-              let cameraModel = cameraModelOwner?.cameraModel else {
+        //Resolve the (weakly held) camera model before creating the encoder. If both were checked
+        //in one guard and only the model were nil - which happens while leaving the experiment, as
+        //the model is torn down but the MTKView fires one last draw - the encoder would already be
+        //created and then released without endEncoding(), which aborts with a Metal assertion.
+        guard let cameraModel = cameraModelOwner?.cameraModel else {
+            return false
+        }
+
+        guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else {
             return false
         }
         // Set a label to identify this render pass in a captured Metal frame.
@@ -227,17 +235,19 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
    
     // Updates any app state.
     func updateAppState() {
-        // Update the destination-rendering vertex info if the size of the screen changed.
-        if drawableSizeDidChange || cameraOrientation != cameraModelOwner?.cameraModel?.cameraSettingsModel.cameraPosition {
+        // Update the destination-rendering vertex info if the size of the screen, the interface
+        // orientation or the camera changed.
+        if drawableSizeDidChange || cameraOrientation != cameraModelOwner?.cameraModel?.cameraSettingsModel.cameraPosition || interfaceOrientation != currentInterfaceOrientation() {
             drawableSizeDidChange = false
             updateImagePlane()
         }
     }
-    
+
     // Sets up vertex data (source and destination rectangles) rendering.
     func updateImagePlane() {
         cameraOrientation = cameraModelOwner?.cameraModel?.cameraSettingsModel.cameraPosition
-        displayToCameraTransform = transformForDeviceOrientation()
+        interfaceOrientation = currentInterfaceOrientation()
+        displayToCameraTransform = transformForInterfaceOrientation(interfaceOrientation)
         let cameraSpecificTransform = if cameraOrientation == .front {
             //Image of fron facing camera needs to be mirrored for intuitive use
             displayToCameraTransform.concatenating(CGAffineTransform(1.0, 0.0, 0.0, -1.0, 0.0, 1.0))
@@ -254,26 +264,36 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
         }
     }
     
-    func transformForDeviceOrientation() -> CGAffineTransform {
-        let currentOrientation = UIDevice.current.orientation
-        
-        switch currentOrientation {
-        case .portrait , .faceUp , .faceDown:
+    //The interface orientation of the window this view is shown in. This must be the same source
+    //that the layout code uses to pick the aspect ratio of the metal view: the transform below
+    //and the layout have to agree or the preview gets distorted. In particular, the physical
+    //device orientation (UIDevice.current.orientation) is not suitable, as it reports
+    //faceUp/faceDown when the device is tilted flat - typical when pointing the camera at a
+    //spectroscopy setup - while the interface keeps its last orientation.
+    func currentInterfaceOrientation() -> UIInterfaceOrientation {
+        return renderDestination.window?.windowScene?.interfaceOrientation
+            ?? UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.windowScene?.interfaceOrientation
+            ?? .portrait
+    }
+
+    func transformForInterfaceOrientation(_ orientation: UIInterfaceOrientation) -> CGAffineTransform {
+        switch orientation {
+        case .portrait:
             return CGAffineTransform(a: 0.0, b: -1.0, c: 1.0, d: 0.0, tx: 0.0, ty: 1.0)
-          
-        case .landscapeLeft:
-            return CGAffineTransform.identity
 
         case .landscapeRight:
+            return CGAffineTransform.identity
+
+        case .landscapeLeft:
             return CGAffineTransform(a: -1.0, b: 0.0, c: 0.0, d: -1.0, tx: 1.0, ty: 1.0)
-            
+
         case .portraitUpsideDown:
             return CGAffineTransform(a: 0.0, b: 1.0, c: -1.0, d: 0.0, tx: 1.0, ty: 1.0)
-      
+
         default:
-            return CGAffineTransform.identity
+            return CGAffineTransform(a: 0.0, b: -1.0, c: 1.0, d: 0.0, tx: 0.0, ty: 1.0)
         }
-        
+
     }
    
 }

@@ -9,6 +9,14 @@
 import Foundation
 
 final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let xInSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let thresholdInSlot = AnalysisIOSlot(name: "threshold", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let positionOutSlot = AnalysisIOSlot(name: "position", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.xInSlot, Self.yInSlot, Self.thresholdInSlot], outputs: [Self.positionOutSlot])
+    }
     private let falling: Bool
     
     private var xIn: MutableDoubleArray?
@@ -20,44 +28,28 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
 
         falling = try attributes.optionalValue(for: "falling") ?? false
 
-        for input in inputs {
-            if input.asString == "threshold" {
-                thresholdIn = input
-            }
-            else if input.asString == "y" {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    yIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            else if input.asString == "x" {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    xIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            else {
-                print("Error: Invalid analysis input: \(String(describing: input.asString))")
-            }
-        }
-        
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        xIn = io.data(Self.xInSlot)
+        yIn = io.data(Self.yInSlot)
+        thresholdIn = io.input(Self.thresholdInSlot)
+
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     override func update() {
         var threshold = 0.0
-        
+
         if let v = thresholdIn?.getSingleValue() {
-            threshold = v.isNaN ? 0.0 : v
+            //A NaN threshold value participates like any number: no comparison with it is ever
+            //true, so no crossing is found and NaN is output. Only an absent threshold input or
+            //an empty threshold buffer (getSingleValue() == nil) selects the default of 0.
+            threshold = v
         }
-        
+
         var x: Double = -1.0
+        var found = false
         var onOppositeSide = false //We want to cross (!) the threshold. This becomes true, when we have a value on the "wrong" side of the threshold, so we can actually cross it
-        
+
         for (i, value) in yIn.data.enumerated() {
             if let xIn = xIn, i < xIn.data.count {
                 x = xIn.data[i]
@@ -67,11 +59,17 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
             }
             if (falling ? (value < threshold) : (value > threshold)) {
                 if onOppositeSide {
+                    found = true
                     break
                 }
             } else {
                 onOppositeSide = true
             }
+        }
+
+        //No crossing found is an intermediate error state: output NaN, not the last sample's x
+        if !found {
+            x = Double.nan
         }
         
         for output in outputs {

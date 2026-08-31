@@ -10,6 +10,16 @@ import Foundation
 import Accelerate
 
 final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let xInSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let minXInSlot = AnalysisIOSlot(name: "minX", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let maxXInSlot = AnalysisIOSlot(name: "maxX", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let yOutSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let xOutSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.xInSlot, Self.yInSlot, Self.minXInSlot, Self.maxXInSlot], outputs: [Self.yOutSlot, Self.xOutSlot])
+    }
     private var minXIn: ExperimentAnalysisDataInput?
     private var maxXIn: ExperimentAnalysisDataInput?
     
@@ -20,45 +30,13 @@ final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
     private var yOut: ExperimentAnalysisDataOutput?
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
-        for input in inputs {
-            if input.asString == "x" {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    xIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            else if input.asString == "y" {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    yIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            else if input.asString == "minX" {
-                minXIn = input
-            }
-            else if input.asString == "maxX" {
-                maxXIn = input
-            }
-            else {
-                print("Error: Invalid analysis input: \(String(describing: input.asString))")
-            }
-        }
-        
-        for output in outputs {
-            if output.asString == "x" {
-                xOut = output
-            }
-            else if output.asString == "y" {
-                yOut = output
-            }
-            else {
-                print("Error: Invalid analysis output: \(String(describing: output.asString))")
-            }
-        }
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        xIn = io.data(Self.xInSlot)
+        yIn = io.data(Self.yInSlot)
+        minXIn = io.input(Self.minXInSlot)
+        maxXIn = io.input(Self.maxXInSlot)
+        yOut = io.output(Self.yOutSlot)
+        xOut = io.output(Self.xOutSlot)
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
@@ -90,9 +68,12 @@ final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
                 count = min(xIn.data.count, count);
             }
             
-            var x: [Double]!
-            
-            if xOut != nil {
+            //x is needed for the x output, but also for min/max filtering when no x output is
+            //connected. An omitted x output must simply be skipped, like on Android - building
+            //x only in that case trapped on the forced unwrap below.
+            var x: [Double] = []
+
+            if xOut != nil || needsFiltering {
                 if xIn != nil {
                     x = [Double](repeating: 0.0, count: count)
                     
@@ -108,7 +89,7 @@ final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
                         x = xRaw
                     }
                     else {
-                        x!.withUnsafeMutableBufferPointer { buffer in
+                        x.withUnsafeMutableBufferPointer { buffer in
                             guard let pointer = buffer.baseAddress else { return }
 
                             vDSP_vsaddD(xRaw, 1, [-first!], pointer, 1, vDSP_Length(count))
@@ -118,7 +99,7 @@ final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
                 else {
                     x = [Double](repeating: 0.0, count: count)
 
-                    x!.withUnsafeMutableBufferPointer { buffer in
+                    x.withUnsafeMutableBufferPointer { buffer in
                         guard let pointer = buffer.baseAddress else { return }
 
                         vDSP_vrampD([0.0], [1.0], pointer, 1, vDSP_Length(count))

@@ -9,6 +9,18 @@
 import Foundation
 
 final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let xInSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let dxInSlot = AnalysisIOSlot(name: "dx", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let overlapInSlot = AnalysisIOSlot(name: "overlap", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let minInSlot = AnalysisIOSlot(name: "min", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let maxInSlot = AnalysisIOSlot(name: "max", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let timeOutSlot = AnalysisIOSlot(name: "time", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let periodOutSlot = AnalysisIOSlot(name: "period", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.xInSlot, Self.yInSlot, Self.dxInSlot, Self.overlapInSlot, Self.minInSlot, Self.maxInSlot], outputs: [Self.timeOutSlot, Self.periodOutSlot])
+    }
     //Calculate the periodicity over time by doing autocorrelations on a series of subsets of the input data
     //input1 is x values
     //input2 is y values
@@ -30,51 +42,15 @@ final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
     private var periodOutput: ExperimentAnalysisDataOutput?
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
-        for input in inputs {
-            if input.asString == "x" {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    xInput = data
-                case .value(value: _, usedAs: _):
-                    throw SerializationError.genericError(message: "x input can only be a buffer")
-                }
-            }
-            else if input.asString == "y" {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    yInput = data
-                case .value(value: _, usedAs: _):
-                    throw SerializationError.genericError(message: "y input can only be a buffer")
-                }
-            }
-            else if input.asString == "dx" {
-                dxInput = input
-            }
-            else if input.asString == "overlap" {
-                overlapInput = input
-            }
-            else if input.asString == "min" {
-                minInput = input
-            }
-            else if input.asString == "max" {
-                maxInput = input
-            }
-            else {
-                print("Error: Invalid analysis output: \(String(describing: input.asString))")
-            }
-        }
-        
-        for output in outputs {
-            if output.asString == "time" {
-                timeOutput = output
-            }
-            else if output.asString == "period" {
-                periodOutput = output
-            }
-            else {
-                print("Error: Invalid analysis output: \(String(describing: output.asString))")
-            }
-        }
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        xInput = io.data(Self.xInSlot)
+        yInput = io.data(Self.yInSlot)
+        dxInput = io.input(Self.dxInSlot)
+        overlapInput = io.input(Self.overlapInSlot)
+        minInput = io.input(Self.minInSlot)
+        maxInput = io.input(Self.maxInSlot)
+        timeOutput = io.output(Self.timeOutSlot)
+        periodOutput = io.output(Self.periodOutSlot)
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
@@ -83,41 +59,58 @@ final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
         let x: [Double] = xInput.data
         let y: [Double] = yInput.data
 
-        let n = y.count
-        
-        var dx = dxInput.getSingleValueAsInt() ?? 1
-        if dx <= 0 {
-            dx = 1
+        //An x buffer shorter than y must not trap in the x lookups below - process the common
+        //length
+        let n = min(x.count, y.count)
+
+        //An invalid dx - non-positive, non-finite or an empty buffer - yields empty outputs
+        //instead of silently running at dx = 1
+        guard let dx = dxInput.getSingleValueAsInt(), dx > 0 else {
+            return
         }
-        
+
+        //A present but non-finite overlap is an error state yielding empty outputs; an absent
+        //input or an empty buffer keeps the default 0
         var overlap = 0
-        
-        if let o = overlapInput?.getSingleValueAsInt() {
-            overlap = o
+
+        if let o = overlapInput?.getSingleValue() {
+            guard o.isFinite && abs(o) < 9e18 else {
+                return
+            }
+            overlap = Int(o)
         }
-        
+
+        //min is floored and max is ceiled - conservative, including the boundary. An infinite
+        //bound participates as "no bound"; a NaN bound is an error yielding empty outputs.
         var minPeriod = 0
         var userSelectedRange = false
-        
-        if let m = minInput?.getSingleValueAsInt() {
-            minPeriod = m
+
+        if let m = minInput?.getSingleValue() {
+            guard !m.isNaN else {
+                return
+            }
+            minPeriod = m >= 9e18 ? Int.max : (m <= 0 ? 0 : Int(m.rounded(.down)))
             userSelectedRange = true
         }
-        
+
         var maxPeriod = Int.max
-        
-        if let m = maxInput?.getSingleValueAsInt() {
-            maxPeriod = m
+
+        if let m = maxInput?.getSingleValue() {
+            guard !m.isNaN else {
+                return
+            }
+            maxPeriod = m >= 9e18 ? Int.max : (m <= 0 ? 0 : Int(m.rounded(.up)))
             userSelectedRange = true
         }
-        
+
         var timeOut = [Double]()
         var periodOut = [Double]()
-        
+
         for stepX in stride(from: 0, through: n-dx, by: dx) {
-            //Calculate actual autocorrelation range as it might be cut off at the edges
-            let x1 = max(stepX-overlap, 0)
-            
+            //Calculate actual autocorrelation range as it might be cut off at the edges.
+            //The upper clamp keeps a negative overlap from pushing x1 past the end.
+            let x1 = min(max(stepX-overlap, 0), n-1)
+
             let x2 = min(stepX+dx+overlap, n)
             
             if (maxPeriod > x2-x1) {

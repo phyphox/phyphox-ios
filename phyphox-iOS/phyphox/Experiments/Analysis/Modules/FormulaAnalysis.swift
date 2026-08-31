@@ -9,12 +9,22 @@
 import Foundation
 
 final class FormulaAnalysis: AutoClearingExperimentAnalysisModule {
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [
+            AnalysisIOSlot(name: "in", asRequired: false, repeatOffset: 0, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 0)
+        ], outputs: [
+            AnalysisIOSlot(name: "out", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+        ])
+    }
     let parser: FormulaParser
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
         
-        let formula = try attributes.optionalValue(for: "formula") ?? ""
+        //A missing formula attribute rejects the file (matching Android)
+        guard let formula: String = try attributes.optionalValue(for: "formula") else {
+            throw SerializationError.genericError(message: "Formula module needs a formula.")
+        }
         do {
             parser = try FormulaParser(formula: formula)
         } catch FormulaParser.FormulaError.parseError(let message) {

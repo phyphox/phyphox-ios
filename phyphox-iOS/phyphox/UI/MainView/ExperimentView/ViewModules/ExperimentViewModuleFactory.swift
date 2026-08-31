@@ -10,11 +10,12 @@ import UIKit
 
 final class ExperimentViewModuleFactory {
     
-    class func createViews(_ viewDescriptor: ExperimentViewCollectionDescriptor, resourceFolder: URL?) -> [UIView] {
+    class func createViews(_ viewDescriptor: ExperimentViewCollectionDescriptor, resourceFolder: URL?) -> [ExperimentModule] {
         var views: [UIView?] = []
         
         for descriptor in viewDescriptor.views {
             if let descriptor = descriptor as? InfoViewDescriptor {
+                
                 views.append(ExperimentInfoView(descriptor: descriptor, resourceFolder: resourceFolder))
             }
             else if let descriptor = descriptor as? ValueViewDescriptor {
@@ -73,6 +74,6 @@ final class ExperimentViewModuleFactory {
             }
         }
 
-        return views.compactMap { $0 }
+        return views.compactMap { ExperimentModule(view: $0, isVisible: true)}
     }
 }

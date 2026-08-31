@@ -224,6 +224,13 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         if !cameraModel.autoExposureEnabled {
             return
         }
+        //Auto exposure only ever adjusts ISO and shutter speed, so locked settings need to be
+        //excluded from its strategy. If both are locked, there is nothing left to adjust.
+        let isoLocked = cameraModel.locked.keys.contains("iso")
+        let shutterLocked = cameraModel.locked.keys.contains("shutter_speed")
+        if isoLocked && shutterLocked {
+            return
+        }
         var adjust = 1.0
         var targetExposure = Double(0.5 * pow(2.0, cameraModel.cameraSettingsModel.currentExposureValue))
         if targetExposure > 0.95 {
@@ -240,7 +247,14 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             maxExposureTime = CMTime(value: 1, timescale: 15)
         case .prioritizeFramerate:
             adjust = 1.0 - speedfactor * 0.1 * (meanLuma - targetExposure)
-            maxExposureTime = CMTime(value: Int64(1_000_000_000*cameraModel.cameraSettingsModel.maxFrameDuration), timescale: 1_000_000_000)
+            //With aeFPSTarget set, its inverse acts as the maximum exposure time to at least
+            //achieve the target frame rate; otherwise the shortest supported frame duration
+            //is used, like on Android
+            if cameraModel.aeFPSTarget > 0.0 {
+                maxExposureTime = CMTime(value: Int64(1_000_000_000/cameraModel.aeFPSTarget), timescale: 1_000_000_000)
+            } else {
+                maxExposureTime = CMTime(value: Int64(1_000_000_000*cameraModel.cameraSettingsModel.maxFrameDuration), timescale: 1_000_000_000)
+            }
         case .avoidUnderexposure:
             if minRGB > 0.2 {
                 adjust = 1.0 - speedfactor * 0.1 * (meanLuma - targetExposure)
@@ -261,17 +275,52 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             maxExposureTime = CMTime(value: 1, timescale: 15)
         }
         
-        let (shutter, iso) = calculateAdjustedExposure(adjust: adjust, state: cameraModel.cameraSettingsModel, maxExposureTime: maxExposureTime)
-        
+        let (shutter, iso) = calculateAdjustedExposure(adjust: adjust, state: cameraModel.cameraSettingsModel, maxExposureTime: maxExposureTime, isoLocked: isoLocked, shutterLocked: shutterLocked)
+
         setExposureDurationIso(duration: shutter, iso: iso)
     }
-    
-    func calculateAdjustedExposure(adjust: Double, state: CameraSettingsModel, maxExposureTime: CMTime) -> (shutter: CMTime, iso: Int) {
+
+    func calculateAdjustedExposure(adjust: Double, state: CameraSettingsModel, maxExposureTime: CMTime, isoLocked: Bool = false, shutterLocked: Bool = false) -> (shutter: CMTime, iso: Int) {
         let shutterTarget = state.maxFrameDuration
-        
+
         var iso = state.currentIso
         var shutter = state.currentShutterSpeed
-        
+
+        if isoLocked && shutterLocked { //Nothing we are allowed to adjust
+            return (shutter, iso)
+        }
+
+        if shutterLocked {
+            //Only the ISO may be changed, so pick the available ISO that gets closest to the required adjustment
+            let targetIso = Double(iso) * adjust
+            var isoOption = iso
+            var optionRating = Double.greatestFiniteMagnitude
+            for isoCandidate in state.isoValues {
+                let thisIso = Int(isoCandidate)
+                let rating = abs(log(Double(thisIso)/targetIso)/log(2.0))
+                if rating < optionRating {
+                    isoOption = thisIso
+                    optionRating = rating
+                }
+            }
+            return (shutter, isoOption)
+        }
+
+        if isoLocked {
+            //Only the shutter speed may be changed
+            var newShutter = shutter.seconds * adjust
+            if newShutter > state.maxShutterSpeed.seconds {
+                newShutter = state.maxShutterSpeed.seconds
+            }
+            if newShutter > maxExposureTime.seconds {
+                newShutter = maxExposureTime.seconds
+            }
+            if newShutter < state.minShutterSpeed.seconds {
+                newShutter = state.minShutterSpeed.seconds
+            }
+            return (CMTime(value: Int64(newShutter*1_000_000_000), timescale: 1_000_000_000), iso)
+        }
+
         func isoShutterRating(iso: Int, shutter: CMTime) -> Double {
             let isoPenalty = abs(log(Double(iso)/50.0)/log(2.0)) //Prefer ISO 100
             let shutterPenalty = 10*abs(log(shutter.seconds/shutterTarget)/log(2.0)) //Strongly prefer shutter time of maxFrameDuration
@@ -324,9 +373,12 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 
             do {
                 let videoDeviceInput = try AVCaptureDeviceInput(device: newVideoDevice)
-                
+
+                //The old camera would keep its locked configuration beyond this session otherwise
+                self.releaseConfigurationLocks()
+
                 self.session.beginConfiguration()
-                
+
                 self.session.removeInput(self.videoDeviceInput)
                 
                 if self.session.canAddInput(videoDeviceInput) {
@@ -642,7 +694,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
         var lockedIso: Int? = nil
         var lockedShutterSpeed: Float? = nil
-        
+
         for (lockedSetting, value) in cameraModel.locked {
             if let value = value {
                 switch lockedSetting {
@@ -650,6 +702,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 case "aperture": print("Aperture not implemented on iOS as there is no device with variable aperture.")
                 case "iso": lockedIso = Int(value)
                 case "shutter_speed": lockedShutterSpeed = value
+                case "focus_distance": setFocusDistanceLock(value)
                 default: print("Unknown locked setting: \(lockedSetting)")
                 }
             }
@@ -664,7 +717,75 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             setIso(lockedIso)
         }
     }
-    
+
+    //Locks the focus at a given distance in meters, zero denoting infinity, as this is more
+    //intuitive than the dioptres or the uncalibrated lens position used by the camera APIs.
+    //Besides being desirable for a fixed setup, disabling the autofocus prevents focus drift
+    //that would ruin a spectroscopy calibration. There is no UI element for this, so it can
+    //only be locked to an explicit value and the autofocus stays enabled if there is none.
+    func setFocusDistanceLock(_ distance: Float) {
+        guard distance >= 0.0 else {
+            print("Ignoring negative locked focus distance: \(distance)")
+            return
+        }
+        lockConfig { (_ camera: AVCaptureDevice) -> () in
+            guard camera.isLockingFocusWithCustomLensPositionSupported else {
+                print("Cannot lock the focus distance as this camera does not support a custom lens position.")
+                return
+            }
+            //The API takes an uncalibrated lens position from 0.0 (closest) to 1.0 (furthest)
+            //instead of a physical distance. Assuming the lens position to be proportional to
+            //dioptres (reasonable for a voice-coil actuator), the requested distance is mapped
+            //linearly in dioptres between infinity (1.0) and the closest focus distance (0.0).
+            let lensPosition: Float
+            if distance == 0.0 {
+                lensPosition = 1.0
+            } else if #available(iOS 15.0, *), camera.minimumFocusDistance > 0 {
+                let maxDioptres = 1000.0 / Float(camera.minimumFocusDistance)
+                lensPosition = min(max(0.0, 1.0 - (1.0 / distance) / maxDioptres), 1.0)
+                if lensPosition == 0.0 {
+                    print("Requested focus distance of \(distance) m is closer than this camera can focus. Using its closest focus distance instead.")
+                }
+            } else {
+                print("The closest focus distance of this camera is unknown, so a finite focus distance cannot be mapped to a lens position. Locking the focus to infinity instead.")
+                lensPosition = 1.0
+            }
+            camera.setFocusModeLocked(lensPosition: lensPosition, completionHandler: nil)
+        }
+    }
+
+    //Configuration applied to the capture device via lockForConfiguration - a locked focus, a
+    //custom exposure (set by the locked attribute, the manual controls and phyphox's own auto
+    //exposure alike) or a locked white balance - sticks to the shared device beyond the
+    //lifetime of this session and would affect every other camera user in the app, including
+    //the QR code scanner. So everything is returned to its automatic mode when the camera
+    //session ends or switches to another camera.
+    func releaseConfigurationLocks() {
+        lockConfig { (_ camera: AVCaptureDevice) -> () in
+            if camera.focusMode == .locked {
+                if camera.isFocusModeSupported(.continuousAutoFocus) {
+                    camera.focusMode = .continuousAutoFocus
+                } else if camera.isFocusModeSupported(.autoFocus) {
+                    camera.focusMode = .autoFocus
+                }
+            }
+            if camera.exposureMode == .custom || camera.exposureMode == .locked {
+                if camera.isExposureModeSupported(.continuousAutoExposure) {
+                    camera.exposureMode = .continuousAutoExposure
+                } else if camera.isExposureModeSupported(.autoExpose) {
+                    camera.exposureMode = .autoExpose
+                }
+            }
+            if camera.whiteBalanceMode == .locked {
+                if camera.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
+                    camera.whiteBalanceMode = .continuousAutoWhiteBalance
+                } else if camera.isWhiteBalanceModeSupported(.autoWhiteBalance) {
+                    camera.whiteBalanceMode = .autoWhiteBalance
+                }
+            }
+        }
+    }
+
     func setZoom(_ zoom: Float){
         guard let cameraSettings = cameraModelOwner?.cameraModel?.cameraSettingsModel else {
             return

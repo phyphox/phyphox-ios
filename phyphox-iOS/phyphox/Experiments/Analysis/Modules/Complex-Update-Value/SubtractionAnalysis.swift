@@ -10,6 +10,14 @@ import Foundation
 import Accelerate
 
 final class SubtractionAnalysis: ExperimentComplexUpdateValueAnalysis {
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [
+            AnalysisIOSlot(name: "minuend", asRequired: false, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1),
+            AnalysisIOSlot(name: "subtrahend", asRequired: false, repeatOffset: 0, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 0)
+        ], outputs: [
+            AnalysisIOSlot(name: "difference", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+        ])
+    }
     
     override func update() {
         updateAllWithMethod({ (inputs) -> ValueSource in
@@ -22,7 +30,7 @@ final class SubtractionAnalysis: ExperimentComplexUpdateValueAnalysis {
             }
             
             return main
-            },  priorityInputKey: "minuend")
+            })
     }
     
     func subtractValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {

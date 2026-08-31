@@ -6,6 +6,7 @@
 //  Copyright © 2016 RWTH Aachen. All rights reserved.
 //
 
+import AVFoundation
 import Foundation
 import GCDWebServer
 
@@ -24,9 +25,20 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     var segControl: UISegmentedControl? = nil
     var tabBar: UIScrollView? = nil
-    let tabBarHeight : CGFloat = 30
+    var tabBarHeight : CGFloat = 30 //Adjusted to the native segmented control's height at creation
     
-    var hintBubble: HintBubbleViewController? = nil
+    var hintTooltip: HintTooltipView? = nil
+
+    //Floating countdown display for timed runs, shown at the top right of the content area. It used
+    //to be a UIBarButtonItem label, but the iOS 26 glass bar buttons left the already tight
+    //navigation bar without any room for the experiment title once the timer appeared.
+    private var timerDisplay: UIView? = nil
+    private var timerDisplayBackdrop: UIVisualEffectView? = nil
+    private var timerLabel: UILabel? = nil
+    private var photosensitivityWarningShown = false
+    private var hasCompletedInitialPermissionCheck = false
+    private var startHintShown = false
+    private var infoHintShown = false
     
     let pageViewControler: UIPageViewController = UIPageViewController(transitionStyle: UIPageViewController.TransitionStyle.scroll, navigationOrientation: UIPageViewController.NavigationOrientation.horizontal, options: nil)
     
@@ -40,12 +52,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     let webServer: ExperimentWebServer
     
-    private let viewModules: [[UIView]]
+    private var viewModules: [[ExperimentModule]]
     
     var numOfConnectedDevices = 0
     
     var bluetoothStatusBar: ConnectedBluetoothDevicesViewController? = nil
-    
+
     var timerRunning: Bool {
         return experimentRunTimer != nil
     }
@@ -120,8 +132,10 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.timerDelay = experiment.analysis.timedRunStartDelay
         self.timerDuration = experiment.analysis.timedRunStopDelay
         
-        var modules: [[UIView]] = []
+        var modules: [[ExperimentModule]] = []
         
+        //Nil for a link experiment and for the placeholder of a file that failed to load; see
+        //viewCollections, which the rest of the class uses (self is not available yet here)
         if let descriptors = experiment.viewDescriptors {
             for collection in descriptors {
                 let m = ExperimentViewModuleFactory.createViews(collection, resourceFolder: experiment.resourceFolder)
@@ -141,13 +155,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         experimentViewControllers.first?.active = true
         
         for module in viewModules.flatMap({ $0 }) {
-            if let button = module as? ExperimentButtonView {
+            if let button = module.view as? ExperimentButtonView {
                 button.buttonTappedCallback = { [weak self, weak button] in
                     guard let button = button else { return }
                     self?.buttonPressed(viewDescriptor: button.descriptor, buttonViewTriggerCallback: button)
                 }
             }
-            if let exportingViewModule = module as? ExportingViewModule {
+            if let exportingViewModule = module.view as? ExportingViewModule {
                 exportingViewModule.exportDelegate = self
             }
         }
@@ -155,14 +169,30 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         ExperimentBluetoothDevice.updateDelegate = self
         
         
-        self.navigationItem.title = experiment.displayTitle
-        
+        self.navigationItem.title = experiment.displayTitle //Keeps the accessibility name and back label
+
+        //With the iOS 26 glass bar buttons there is little width left for the title, and the
+        //default bar title only truncates. This label shrinks the font to fit and, for very long
+        //titles, wraps onto a second line — the title is what identifies an experiment on student
+        //screenshots, so it should stay readable.
+        installFittingTitle()
+
         let backButton =  UIBarButtonItem(title: "‹", style: .plain, target: self, action: #selector(leaveExperiment))
         backButton.setTitleTextAttributes([NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 32)], for: .normal)
         navigationItem.leftBarButtonItem = backButton
         
         webServer.delegate = self
         experiment.analysisDelegate = self
+
+        experiment.flashlightOutput?.onThermalWarning = { [weak self] in
+            guard let self = self else { return }
+            UIAlertController.PhyphoxUIAlertBuilder()
+                .title(title: localize("device_overheating"))
+                .message(message: localize("device_heating_serious"))
+                .preferredStyle(style: .alert)
+                .addOkAction()
+                .show(in: self.topMostViewController, animated: true)
+        }
         
         countdownFormatter.minimumFractionDigits = 1
         
@@ -196,24 +226,23 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        if isMovingToParent {
-            experiment.willBecomeActive {
-                DispatchQueue.main.async {
-                    self.navigationController?.popToRootViewController(animated: true)
-                }
-            }
-        }
-        
         guard let navBar = self.navigationController?.navigationBar else {
             return
         }
         if #available(iOS 13, *) {
+            //Per-item appearance: UIKit cross-fades between the collection's transparent
+            //large-title bar and this opaque branded bar during the push/pop transition. Mutating
+            //the shared bar's appearance here instead paints the orange background onto the bar
+            //while it still has the collection's large-title height — a tall orange flash on push.
             let appearance = UINavigationBarAppearance()
             appearance.configureWithOpaqueBackground()
             appearance.backgroundColor = kHighlightColor
             appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
-            navBar.standardAppearance = appearance;
-            navBar.scrollEdgeAppearance = navBar.standardAppearance
+            navigationItem.standardAppearance = appearance
+            navigationItem.scrollEdgeAppearance = appearance
+            navigationItem.compactAppearance = appearance
+            navBar.tintColor = kTextColor
+            navigationItem.largeTitleDisplayMode = .never
         } else {
             navBar.barTintColor = kHighlightColor
             navBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
@@ -222,45 +251,44 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func updateSegControlDesign() {
+        //Native segmented control (rendered by iOS 26 as liquid glass). The custom background and
+        //divider images that used to fake Android-style underline tabs are no longer applied cleanly
+        //by iOS 26 and left hard white lines between the items, so let the system draw the control
+        //and only brand the selected segment with the phyphox highlight color.
         let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : SettingBundleHelper.getTextColorWhenDarkModeNotSupported() , NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
+        let selectedFont: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : kTextColor, NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
         segControl!.setTitleTextAttributes(font, for: .normal)
-        segControl!.setTitleTextAttributes(font, for: .selected)
-        
-        segControl!.tintColor = UIColor(named: "textColor")
-        segControl!.backgroundColor = UIColor(named: "textColor")
-        
-        //Generate new background and divider images for the segControl
-        let rect = CGRect(x: 0, y: 0, width: 1, height: tabBarHeight)
-        UIGraphicsBeginImageContext(rect.size)
-        let ctx = UIGraphicsGetCurrentContext()
-        
-        //Background
-        ctx!.setFillColor(UIColor(named: "lightBackgroundColor")?.cgColor ?? kLightBackgroundColor.cgColor)
-        ctx!.fill(rect)
-        let bgImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
-        
-        //Higlighted image, bg with underline
-        ctx!.setFillColor(UIColor(named: "highlightColor")?.cgColor ?? kHighlightColor.cgColor)
-        ctx!.fill(CGRect(x: 0, y: tabBarHeight-2, width: 1, height: 2))
-        let highlightImage = UIGraphicsGetImageFromCurrentImageContext()?.resizableImage(withCapInsets: UIEdgeInsets.zero)
-        
-        UIGraphicsEndImageContext()
-        
-        segControl!.setBackgroundImage(bgImage, for: .normal, barMetrics: .default)
-        segControl!.setBackgroundImage(highlightImage, for: .selected, barMetrics: .default)
-        segControl!.setDividerImage(bgImage, forLeftSegmentState: .normal, rightSegmentState: .normal, barMetrics: .default)
-        segControl!.setDividerImage(bgImage, forLeftSegmentState: .selected, rightSegmentState: .normal, barMetrics: .default)
-        segControl!.setDividerImage(bgImage, forLeftSegmentState: .normal, rightSegmentState: .selected, barMetrics: .default)
-        segControl!.setDividerImage(bgImage, forLeftSegmentState: .selected, rightSegmentState: .selected, barMetrics: .default)
-        if #available(iOS 11.0, *) {
-            segControl!.layer.maskedCorners = []
+        segControl!.setTitleTextAttributes(selectedFont, for: .selected)
+        if #available(iOS 13.0, *) {
+            segControl!.selectedSegmentTintColor = UIColor(named: "highlightColor") ?? kHighlightColor
         }
     }
     
     func updateLayout() {
-        var offsetTop : CGFloat = self.topLayoutGuide.length
-        if (experiment.viewDescriptors!.count > 1) {
-            offsetTop += tabBarHeight
+        let offsetTop : CGFloat = self.topLayoutGuide.length
+        //The tab strip floats over the content (iOS 26 style, content scrolling behind the glass
+        //control), so the pages start right below the navigation bar and get a top content inset
+        //instead, keeping their initial content below the tabs. The floating countdown display
+        //shares that band; without tabs it needs the inset itself.
+        layoutTimerDisplay()
+        //Keep the floating tab strip below the bar — the top offset differs per orientation, so the
+        //frame set at creation goes stale (in landscape the tabs ended up slightly under the bar)
+        tabBar?.frame = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: tabBarHeight)
+        let timerInset: CGFloat = timerDisplay.map { $0.frame.height + 8 } ?? 0
+        let tabInset: CGFloat = (viewCollections.count > 1) ? tabBarHeight : timerInset
+        for vc in experimentViewControllers {
+            let oldInset = vc.tableView.contentInset.top
+            if oldInset != tabInset {
+                let wasAtTop = vc.tableView.contentOffset.y <= -oldInset + 0.5
+                vc.tableView.contentInset.top = tabInset
+                vc.tableView.verticalScrollIndicatorInsets.top = tabInset
+                //Changing the inset does not move the content: a table resting at the old top would
+                //keep its top rows behind the tabs (seen on the iPhone 8), so scroll it to the new
+                //natural top — but only if the user has not scrolled away
+                if wasAtTop {
+                    vc.tableView.contentOffset.y = -tabInset
+                }
+            }
         }
         var offsetBottom: CGFloat = self.bottomLayoutGuide.length
         let offsetFrame: CGRect
@@ -305,10 +333,21 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         self.automaticallyAdjustsScrollViewInsets = false
-        self.edgesForExtendedLayout = UIRectEdge()
-        
+        //Extend under the (opaque) navigation bar and lay out from the top guide instead — with a
+        //view that does not underlap the bar, UIKit cannot animate the large-title collapse when
+        //this page is pushed from the collection: the still-expanded bar was painted with this
+        //page's opaque background for the whole transition and snapped at the end. All own layout
+        //already offsets by topLayoutGuide.length on every pass (updateLayout), so the content
+        //keeps its position below the bar.
+        self.edgesForExtendedLayout = .top
+        self.extendedLayoutIncludesOpaqueBars = true
+        //The region under the bar is covered by the opaque bar at rest, but shows through during
+        //the pop transition while the bar crossfades to the collection's transparent appearance —
+        //without a background it appeared black instead of the app background.
+        self.view.backgroundColor = UIColor(named: "mainBackground")
+
         refreshAppTheme()
         
         actionItem = UIBarButtonItem(image: generateDots(20.0), landscapeImagePhone: generateDots(15.0), style: .plain, target: self, action: #selector(action(_:)))
@@ -322,7 +361,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             playItem!
         ]
         
-        updateTimerInBar()
+        updateTimerDisplay()
         
         for device in experiment.bluetoothDevices {
             device.feedbackViewController = self
@@ -333,9 +372,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         
         //TabBar to switch collections
-        if (experiment.viewDescriptors!.count > 1) {
+        if (viewCollections.count > 1) {
             var buttons: [String] = []
-            for collection in experiment.viewDescriptors! {
+            for collection in viewCollections {
                 buttons.append(collection.localizedLabel)
             }
             segControl = UIExperimentTabControl(items: buttons)
@@ -345,13 +384,36 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             updateSegControlDesign()
             segControl!.sizeToFit()
-            
+
+            //Give the native control a little air within the strip and size the strip to it.
+            segControl!.frame = CGRect(x: 8, y: 4, width: segControl!.frame.width, height: segControl!.frame.height)
+            tabBarHeight = segControl!.frame.height + 8
+
             tabBar = UIScrollView()
             tabBar!.frame = CGRect(x: 0, y: self.topLayoutGuide.length, width: self.view.frame.width, height: tabBarHeight)
-            tabBar!.contentSize = segControl!.frame.size
+            tabBar!.contentSize = CGSize(width: segControl!.frame.width + 16, height: tabBarHeight)
             tabBar!.showsHorizontalScrollIndicator = false
             tabBar!.autoresizingMask = .flexibleWidth
-            tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
+            //No strip background: the glass control floats directly over the content
+            tabBar!.backgroundColor = .clear
+
+            //The segmented control's own track is translucent but applies no blur, so its labels mix
+            //illegibly with content scrolling behind it. Back it with a capsule of real material —
+            //liquid glass on iOS 26, a blur material on earlier versions — like the bar buttons have.
+            let backdrop: UIVisualEffectView
+            if #available(iOS 26.0, *) {
+                backdrop = UIVisualEffectView(effect: UIGlassEffect())
+            } else if #available(iOS 13.0, *) {
+                backdrop = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
+            } else {
+                backdrop = UIVisualEffectView(effect: UIBlurEffect(style: .regular))
+            }
+            backdrop.frame = segControl!.frame
+            backdrop.layer.cornerRadius = segControl!.frame.height / 2
+            backdrop.clipsToBounds = true
+            backdrop.isUserInteractionEnabled = false
+            tabBar!.addSubview(backdrop)
+
             tabBar!.addSubview(segControl!)
             
             self.view.addSubview(tabBar!)
@@ -367,8 +429,17 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         self.addChild(pageViewControler)
         self.view.addSubview(pageViewControler.view)
-        
+
         pageViewControler.didMove(toParent: self)
+
+        //The pages now extend under the floating tab strip and countdown display, so both have to
+        //stay above them
+        if let tabBar = tabBar {
+            self.view.bringSubviewToFront(tabBar)
+        }
+        if let timerDisplay = timerDisplay {
+            self.view.bringSubviewToFront(timerDisplay)
+        }
         
         updateSelectedViewCollection()
         
@@ -377,14 +448,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         
     }
-    
+
+
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         updateSelectedViewCollection()
         refreshAppTheme()
-        if (experiment.viewDescriptors!.count > 1) {
+        if (viewCollections.count > 1) {
             updateSegControlDesign()
-            tabBar!.backgroundColor = SettingBundleHelper.getLightBackgroundColorWhenDarkModeNotSupported()
         }
         
     }
@@ -415,6 +486,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     callbackHandedOver = true
                 }
             }
+            for bluetoothOutput in experiment.bluetoothOutputs {
+                bluetoothOutput.requestSend(triggerId: trigger)
+            }
         }
         for (input, output) in viewDescriptor.dataFlow {
             switch input {
@@ -436,67 +510,195 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return .none
     }
     
-    func showOptionalDialogsAndHints() {
-        
-        //Ask to save the experiment locally if it has been loaded from a remote source
-        if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32) {
-            UIAlertController.PhyphoxUIAlertBuilder()
-                .title(title: localize("save_locally"))
-                .message(message: localize("save_locally_message"))
-                .preferredStyle(style: .alert)
-                .addActionWithTitle(localize("save_locally_button"), style: .default, handler: { _ in
-                    do {
-                        try self.saveLocally()
+    //Alerts that are not part of a sequenced dialog flow are presented from the top-most view
+    //controller, so they stack on an already presented alert (like the denial notice of a
+    //permission a custom experiment combines with the flashlight) instead of failing silently.
+    private var topMostViewController: UIViewController {
+        var top: UIViewController = navigationController ?? self
+        while let presented = top.presentedViewController {
+            top = presented
+        }
+        return top
+    }
+
+    //MARK: - Dialog sequence
+
+    //The dialogs shown when an experiment opens, in order. Each step either presents its dialog
+    //and continues with the next step when it is dismissed, or passes through directly, so no
+    //dialog collides with (and silently cancels) another one.
+    private enum DialogSequence {
+        case systemPermissions
+        case dataPolicy
+        case bluetoothConnections
+        case networkConnections
+        case photosensitivity
+        case saveLocally
+        case hints
+    }
+
+    private func executeSequence(from step: DialogSequence) {
+        switch step {
+        case .systemPermissions:
+            experiment.willBecomeActive(
+                onSuccess: { [weak self] in
+                    DispatchQueue.main.async {
+                        guard let self = self else { return }
+                        self.hasCompletedInitialPermissionCheck = true
+                        self.executeSequence(from: .dataPolicy)
                     }
-                    catch {
-                        print(error)
+                },
+                { [weak self] in
+                    DispatchQueue.main.async {
+                        self?.navigationController?.popToRootViewController(animated: true)
                     }
-                })
-                .addCancelAction()
-                .show(in: self.navigationController!, animated: true)
-            
-            //Show a hint for the experiment info
-        } else {
-            if let playItem = playItem, hintBubble == nil {
-                let defaults = UserDefaults.standard
-                let key = "experiment_start_hint_dismiss_count"
-                if (defaults.integer(forKey: key) < 3) {
-                    hintBubble = HintBubbleViewController(text: localize("start_hint"), onDismiss: {() -> Void in
-                    })
-                    guard let hintBubble = hintBubble else {
-                        return
-                    }
-                    hintBubble.popoverPresentationController?.delegate = self
-                    hintBubble.popoverPresentationController?.barButtonItem = playItem
-                    
-                    self.present(hintBubble, animated: true, completion: nil)
                 }
+            )
+
+        case .dataPolicy:
+            //-phyphoxAutoConfirm (see AutomationLaunchOptions) confirms the notice for an
+            //unattended run - it gates the connection setup, so a headless network test could
+            //not run otherwise
+            if AutomationLaunchOptions.autoConfirm {
+                dataPolicyInfoDismissed()
+            } else if let networkConnection = experiment.networkConnections.first {
+                let sensorList = experiment.sensorInputs.map { $0.sensorType.getLocalizedName() }
+                networkConnection.showDataAndPolicy(infoMicrophone: experiment.audioInputs.count > 0, infoLocation: experiment.gpsInputs.count > 0, infoSensorData: experiment.sensorInputs.count > 0, infoSensorDataList: sensorList, callback: self)
+            } else {
+                executeSequence(from: .bluetoothConnections)
             }
-            
-            if let actionItem = actionItem, hintBubble == nil && (experiment.localizedCategory != localize("categoryRawSensor")) {
-                let defaults = UserDefaults.standard
-                let key = "experiment_info_hint_dismiss_count"
-                if (defaults.integer(forKey: key) < 3) {
-                    hintBubble = HintBubbleViewController(text: localize("experimentinfo_hint"), onDismiss: {() -> Void in
-                        defaults.set(defaults.integer(forKey: key) + 1, forKey: key)
+
+        case .bluetoothConnections:
+            if experiment.bluetoothDevices.count > 0 {
+                connectToBluetoothDevices()
+            } else {
+                executeSequence(from: .networkConnections)
+            }
+
+        case .networkConnections:
+            if experiment.networkConnections.count > 0 {
+                connectToNetworkDevices()
+            } else {
+                executeSequence(from: .photosensitivity)
+            }
+
+        case .photosensitivity:
+            //Like on Android, the photosensitivity warning is deliberately shown on every open
+            //of an experiment that can strobe the flashlight, rather than offering a permanent
+            //dismissal that would silence it forever.
+            if !photosensitivityWarningShown, experiment.flashlightOutput?.usesStrobe == true,
+               !AutomationLaunchOptions.autoConfirm {
+                photosensitivityWarningShown = true
+                UIAlertController.PhyphoxUIAlertBuilder()
+                    .title(title: localize("warning_photosensitivity"))
+                    .message(message: localize("warning_photosensitivity_message"))
+                    .preferredStyle(style: .alert)
+                    .addOkAction(handler: { [weak self] _ in
+                        self?.executeSequence(from: .saveLocally)
                     })
-                    guard let hintBubble = hintBubble else {
-                        return
-                    }
-                    hintBubble.popoverPresentationController?.delegate = self
-                    hintBubble.popoverPresentationController?.barButtonItem = actionItem
-                    
-                    self.present(hintBubble, animated: true, completion: nil)
-                }
+                    .show(in: self.topMostViewController, animated: true)
+            } else {
+                executeSequence(from: .saveLocally)
+            }
+
+        case .saveLocally:
+            //Ask to save the experiment locally if it has been loaded from a remote source
+            if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32),
+               !AutomationLaunchOptions.autoConfirm {
+                UIAlertController.PhyphoxUIAlertBuilder()
+                    .title(title: localize("save_locally"))
+                    .message(message: localize("save_locally_message"))
+                    .preferredStyle(style: .alert)
+                    .addActionWithTitle(localize("save_locally_button"), style: .default, handler: { [weak self] _ in
+                        do {
+                            try self?.saveLocally()
+                        }
+                        catch {
+                            print(error)
+                        }
+                        self?.executeSequence(from: .hints)
+                    })
+                    .addCancelAction(handler: { [weak self] _ in
+                        self?.executeSequence(from: .hints)
+                    })
+                    .show(in: self.navigationController!, animated: true)
+            } else {
+                executeSequence(from: .hints)
+            }
+
+        case .hints:
+            presentNextHint()
+        }
+    }
+
+    private func presentNextHint() {
+        let defaults = UserDefaults.standard
+
+        if let playItem = playItem, hintTooltip == nil, !startHintShown {
+            startHintShown = true
+            let key = "experiment_start_hint_dismiss_count"
+            if (defaults.integer(forKey: key) < 3) {
+                showHintBubble(text: localize("start_hint"), item: playItem, defaultsKey: key)
+                return
             }
         }
+
+        if let actionItem = actionItem, hintTooltip == nil, !infoHintShown && (experiment.localizedCategory != localize("categoryRawSensor")) {
+            infoHintShown = true
+            let key = "experiment_info_hint_dismiss_count"
+            if (defaults.integer(forKey: key) < 3) {
+                showHintBubble(text: localize("experimentinfo_hint"), item: actionItem, defaultsKey: key)
+                return
+            }
+        }
+    }
+
+    private func showHintBubble(text: String, item: UIBarButtonItem, defaultsKey: String) {
+        let tooltip = HintTooltipView(text: text, onDismiss: { [weak self] in
+            let defaults = UserDefaults.standard
+            defaults.set(defaults.integer(forKey: defaultsKey) + 1, forKey: defaultsKey)
+            self?.hintTooltip = nil
+            self?.presentNextHint()
+        })
+
+        let maxWidth = min(CGFloat(280), view.bounds.width - 24)
+        let size = tooltip.fittingSize(maxWidth: maxWidth)
+
+        //Aim the pointer at the real on-screen button. UIBarButtonItem does not expose its view
+        //publicly; reading the "view" key via KVC works (and is not flagged as private-API use, as
+        //"view" is a common public key). Button positions differ per device, so an estimate can't be
+        //right on every phone — fall back to one only if the actual view is unavailable.
+        let targetX: CGFloat
+        if let itemView = item.value(forKey: "view") as? UIView, itemView.window != nil {
+            targetX = view.convert(itemView.bounds, from: itemView).midX
+        } else {
+            let items = navigationItem.rightBarButtonItems ?? []
+            let indexFromRight = CGFloat(items.firstIndex(of: item) ?? 0)
+            targetX = view.bounds.maxX - (view.safeAreaInsets.right + 8) - (indexFromRight + 0.5) * 44
+        }
+
+        //self.view starts right below the navigation bar (edgesForExtendedLayout is empty), so place
+        //the bubble just under the bar pointing up at the buttons. The buttons never move — a tab
+        //strip or the countdown label appear below/beside them — so this stays fixed either way, even
+        //if the bubble briefly overlays the top of the tab strip.
+        var originX = targetX - size.width / 2
+        originX = max(12, min(originX, view.bounds.width - 12 - size.width))
+        let originY: CGFloat = 8
+
+        tooltip.frame = CGRect(x: originX, y: originY, width: size.width, height: size.height)
+        tooltip.pointerX = targetX - originX
+        view.addSubview(tooltip)
+        hintTooltip = tooltip
+    }
+
+    private func dismissHintTooltip() {
+        hintTooltip?.dismissTooltip()
     }
     
     override func viewDidAppear(_ animated: Bool) {
         if #available(iOS 14.0, *) {
             for vc in experimentViewControllers {
                 for view in vc.modules {
-                    if let depthGUI = view as? ExperimentDepthGUIView {
+                    if let depthGUI = view.view as? ExperimentDepthGUIView {
                         guard let session = experiment.depthInput?.session as? ExperimentDepthInputSession else {
                             continue
                         }
@@ -504,34 +706,69 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                         depthGUI.depthGUISelectionDelegate = session
                     }
                     
-                    if let cameraGUI = view as? ExperimentCameraUIView {
+                    if let cameraGUI = view.view as? ExperimentCameraUIView {
                         guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
                             continue
                         }
                         cameraGUI.cameraModelOwner = session.attachDelegate(cameraGUI)
                         cameraGUI.cameraTextureProvider = session.cameraModel?.getTextureProvider()
-    
+
                     }
-                
+                    
                 }
             }
         }
-        if let networkConnection = experiment.networkConnections.first {
-            var sensorList: [String] = []
-            for sensorInput in experiment.sensorInputs {
-                sensorList.append(sensorInput.sensorType.getLocalizedName())
-            }
-            networkConnection.showDataAndPolicy(infoMicrophone: experiment.audioInputs.count > 0, infoLocation: experiment.gpsInputs.count > 0, infoSensorData: experiment.sensorInputs.count > 0, infoSensorDataList: sensorList, callback: self)
-        } else if experiment.bluetoothDevices.count > 0 {
-            connectToBluetoothDevices()
+        if isMovingToParent && !hasCompletedInitialPermissionCheck {
+            //First appearance: resolve permissions, then run the full dialog sequence
+            executeSequence(from: .systemPermissions)
         } else {
-            showOptionalDialogsAndHints()
+            //Re-appearing, for example after returning from the experiment info: reconnect what
+            //viewDidDisappear tore down and let the sequence pass through the remaining steps
+            executeSequence(from: .dataPolicy)
+        }
+
+        //Launch-argument seam for unattended automation (see AutomationLaunchOptions in
+        //AppDelegate): -phyphoxRemote brings the remote server up for this session, exactly as
+        //the menu toggle's confirmed action does, so a host script can drive the REST API.
+        //Only once - a later manual toggle stays the user's decision.
+        //
+        //It does not matter where the experiment came from: this runs for every experiment page,
+        //so an experiment transferred from a Bluetooth device (-phyphoxBleConnect) serves the
+        //remote API exactly as a launched one does. The Bluetooth compatibility suite depends on
+        //that, and it is why the switch needs no counterpart there.
+        if AutomationLaunchOptions.remoteEnabled && !didLaunchWebServerForAutomation {
+            didLaunchWebServerForAutomation = true
+            launchWebServer()
         }
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+
+        //Tear the hint down without advancing the sequence; the view is going away.
+        hintTooltip?.removeFromSuperview()
+        hintTooltip = nil
+    }
+
+    private func installFittingTitle() {
+        let titleLabel = FittingTitleLabel()
+        titleLabel.text = experiment.displayTitle
+        titleLabel.textColor = kTextColor
+        titleLabel.textAlignment = .center
+        titleLabel.font = UIFont.preferredFont(forTextStyle: .headline)
+        titleLabel.lineBreakMode = .byTruncatingTail
+        titleLabel.numberOfLines = 2 //Second line always available, see intrinsicContentSize
+        //Sizing via Auto Layout with an explicit height: with the default autoresizing-mask
+        //constraints the bar assigns the title view a single-line-high frame after rotation
+        //(regardless of the intrinsic size), which truncates the wrapped two-line case.
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.heightAnchor.constraint(equalToConstant: FittingTitleLabel.twoLineHeight).isActive = true
+        self.navigationItem.titleView = titleLabel
+    }
+
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        
+
         if #available(iOS 14.0, *) {
             if let session = experiment.depthInput?.session as? ExperimentDepthInputSession {
                 session.stopSession()
@@ -543,7 +780,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()
-
+        
         if isMovingFromParent {
             tearDownWebServer()
             
@@ -601,19 +838,32 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    ///The experiment's view collections. Nil descriptors are possible - a link experiment has no
+    ///views, and neither does the placeholder built for a file that failed to load - so this is
+    ///never force-unwrapped: the collection view controller keeps such experiments away from
+    ///this screen, and if one ever arrives here it must not trap.
+    private var viewCollections: [ExperimentViewCollectionDescriptor] {
+        return experiment.viewDescriptors ?? []
+    }
+
     private var remoteUrl: String = ""
+
+    private var didLaunchWebServerForAutomation = false
     
     private func launchWebServer() {
         experiment.setKeepScreenOn(true)
         if !webServer.start() {
-            let hud = JGProgressHUD(style: .dark)
-            hud.interactionType = .blockTouchesOnHUDView
-            hud.indicatorView = JGProgressHUDErrorIndicatorView()
-            hud.textLabel.text = "Failed to initialize HTTP server"
-            
-            hud.show(in: self.view)
-            
-            hud.dismiss(afterDelay: 3.0)
+            //The translated message must not contain a format placeholder (non-professional
+            //translators tend to break template strings), so the port is appended in code.
+            UIAlertController.PhyphoxUIAlertBuilder()
+                .title(title: localize("remoteServerPortInUseTitle"))
+                .message(message: localize("remoteServerPortInUse") + " (Port \(webServer.port))")
+                .preferredStyle(style: .alert)
+                .addOkAction()
+                .show(in: self.navigationController!, animated: true)
+            if !experiment.running {
+                experiment.setKeepScreenOn(false)
+            }
         }
         else {
             remoteUrl = webServer.server!.serverURL?.absoluteString ?? ""
@@ -698,7 +948,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.view.addSubview(self.serverLabelBackground!)
             self.view.addSubview(self.serverLabel!)
             self.view.addSubview(self.serverQRIcon!)
-                        
+            
             // set view1 constraints
             self.serverQRIcon!.translatesAutoresizingMaskIntoConstraints = false
             
@@ -706,7 +956,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             updateLayout()
         }
     }
-
+    
     
     
     private func tearDownWebServer() {
@@ -778,7 +1028,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void) {
-        export.runExport(format, singleSet: singleSet, filename: experiment.cleanedFilenameTitle, timeReference: experiment.timeReference) { (errorMessage, fileURL) in
+        let filename = FileNameFormat.formatFilename(title: experiment.displayTitle, timeReference: experiment.timeReference)
+        export.runExport(format, singleSet: singleSet, filename: filename, timeReference: experiment.timeReference) { (errorMessage, fileURL) in
             if let error = errorMessage {
                 completion(NSError(domain: NSURLErrorDomain, code: 0, userInfo: [NSLocalizedDescriptionKey: error]), nil)
             }
@@ -828,13 +1079,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         alertBuilder.title(title: localize("save_state"))
             .message(message: localize("save_state_message"))
             .preferredStyle(style: .alert)
-            .addTextField(configHandler: { (textField) in
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateStyle = .short
-                dateFormatter.timeStyle = .short
-                
-                let fileNameDefault = localize("save_state_default_title")
-                textField.text = "\(fileNameDefault) \(dateFormatter.string(from: Date()))"
+            .addTextField(configHandler: { [unowned self] (textField) in
+                textField.text = FileNameFormat.format(title: self.experiment.displayTitle, timeReference: self.experiment.timeReference)
             })
             .addActionWithTitle(localize("save_state_save"), style: .default, handler: { [unowned self] action in
                 if let title = alertBuilder.getTextFieldValue().text {
@@ -859,13 +1105,6 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return HUD
     }
     
-    private func createTimeStampedFileNameWith(fileNameDefault: String) -> String
-    {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
-        return "\(fileNameDefault) \(dateFormatter.string(from: Date())).phyphox"
-    }
-    
     private func saveTheState(title: String){
         do {
             if !FileManager.default.fileExists(atPath: savedExperimentStatesURL.path) {
@@ -877,7 +1116,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             //_ = try self.experiment.saveState(to: savedExperimentStatesURL, with: title)
             
             //Instead use the legacy state serializer for now:
-            let fileName = createTimeStampedFileNameWith(fileNameDefault: self.experiment.cleanedFilenameTitle)
+            let fileName = FileNameFormat.formatFilename(title: self.experiment.displayTitle, timeReference: self.experiment.timeReference) + ".phyphox"
             let target = savedExperimentStatesURL.appendingPathComponent(fileName)
             
             let HUD = showHUDProgressWidget()
@@ -907,7 +1146,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     private func shareTheState(title: String){
-        let fileName = createTimeStampedFileNameWith(fileNameDefault: localize("save_state_default_title"))
+        let fileName = FileNameFormat.formatFilename(title: experiment.displayTitle, timeReference: experiment.timeReference) + ".phyphox"
         let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent(fileName)
         
         let HUD = showHUDProgressWidget()
@@ -933,36 +1172,75 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         })
     }
     
-    private func updateTimerInBar() {
-        guard var items = self.navigationItem.rightBarButtonItems else {
-            return
-        }
-        
-        if let label = items.last?.customView as? UILabel {
-            //The timer label is visible
-            if !timerEnabled {
-                //...but it should not be
-                items.removeLast()
-                self.navigationItem.rightBarButtonItems = items
-            } else {
-                //...and that is correct. Let's make sure it is up to date
-                label.text = countdownFormatter.string(from: self.timerDelay as NSNumber)
-                label.sizeToFit()
+    private func updateTimerDisplay() {
+        if timerEnabled {
+            if timerDisplay == nil {
+                createTimerDisplay()
             }
+            setTimerLabel(timerDelay)
+        } else if let timerDisplay = timerDisplay {
+            timerDisplay.removeFromSuperview()
+            self.timerDisplay = nil
+            self.timerDisplayBackdrop = nil
+            self.timerLabel = nil
+            tabBar?.contentInset.right = 0
+            updateLayout()
+        }
+    }
+
+    private func createTimerDisplay() {
+        let label = UILabel()
+        //Monospaced digits keep the capsule from wobbling while the countdown ticks
+        label.font = UIFont.monospacedDigitSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .headline).pointSize, weight: .semibold)
+        label.textColor = UIColor(named: "textColor")
+        label.textAlignment = .center
+
+        //Same material as the floating tab strip: liquid glass on iOS 26, blur before
+        let backdrop: UIVisualEffectView
+        if #available(iOS 26.0, *) {
+            backdrop = UIVisualEffectView(effect: UIGlassEffect())
+        } else if #available(iOS 13.0, *) {
+            backdrop = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
         } else {
-            //The timer label is not visible
-            if timerEnabled {
-                //...but it should be
-                let label = UILabel()
-                label.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
-                label.textColor = kTextColor
-                label.text = countdownFormatter.string(from: self.timerDelay as NSNumber)
-                label.sizeToFit()
-                
-                items.append(UIBarButtonItem(customView: label))
-                self.navigationItem.rightBarButtonItems = items
-            }
+            backdrop = UIVisualEffectView(effect: UIBlurEffect(style: .regular))
         }
+        backdrop.clipsToBounds = true
+        backdrop.isUserInteractionEnabled = false
+
+        let container = UIView()
+        container.addSubview(backdrop)
+        container.addSubview(label)
+        self.view.addSubview(container)
+        self.view.bringSubviewToFront(container)
+
+        timerDisplay = container
+        timerDisplayBackdrop = backdrop
+        timerLabel = label
+        updateLayout()
+    }
+
+    private func layoutTimerDisplay() {
+        guard let container = timerDisplay, let label = timerLabel else { return }
+        let textSize = label.sizeThatFits(CGSize(width: 200, height: 100))
+        let h = textSize.height + 12
+        let w = textSize.width + 24
+        var safeRight: CGFloat = 0
+        if #available(iOS 11, *) {
+            safeRight = view.safeAreaInsets.right
+        }
+        container.frame = CGRect(x: view.bounds.width - safeRight - 8 - w, y: self.topLayoutGuide.length + 4, width: w, height: h)
+        timerDisplayBackdrop?.frame = container.bounds
+        timerDisplayBackdrop?.layer.cornerRadius = h / 2
+        label.frame = container.bounds
+
+        //Pad the tab strip's scrollable range by the capsule overlap, so the last tabs can be
+        //scrolled out from under the countdown display and remain reachable
+        tabBar?.contentInset.right = view.bounds.width - container.frame.minX + 8
+    }
+
+    private func setTimerLabel(_ value: Double) {
+        timerLabel?.text = countdownFormatter.string(from: value as NSNumber)
+        layoutTimerDisplay()
     }
     
     private func showTimerOptions() {
@@ -984,7 +1262,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.timerBeep.running = timedRunDialogView?.beeperRunning.sw.isOn ?? false
             self.timerBeep.stop = timedRunDialogView?.beeperStop.sw.isOn ?? false
             
-            self.updateTimerInBar()
+            self.updateTimerDisplay()
         }))
         
         alert.addAction(UIAlertAction(title: localize("disableTimedRun"), style: .cancel, handler: { [unowned self] action in
@@ -997,14 +1275,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             self.timerBeep.running = timedRunDialogView?.beeperRunning.sw.isOn ?? false
             self.timerBeep.stop = timedRunDialogView?.beeperStop.sw.isOn ?? false
             
-            self.updateTimerInBar()
+            self.updateTimerDisplay()
         }))
         
         self.navigationController!.present(alert, animated: true, completion: nil)
     }
     
     @objc func action(_ item: UIBarButtonItem) {
-        hintBubble?.dismiss(animated: true, completion: nil)
+        dismissHintTooltip()
         let alert = UIAlertController(title: localize("actions"), message: nil, preferredStyle: .actionSheet)
         
         alert.addAction(UIAlertAction(title: localize("show_description"), style: .default, handler: { [unowned self] action in
@@ -1042,9 +1320,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             HUD.show(in: self.navigationController!.view)
             
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
-            let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(self.experiment.cleanedFilenameTitle) \(dateFormatter.string(from: Date())).png")
+            let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("\(FileNameFormat.formatFilename(title: self.experiment.displayTitle, timeReference: self.experiment.timeReference)).png")
             
             do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
             do { try png.write(to: URL(fileURLWithPath: tmpFile), options: .noFileProtection) } catch {}
@@ -1124,7 +1400,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         ExperimentManager.shared.reloadUserExperiments()
     }
     
-    func startExperiment() {
+    //Returns whether the measurement is running afterwards - with a timed run, whether its
+    //countdown was started. A start can be refused (a Bluetooth device that is not connected,
+    //an audio engine that will not start), and the remote interface reports that to its client
+    //instead of claiming success (control-start-refused).
+    @discardableResult
+    func startExperiment() -> Bool {
         let defaults = UserDefaults.standard
         let key = "experiment_start_hint_dismiss_count"
         defaults.set(defaults.integer(forKey: key) + 1, forKey: key)
@@ -1133,11 +1414,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             experiment.setKeepScreenOn(true)
             
             if experimentStartTimer != nil {
+                //A running countdown is cancelled rather than started again, so nothing begins
                 experimentStartTimer!.invalidate()
                 experimentStartTimer = nil
                 
-                updateTimerInBar()
-                return
+                updateTimerDisplay()
+                return false
             }
             
             if timerEnabled {
@@ -1147,28 +1429,20 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     } catch {
                         showError(message: "Could not start experiment \(error).")
                         experiment.stop()
-                        return
+                        return false
                     }
                 }
                 
                 let d = timerDelay
                 var nextBeep = floor(d-0.5)
-                
-                var items = navigationItem.rightBarButtonItems
-                
-                guard let label = items?.last?.customView as? UILabel else { return }
-                
-                label.text = countdownFormatter.string(from: d as NSNumber)
-                label.sizeToFit()
-                
-                items?.removeLast()
-                items?.append(UIBarButtonItem(customView: label))
-                
-                navigationItem.rightBarButtonItems = items
-                
+
+                guard timerLabel != nil else { return false }
+
+                setTimerLabel(d)
+
                 func updateT() {
                     guard let experimentStartTimer = experimentStartTimer else { return }
-                    
+
                     let dt = experimentStartTimer.fireDate.timeIntervalSinceNow
                     if dt <= nextBeep && nextBeep > 0 {
                         nextBeep -= 1
@@ -1176,13 +1450,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                             experiment.audioEngine?.beep(frequency: 800, duration: 0.1)
                         }
                     }
-                    
+
                     after(0.02) {
                         updateT()
                     }
-                    
-                    label.text = countdownFormatter.string(from: dt as NSNumber)
-                    label.sizeToFit()
+
+                    setTimerLabel(dt)
                 }
                 
                 after(0.02) {
@@ -1190,11 +1463,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 }
                 
                 experimentStartTimer = Timer.scheduledTimer(timeInterval: d, target: self, selector: #selector(startTimerFired), userInfo: nil, repeats: false)
+                return true
             }
             else {
-                actuallyStartExperiment()
+                return actuallyStartExperiment()
             }
         }
+        
+        return true
     }
     
     func showError(message: String) {
@@ -1203,17 +1479,25 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         present(alert, animated: true)
     }
     
-    func actuallyStartExperiment() {
+    @discardableResult
+    func actuallyStartExperiment() -> Bool {
         do {
             try experiment.start(stopExperimentDelegate: self)
         } catch AudioEngine.AudioEngineError.NoInput {
             showError(message: "Could not start experiment: No microphone available.")
             experiment.stop()
-            return
+            return false
         } catch {
             showError(message: "Could not start experiment \(error).")
             experiment.stop()
-            return
+            return false
+        }
+        
+        //Experiment.start() also refuses silently when one of its Bluetooth devices is not
+        //connected - it shows its own dialog and leaves the experiment stopped, so neither the
+        //toolbar item nor the remote interface may pretend that a measurement is running.
+        guard experiment.running else {
+            return false
         }
         
         var items = navigationItem.rightBarButtonItems!
@@ -1221,6 +1505,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         items[2] = UIBarButtonItem(barButtonSystemItem: .pause, target: self, action: #selector(toggleExperiment))
         
         navigationItem.rightBarButtonItems = items
+        
+        return true
     }
     
     func stopExperiment() {
@@ -1230,21 +1516,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
             
             var items = navigationItem.rightBarButtonItems!
-            
+
             if experimentRunTimer != nil {
                 experimentRunTimer!.invalidate()
                 experimentRunTimer = nil
-                
-                let label = items.last!.customView! as! UILabel
-                
-                label.text = countdownFormatter.string(from: self.timerDelay as NSNumber)
-                label.sizeToFit()
-                
-                items.removeLast()
-                items.append(UIBarButtonItem(customView: label))
-                
+
+                setTimerLabel(self.timerDelay)
             }
-            
+
             experiment.stop()
             
             items[2] = UIBarButtonItem(barButtonSystemItem: .play, target: self, action: #selector(toggleExperiment))
@@ -1269,7 +1548,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func toggleExperiment() {
-        hintBubble?.dismiss(animated: true, completion: nil)
+        dismissHintTooltip()
         if experiment.running {
             stopExperiment()
         }
@@ -1280,19 +1559,18 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     @objc func handleCameraError(notification: Notification) {
         DispatchQueue.main.async {
-            
-            guard self.presentedViewController == nil else {
-                        // Optionally, dismiss the current one before showing alert
-                        self.presentedViewController?.dismiss(animated: false) {
-                            self.handleCameraError(notification: notification)
-                        }
-                        return
-                    }
-            
+
+            //If the camera could not be set up because its permission is missing, the
+            //permission flow already informs the user with the accurate explanation - the
+            //generic loading error would only replace it with a less helpful message.
+            guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else {
+                return
+            }
+
             let alert = UIAlertController(title: localize("cameraLoadingErrorTitle"),
                                           message: (notification.userInfo?["message"] as? String ?? localize("cameraLoadingErrorMessage6")) + localize("cameraLoadingErrorSecondMessage"),
                                           preferredStyle: .alert)
-            
+
             let okAction = UIAlertAction(title: localize("ok"), style: .default) { [weak self] _ in
                 if let nav = self?.navigationController {
                     nav.popViewController(animated: true)
@@ -1300,23 +1578,44 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     self?.dismiss(animated: true, completion: nil)
                 }
             }
-            
+
             alert.addAction(okAction)
-            self.present(alert, animated: true, completion: nil)
+            //Present on top of whatever is currently shown instead of dismissing it: the
+            //presented dialog may carry information of its own, like the photosensitivity
+            //warning
+            self.topMostViewController.present(alert, animated: true, completion: nil)
         }
     }
     
     @objc func clearDataDialog() {
-        hintBubble?.dismiss(animated: true, completion: nil)
-        
-        let al = UIAlertController(title: localize("clear_data"), message: localize("clear_data_question"), preferredStyle: .alert)
-        
-        al.addAction(UIAlertAction(title: localize("clear"), style: .default, handler: { [unowned self] action in
-            self.clearData()
-        }))
-        al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
-        
-        self.navigationController!.present(al, animated: true, completion: nil)
+        dismissHintTooltip()
+
+        let clearGroups = experiment.clearGroups
+
+        if clearGroups.isEmpty {
+            let al = UIAlertController(title: localize("clear_data"), message: localize("clear_data_question"), preferredStyle: .alert)
+
+            al.addAction(UIAlertAction(title: localize("clear"), style: .default, handler: { [unowned self] action in
+                self.clearData(clearGroups: [])
+            }))
+            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+
+            self.navigationController!.present(al, animated: true, completion: nil)
+        } else {
+            //Like on Android, buffers assigned to a clear group are only cleared if the user
+            //explicitly selects that group.
+            let selectionView = ClearGroupSelectionView(groups: clearGroups)
+
+            let al = UIAlertController(title: localize("clear_data"), message: localize("clear_data_question_select"), preferredStyle: .alert)
+            al.__pt__setAccessoryView(selectionView)
+
+            al.addAction(UIAlertAction(title: localize("clear"), style: .default, handler: { [unowned self] action in
+                self.clearData(clearGroups: selectionView.selectedGroups())
+            }))
+            al.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
+
+            self.navigationController!.present(al, animated: true, completion: nil)
+        }
     }
     
     @objc func showQr(){
@@ -1349,7 +1648,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.centerXAnchor.constraint(equalTo: alertController.view.centerXAnchor).isActive = true
         imageView.centerYAnchor.constraint(equalTo: alertController.view.centerYAnchor).isActive = true
-       
+        
         let closeButton = UIAlertAction(title: localize("cancel"), style: .default, handler: nil)
         alertController.addAction(closeButton)
         
@@ -1374,22 +1673,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         let d = timerDuration
         var nextBeep = floor(d-0.6)
-        
-        var items = navigationItem.rightBarButtonItems
-        
-        guard let label = items?.last?.customView as? UILabel else { return }
-        
-        label.text = countdownFormatter.string(from: d as NSNumber)
-        label.sizeToFit()
-        
-        items?.removeLast()
-        items?.append(UIBarButtonItem(customView: label))
-        
-        navigationItem.rightBarButtonItems = items
-        
+
+        guard timerLabel != nil else { return }
+
+        setTimerLabel(d)
+
         func updateT() {
             guard let experimentRunTimer = experimentRunTimer else { return }
-            
+
             let dt = experimentRunTimer.fireDate.timeIntervalSinceNow
             if dt <= nextBeep && nextBeep > 0 {
                 nextBeep -= 1
@@ -1397,13 +1688,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     experiment.audioEngine?.beep(frequency: 1000, duration: 0.1)
                 }
             }
-            
+
             after(0.02) {
                 updateT()
             }
-            
-            label.text = countdownFormatter.string(from: dt as NSNumber)
-            label.sizeToFit()
+
+            setTimerLabel(dt)
         }
         
         after(0.02) {
@@ -1414,12 +1704,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     
-    func clearData() {
+    func clearData(clearGroups: [String]) {
         self.experiment.timeReference.registerEvent(event: .CLEAR)
         self.experiment.bluetoothDevices.forEach { $0.writeEventCharacteristic(timeMapping: self.experiment.timeReference.timeMappings.last) }
-        
+
         self.stopExperiment()
-        self.experiment.clear(byUser: true)
+        self.experiment.clear(byUser: true, clearGroups: clearGroups)
         
         self.webServer.forceFullUpdate = true //The next time, the webinterface requests buffers, we need to send a full update, so the now empty buffers can be recognized
         
@@ -1433,39 +1723,33 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func connectToBluetoothDevices() {
-        
+
         if experiment.bluetoothDevices.count == 1, let input = experiment.bluetoothDevices.first {
             if input.deviceAddress != nil {
                 input.stopExperimentDelegate = self
                 input.scanToConnect()
-                if (experiment.networkConnections.count > 0) {
-                    connectToNetworkDevices()
-                } else {
-                    showOptionalDialogsAndHints()
-                }
+                executeSequence(from: .networkConnections)
                 return
             }
         }
-        
+
         for device in experiment.bluetoothDevices {
             if device.deviceAddress == nil {
                 device.stopExperimentDelegate = self
                 device.showScanDialog(dismissDelegate: self)
-                
+
                 return
             }
         }
-        
-        //No more dialogs shown. Now show any other dialog that had to wait.
-        if (experiment.networkConnections.count > 0) {
-            connectToNetworkDevices()
-        } else {
-            showOptionalDialogsAndHints()
-        }
+
+        //No more dialogs shown. Continue with any other dialog that had to wait.
+        executeSequence(from: .networkConnections)
     }
-    
+
     func bluetoothScanDialogDismissed() {
-        connectToBluetoothDevices()
+        //Re-enter the bluetooth step: the device picked in the scan dialog still has to be
+        //connected before the sequence moves on
+        executeSequence(from: .bluetoothConnections)
     }
     
     func disconnectFromBluetoothDevices(){
@@ -1481,7 +1765,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 return
             }
         }
-        showOptionalDialogsAndHints()
+        executeSequence(from: .photosensitivity)
     }
     
     func networkScanDialogDismissed() {
@@ -1495,11 +1779,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func dataPolicyInfoDismissed() {
-        if experiment.bluetoothDevices.count > 0 {
-            connectToBluetoothDevices()
-        } else {
-            connectToNetworkDevices()
-        }
+        executeSequence(from: .bluetoothConnections)
     }
     
     func refreshAppTheme(){
@@ -1512,7 +1792,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                     // Fallback on earlier versions
                 }
             } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE ||
-                  (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .dark)){
+                      (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .dark)){
                 if #available(iOS 13.0, *) {
                     view.overrideUserInterfaceStyle = .dark
                 } else {
@@ -1542,7 +1822,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 extension ExperimentPageViewController: ExperimentAnalysisDelegate {
     func analysisWillUpdate(_: ExperimentAnalysis) {
         for module in viewModules.flatMap({ $0 }) {
-            if let analysisLimitedViewModule = module as? AnalysisLimitedViewModule {
+            if let analysisLimitedViewModule = module.view as? AnalysisLimitedViewModule {
                 analysisLimitedViewModule.analysisRunning = true
             }
         }
@@ -1550,7 +1830,7 @@ extension ExperimentPageViewController: ExperimentAnalysisDelegate {
     
     func analysisDidUpdate(_: ExperimentAnalysis) {
         for module in viewModules.flatMap({ $0 }) {
-            if let analysisLimitedViewModule = module as? AnalysisLimitedViewModule {
+            if let analysisLimitedViewModule = module.view as? AnalysisLimitedViewModule {
                 analysisLimitedViewModule.analysisRunning = false
             }
         }
@@ -1558,10 +1838,135 @@ extension ExperimentPageViewController: ExperimentAnalysisDelegate {
     
     func analysisSkipped(_ analysis: ExperimentAnalysis) {
         for module in viewModules.flatMap({ $0 }) {
-            if let analysisLimitedViewModule = module as? AnalysisLimitedViewModule {
+            if let analysisLimitedViewModule = module.view as? AnalysisLimitedViewModule {
                 analysisLimitedViewModule.analysisRunning = false
             }
         }
     }
 }
 
+//Accessory view for the clear-data dialog of an experiment with clear groups: one switch per
+//group, all off by default, so protected buffers are only cleared on explicit selection.
+final class ClearGroupSelectionView: UIView {
+    private let groups: [String]
+    private var switches: [UISwitch] = []
+
+    private let rowHeight: CGFloat = 40.0
+    private let sideMargin: CGFloat = 24.0
+
+    init(groups: [String]) {
+        self.groups = groups
+        super.init(frame: .zero)
+
+        for group in groups {
+            let groupSwitch = UISwitch()
+            groupSwitch.isOn = false
+            groupSwitch.onTintColor = UIColor(named: "highlightColor")
+            switches.append(groupSwitch)
+            addSubview(groupSwitch)
+
+            let label = UILabel()
+            label.text = group
+            label.font = .systemFont(ofSize: 16)
+            label.textColor = UIColor(named: "textColor")
+            label.adjustsFontSizeToFitWidth = true
+            label.minimumScaleFactor = 0.5
+            label.tag = 1
+            addSubview(label)
+        }
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override var intrinsicContentSize: CGSize {
+        return CGSize(width: UIView.noIntrinsicMetric, height: CGFloat(groups.count) * rowHeight + 16.0)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        let labels = subviews.filter { $0.tag == 1 }
+        for (i, groupSwitch) in switches.enumerated() {
+            let y = 8.0 + CGFloat(i) * rowHeight
+            let switchSize = groupSwitch.sizeThatFits(bounds.size)
+            groupSwitch.frame = CGRect(x: bounds.width - sideMargin - switchSize.width, y: y + (rowHeight - switchSize.height)/2.0, width: switchSize.width, height: switchSize.height)
+            if i < labels.count {
+                labels[i].frame = CGRect(x: sideMargin, y: y, width: bounds.width - 2*sideMargin - switchSize.width - 8.0, height: rowHeight)
+            }
+        }
+    }
+
+    func selectedGroups() -> [String] {
+        return zip(groups, switches).filter { $0.1.isOn }.map { $0.0 }
+    }
+}
+
+///Navigation bar title label that adapts to the space the bar items leave: full headline size when
+///the title fits, shrunk down to 70% to stay on one line, and wrapped onto a second line for
+///titles too long even at that size.
+class FittingTitleLabel: UILabel {
+    ///Room for two lines at the minimum size — the label's height at all times: a height that
+    ///changes with the fitting result does not work, since the bar re-queries the intrinsic size
+    ///only unreliably after rotation (verified by logging), leaving a wrapped title in a
+    ///single-line-high frame, shown truncated. With the constant height a single-line title is
+    ///simply centered vertically — visually identical — and the wrapped case has its second line
+    ///available from the start.
+    static var twoLineHeight: CGFloat {
+        let base = UIFont.preferredFont(forTextStyle: .headline)
+        return ceil(2 * base.withSize(base.pointSize * 0.7).lineHeight) + 2
+    }
+
+    //Width: ask for all the width the navigation bar has left between its items
+    override var intrinsicContentSize: CGSize {
+        return CGSize(width: UIView.layoutFittingExpandedSize.width, height: FittingTitleLabel.twoLineHeight)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        fitText()
+    }
+
+    //Inputs of the last fitting run: layoutSubviews fires on every bar layout pass (per frame
+    //during interactive transitions), so skip the measuring when nothing changed
+    private var lastFittedText: String? = nil
+    private var lastFittedWidth: CGFloat = 0
+    private var lastFittedBaseSize: CGFloat = 0
+
+    private func fitText() {
+        guard let text = text, !text.isEmpty, bounds.width > 0 else { return }
+        let base = UIFont.preferredFont(forTextStyle: .headline)
+        if text == lastFittedText && bounds.width == lastFittedWidth && base.pointSize == lastFittedBaseSize {
+            return
+        }
+        lastFittedText = text
+        lastFittedWidth = bounds.width
+        lastFittedBaseSize = base.pointSize
+        let minSize = base.pointSize * 0.7
+        let ns = text as NSString
+
+        //Find the largest size (in 0.5pt steps) at which the whole title measures within a single
+        //line. Measured per candidate size rather than scaled linearly: glyph advances do not scale
+        //exactly linearly with the point size, and a size estimated slightly too large leaves the
+        //title truncated with an ellipsis instead of shown in full.
+        var singleLineSize: CGFloat? = nil
+        var size = base.pointSize
+        while size >= minSize {
+            if ns.size(withAttributes: [NSAttributedString.Key.font: base.withSize(size)]).width <= bounds.width {
+                singleLineSize = size
+                break
+            }
+            size -= 0.5
+        }
+
+        //If no size fits a single line, stay at the minimum size — the text then wraps into the
+        //second line, which the constant intrinsic height keeps available at all times
+        let targetFont = base.withSize(singleLineSize ?? minSize)
+        //Only touch the label when something actually changes to avoid a layout feedback loop
+        if font.pointSize != targetFont.pointSize {
+            font = targetFont
+        }
+    }
+}

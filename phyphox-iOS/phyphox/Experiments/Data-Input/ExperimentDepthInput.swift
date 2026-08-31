@@ -15,13 +15,13 @@ enum DepthInputError : Error {
 
 final class ExperimentDepthInput {
     
-    enum DepthExtractionMode: String, LosslessStringConvertible, CaseIterable {
+    enum DepthExtractionMode: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case average
         case closest
         case weighted
     }
     
-    enum CameraOrientation: String, LosslessStringConvertible, CaseIterable {
+    enum CameraOrientation: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case front
         case back
     }

@@ -9,35 +9,30 @@
 import Foundation
 
 final class AverageAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let bufferInSlot = AnalysisIOSlot(name: "buffer", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let averageOutSlot = AnalysisIOSlot(name: "average", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let stddevOutSlot = AnalysisIOSlot(name: "stddev", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.bufferInSlot], outputs: [Self.averageOutSlot, Self.stddevOutSlot])
+    }
     private var avgOutput: ExperimentAnalysisDataOutput?
     private var stdOutput: ExperimentAnalysisDataOutput?
     
     private let input: MutableDoubleArray
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
-        var avg: ExperimentAnalysisDataOutput? = nil
-        var std: ExperimentAnalysisDataOutput? = nil
-        for output in outputs {
-            if output.asString == "std" || avg != nil {
-                std = output
-            }
-            else {
-                avg = output
-            }
-        }
-        avgOutput = avg
-        stdOutput = std
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        //Outputs map by the documented slot names "average" and "stddev"; an unnamed output
+        //fills "average". The as attribute decides the slot, never document order - assigning
+        //by position would silently swap the two values when they are written in reverse order.
+        avgOutput = io.output(Self.averageOutSlot)
+        stdOutput = io.output(Self.stddevOutSlot)
 
-        guard let firstInput = inputs.first else {
+        guard let data = io.data(Self.bufferInSlot) else {
             throw SerializationError.genericError(message: "Average needs a buffer as input.")
         }
-
-        switch firstInput {
-        case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-            input = data
-        case .value(value: _, usedAs: _):
-            throw SerializationError.genericError(message: "Average needs a buffer as input.")
-        }
+        input = data
         
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
@@ -55,11 +50,10 @@ final class AverageAnalysis: AutoClearingExperimentAnalysisModule {
                 count += 1
             }
         }
-        if count == 0 {
-            return
-        }
-
-        let avg = sum/Double(count)
+        //An empty or all-non-finite input is an intermediate error state: average delivers
+        //single values, so each connected output receives NaN instead of nothing (the stddev
+        //branch below yields NaN through its count < 2 case).
+        let avg = count == 0 ? Double.nan : sum/Double(count)
         
         if let avgOutput = avgOutput {
             switch avgOutput {

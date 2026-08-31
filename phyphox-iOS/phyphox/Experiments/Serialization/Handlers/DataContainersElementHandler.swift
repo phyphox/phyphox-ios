@@ -10,7 +10,7 @@ import Foundation
 
 // This file contains element handlers for the `data-container` child element (and its child elements) of the `phyphox` root element.
 
-typealias BufferDescriptor = (name: String, size: Int, baseContents: [Double], staticBuffer: Bool)
+typealias BufferDescriptor = (name: String, size: Int, baseContents: [Double], staticBuffer: Bool, clearGroup: String?)
 
 private final class DataContainerElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [BufferDescriptor]()
@@ -21,6 +21,8 @@ private final class DataContainerElementHandler: ResultElementHandler, Childless
         case size
         case staticKey = "static"
         case initKey = "init"
+        case clearGroup
+        case type
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -28,12 +30,35 @@ private final class DataContainerElementHandler: ResultElementHandler, Childless
 
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
+        //Only "buffer" exists; the attribute is reserved for future container types, so an
+        //unknown value must not silently load as an ordinary buffer
+        //(container-type-unvalidated in phyphox-docs, matching Android)
+        if let type = attributes.optionalString(for: .type), type.lowercased() != "buffer" {
+            throw ElementHandlerError.message("Unknown container type \"\(type)\".")
+        }
+
         let size = try attributes.optionalValue(for: .size) ?? 1
 
-        let baseContents = (attributes.optionalString(for: .initKey) as String?).map { $0.components(separatedBy: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) } } ?? []
+        //A malformed init entry rejects the file instead of being silently dropped, which would
+        //also shift every later entry one position forward (number-invalid-value rule in
+        //phyphox-docs). An empty attribute still just starts the buffer empty, but an empty
+        //entry ("1,,2", a trailing comma) is an error.
+        let baseContents: [Double]
+        if let initValues = attributes.optionalString(for: .initKey), !initValues.isEmpty {
+            baseContents = try initValues.components(separatedBy: ",").map {
+                guard let value = parseExperimentNumber($0.trimmingCharacters(in: .whitespaces)) else {
+                    throw ElementHandlerError.unexpectedAttributeValue("init")
+                }
+                return value
+            }
+        } else {
+            baseContents = []
+        }
         let staticBuffer = try attributes.optionalValue(for: .staticKey) ?? false
 
-        results.append((text, size, baseContents, staticBuffer))
+        let clearGroup = attributes.optionalString(for: .clearGroup)
+
+        results.append((text, size, baseContents, staticBuffer, clearGroup))
     }
 }
 

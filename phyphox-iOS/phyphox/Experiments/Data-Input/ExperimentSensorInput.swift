@@ -9,7 +9,7 @@
 import Foundation
 import CoreMotion
 
-enum SensorType: String, LosslessStringConvertible, Equatable, CaseIterable {
+enum SensorType: String, CaseInsensitiveAttributeDecodable, Equatable, CaseIterable {
     case accelerometer
     case gyroscope
     case linearAcceleration = "linear_acceleration"
@@ -70,7 +70,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     
     let sqrt12 = sqrt(0.5)
 
-    enum RateStrategy: String, LosslessStringConvertible {
+    enum RateStrategy: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case auto
         case request
         case generate
@@ -540,24 +540,28 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             buffer.append(value)
         }
 
-        tryAppend(value: x, to: xBuffer)
-        tryAppend(value: y, to: yBuffer)
-        tryAppend(value: z, to: zBuffer)
+        //One sample's components are written as one atomic group so a remote /get read sees all of
+        //them or none, never a partial sample (see BufferLock)
+        synchronizedBufferWrite([xBuffer, yBuffer, zBuffer, accuracyBuffer, tBuffer, absBuffer]) {
+            tryAppend(value: x, to: xBuffer)
+            tryAppend(value: y, to: yBuffer)
+            tryAppend(value: z, to: zBuffer)
 
-        tryAppend(value: accuracy, to: accuracyBuffer)
-        
-        if let tBuffer = tBuffer {
-            tBuffer.append(t)
-        }
-        
-        if let absBuffer = absBuffer {
-            if let abs = abs {
-                absBuffer.append(abs)
-            } else if let x = x {
-                if let y = y, let z = z {
-                    absBuffer.append(sqrt(x*x + y*y + z*z))
-                } else {
-                    absBuffer.append(x)
+            tryAppend(value: accuracy, to: accuracyBuffer)
+
+            if let tBuffer = tBuffer {
+                tBuffer.append(t)
+            }
+
+            if let absBuffer = absBuffer {
+                if let abs = abs {
+                    absBuffer.append(abs)
+                } else if let x = x {
+                    if let y = y, let z = z {
+                        absBuffer.append(sqrt(x*x + y*y + z*z))
+                    } else {
+                        absBuffer.append(x)
+                    }
                 }
             }
         }

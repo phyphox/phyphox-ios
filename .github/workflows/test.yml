@@ -1,0 +1,69 @@
+# T0 test tier: the XCTest suite (phyphoxTests), including the conformance-corpus runner and
+# the view-element goldens, both of which read their fixtures from a phyphox-docs checkout
+# sitting NEXT TO the app repository - hence the two sibling checkouts. Without the sibling
+# those tests would skip; checking it out explicitly means CI always runs them.
+name: tests
+on: [push, pull_request]
+
+# A push supersedes the run of the push before it - an answer about a commit that is no longer
+# the head of the branch is worth no runner minutes
+concurrency:
+  group: t0-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  t0:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: phyphox-ios
+          submodules: recursive
+      - uses: actions/checkout@v5
+        with:
+          repository: phyphox/phyphox-docs
+          path: phyphox-docs
+
+      # The package checkouts are the same for every run that does not change Package.resolved,
+      # and resolving them is network-bound rather than CPU-bound
+      - uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/spm
+          key: spm-${{ runner.os }}-${{ hashFiles('phyphox-ios/phyphox-iOS/phyphox.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      # A named destination would let xcodebuild pick the simulator; the goldens need a known
+      # one, because the app's follow-system theme resolves against the SYSTEM appearance and
+      # only simctl can set that.
+      - name: Boot a simulator
+        run: |
+          set -euo pipefail
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print([x['udid'] for r in sorted(d) for x in d[r] if x.get('isAvailable') and x['name'].startswith('iPhone')][-1])")
+          test -n "$UDID"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+
+      - name: Tests, system appearance light
+        run: |
+          set -euo pipefail
+          xcrun simctl ui "$UDID" appearance light
+          # The graph goldens are T1: they need the GL renderer in a visible window, so they
+          # run in the t1 workflow rather than here.
+          cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj \
+            -scheme phyphox -destination "id=$UDID" -only-testing phyphoxTests \
+            -skip-testing:phyphoxTests/GraphSnapshotTests \
+            -derivedDataPath "$GITHUB_WORKSPACE/dd" \
+            -clonedSourcePackagesDirPath "$GITHUB_WORKSPACE/spm" CODE_SIGNING_ALLOWED=NO
+
+      # Only the goldens care about the system appearance, and only their two follow-system spot
+      # checks: each of the pair can be verified only while the simulator is in that appearance.
+      - name: View goldens, system appearance dark
+        run: |
+          set -euo pipefail
+          xcrun simctl ui "$UDID" appearance dark
+          cd phyphox-ios/phyphox-iOS && xcodebuild test -project phyphox.xcodeproj \
+            -scheme phyphox -destination "id=$UDID" \
+            -only-testing phyphoxTests/ViewSnapshotTests \
+            -derivedDataPath "$GITHUB_WORKSPACE/dd" \
+            -clonedSourcePackagesDirPath "$GITHUB_WORKSPACE/spm" CODE_SIGNING_ALLOWED=NO

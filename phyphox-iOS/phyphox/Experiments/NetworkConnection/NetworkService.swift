@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import CocoaMQTT
 
 protocol NetworkService {
     func connect(address: String)
@@ -207,137 +206,162 @@ class HttpPostService: NetworkService {
     }
 }
 
-class MqttService: CocoaMQTTDelegate {
-    var address: String = ""
-    var mqtt: CocoaMQTT? = nil
-    var receiveTopic: String? = nil
-    var connected = false
-    var subscribed = false
-    var data: [Data] = []
-    
-    func connect(address: String, receiveTopic: String?) {
-        self.address = address
-        self.receiveTopic = receiveTopic
-        
-        let clientID = "phyphox_" + String(Int64(CFAbsoluteTimeGetCurrent()*1e9) & 0xffffff)
-        let addressParts = address.components(separatedBy: ":")
-        let host = addressParts[0]
-        let port: UInt16
-        if addressParts.count > 1 {
-            port = UInt16(addressParts[1]) ?? 1883
-        } else {
-            port = 1883
+/**
+ Base class of the MQTT network services, driving the from-scratch `MqttClient` (MQTT 3.1.1, no
+ external dependency - it replaced CocoaMQTT). The concrete subclasses only choose the payload
+ format (JSON or CSV) and whether TLS and authentication are used, mirroring the class structure
+ on Android (NetworkConnection/Mqtt/MqttService.java). See network-mqtts-unofficial in
+ phyphox-docs.
+
+ The former QoS-2 "persistence" mode is gone: persistence="true" now publishes with QoS 1
+ (at-least-once) while connected, and there is no more offline message buffering. Plain publishes
+ use QoS 0.
+ */
+class MqttService: MqttClientDelegate {
+    //Configuration, set by the concrete subclasses before connect()
+    var receiveTopic: String = ""
+    var clientID: String = ""
+    var username: String? = nil
+    var password: String? = nil
+    var tls = false
+    var certificateFileName: String? = nil //resource name of a custom CA (see the certificate attribute); nil = system trust store
+    var qos = 0
+    weak var experiment: Experiment? = nil //resolves the certificate resource at connect time (set in Experiment.init)
+
+    var address: String? = nil //as given in the experiment file, used as the salt for the per-broker metadata id
+    var client: MqttClient? = nil
+    private var connectionError: String? = nil
+    private var data: [Data] = []
+    private let dataLock = NSLock()
+
+    //Resources this service needs from the experiment container, so the certificate is copied
+    //along when the experiment is saved to the collection, like an image resource
+    var resources: [String] {
+        if let certificateFileName = certificateFileName, !certificateFileName.isEmpty {
+            return [certificateFileName]
         }
-        mqtt = CocoaMQTT(clientID: clientID, host: host, port: port)
-        mqtt?.username = ""
-        mqtt?.password = ""
-        mqtt?.keepAlive = 60
-        mqtt?.delegate = self
-        _ = mqtt?.connect()
+        return []
     }
-    
-    func disconnect() {
-        mqtt?.disconnect()
-        mqtt = nil
-        connected = false
-        subscribed = false
-    }
-    
-    func mqtt(_ mqtt: CocoaMQTT, didConnectAck ack: CocoaMQTTConnAck) {
-        if ack == .accept {
-            connected = true
-            guard let receiveTopic = receiveTopic else {
+
+    func connect(address: String) {
+        self.address = address
+        connectionError = nil
+
+        var customCACertificate: SecCertificate? = nil
+        if tls, let certificateFileName = certificateFileName, !certificateFileName.isEmpty {
+            //A named certificate that cannot be loaded is an error - silently falling back to the
+            //system trust store would connect with a different trust model than the experiment
+            //author intended
+            guard let file = experiment?.resolveResource(certificateFileName), let certificate = MqttService.loadCertificate(from: file) else {
+                connectionError = "Certificate \"\(certificateFileName)\" could not be loaded."
                 return
             }
-            mqtt.subscribe(receiveTopic, qos: CocoaMQTTQoS.qos0)
+            customCACertificate = certificate
+        }
+
+        //Parse host and port out of the address, which may carry a scheme prefix
+        var hostPort = address
+        if let schemeRange = hostPort.range(of: "://") {
+            hostPort = String(hostPort[schemeRange.upperBound...])
+        }
+        let host: String
+        let port: UInt16
+        let defaultPort: UInt16 = tls ? 8883 : 1883
+        if let colon = hostPort.range(of: ":", options: .backwards) {
+            host = String(hostPort[..<colon.lowerBound])
+            port = UInt16(hostPort[colon.upperBound...]) ?? defaultPort
         } else {
-            connected = false
+            host = hostPort
+            port = defaultPort
         }
+
+        let client = MqttClient(host: host, port: port, clientId: clientID, username: username, password: password, cleanSession: true, keepAliveSeconds: 60, tls: tls ? MqttClient.TLSConfig(customCACertificate: customCACertificate) : nil, subscribeTopic: receiveTopic, delegate: self)
+        self.client = client
+        client.connect()
     }
-    
-    func mqtt(_ mqtt: CocoaMQTT, didSubscribeTopics success: NSDictionary, failed: [String]) {
-        if success[receiveTopic ?? ""] != nil {
-            subscribed = true
-        }
+
+    func disconnect() {
+        client?.disconnect()
+        client = nil
     }
-    
-    func mqtt(_ mqtt: CocoaMQTT, didReceiveMessage message: CocoaMQTTMessage, id: UInt16) {
-        data.append(Data(message.payload))
+
+    func mqttMessage(topic: String, payload: Data) {
+        dataLock.lock()
+        defer { dataLock.unlock() }
+        data.append(payload)
     }
-    
-    func mqtt(_ mqtt: CocoaMQTT, didStateChangeTo state: CocoaMQTTConnState) {
-        print("MQTT connection to \(address) changed to \(state).")
-        if state != .connected {
-            connected = false
-            subscribed = false
-        }
+
+    func mqttConnected() {
+        connectionError = nil
     }
-    
-    func mqtt(_ mqtt: CocoaMQTT, didPublishMessage message: CocoaMQTTMessage, id: UInt16) {
-        return
+
+    func mqttConnectionLost(reason: String) {
+        print("MQTT connection lost: \(reason)")
+        connectionError = reason
     }
-    
-    func mqtt(_ mqtt: CocoaMQTT, didPublishAck id: UInt16) {
-        return
-    }
-    
-    func mqtt(_ mqtt: CocoaMQTT, didUnsubscribeTopics topics: [String]) {
-        return
-    }
-    
-    func mqttDidPing(_ mqtt: CocoaMQTT) {
-        return
-    }
-    
-    func mqttDidReceivePong(_ mqtt: CocoaMQTT) {
-        return
-    }
-    
-    func mqttDidDisconnect(_ mqtt: CocoaMQTT, withError err: Error?) {
-        return
-    }
-    
+
     func getResults() -> [Data]? {
+        dataLock.lock()
+        defer { dataLock.unlock() }
         let result = data
         data = []
         return result
     }
-    
+
     func getState() -> NetworkServiceResult {
-        if !connected {
+        if !(client?.connected ?? false) {
+            //The client reconnects on its own with exponential backoff; here we only report.
+            //Keeping the last error gives the user a descriptive message (e.g. the CONNACK
+            //return code) instead of a generic "no connection".
+            if let connectionError = connectionError {
+                return NetworkServiceResult.genericError(message: "MQTT: \(connectionError)")
+            }
             return NetworkServiceResult.noConnection
         }
-        if !subscribed && receiveTopic != nil {
+        if !(client?.subscribed ?? false) && !receiveTopic.isEmpty {
             return NetworkServiceResult.genericError(message: "Not subscribed.")
         }
         return NetworkServiceResult.success
     }
-    
+
     func publish(topic: String, payload: String) {
-        mqtt?.publish(topic, withString: payload, qos: .qos0)
+        client?.publish(topic: topic, payload: Data(payload.utf8), qos: qos)
+    }
+
+    //Loads a CA certificate in PEM or DER form (.pem/.crt/.cer/.der)
+    static func loadCertificate(from url: URL) -> SecCertificate? {
+        guard let data = try? Data(contentsOf: url) else {
+            return nil
+        }
+        if let certificate = SecCertificateCreateWithData(nil, data as CFData) {
+            return certificate //DER
+        }
+        //PEM: extract the first CERTIFICATE block and decode its base64 payload
+        guard let text = String(data: data, encoding: .utf8),
+              let beginRange = text.range(of: "-----BEGIN CERTIFICATE-----"),
+              let endRange = text.range(of: "-----END CERTIFICATE-----"),
+              beginRange.upperBound <= endRange.lowerBound else {
+            return nil
+        }
+        let base64 = text[beginRange.upperBound..<endRange.lowerBound].components(separatedBy: .whitespacesAndNewlines).joined()
+        guard let der = Data(base64Encoded: base64) else {
+            return nil
+        }
+        return SecCertificateCreateWithData(nil, der as CFData)
     }
 }
 
-class MqttCsvService: NetworkService {
-    var address: String? = nil
-    let mqttService = MqttService()
-    let receiveTopic: String?
-    
-    init(receiveTopic: String?) {
+class MqttCsvService: MqttService, NetworkService {
+    init(receiveTopic: String, username: String?, password: String?) {
+        super.init()
         self.receiveTopic = receiveTopic
+        self.username = username //optional: nil connects without authentication
+        self.password = password
+        self.clientID = "phyphox_" + String(format: "%06x", Int(CFAbsoluteTimeGetCurrent()*1e9) & 0xffffff)
     }
-    
-    func connect(address: String) {
-        self.address = address
-        mqttService.connect(address: address, receiveTopic: receiveTopic)
-    }
-    
-    func disconnect() {
-        mqttService.disconnect()
-    }
-    
+
     func execute(send: [String : NetworkSendableData], requestCallbacks: [NetworkServiceRequestCallback]) {
-        let state = mqttService.getState()
+        let state = getState()
         if state != .success {
             requestCallbacks.forEach{$0.requestFinished(result: state)}
             return
@@ -366,39 +390,29 @@ class MqttCsvService: NetworkService {
                 payload = "\(Date().timeIntervalSince1970)"
             case .none: continue
             }
-            mqttService.publish(topic: item, payload: payload)
+            publish(topic: item, payload: payload)
         }
-        
+
         requestCallbacks.forEach{$0.requestFinished(result: .success)}
-    }
-    
-    func getResults() -> [Data]? {
-        return mqttService.getResults()
     }
 }
 
-class MqttJsonService: NetworkService {
-    var address: String? = nil
-    let mqttService = MqttService()
-    let receiveTopic: String?
+class MqttJsonService: MqttService, NetworkService {
     let sendTopic: String
-    
-    init(receiveTopic: String?, sendTopic: String) {
-        self.receiveTopic = receiveTopic
+
+    init(receiveTopic: String, sendTopic: String, username: String?, password: String?, persistence: Bool) {
         self.sendTopic = sendTopic
+        super.init()
+        self.receiveTopic = receiveTopic
+        self.username = username //optional: nil connects without authentication
+        self.password = password
+        self.clientID = "phyphox_" + String(format: "%06x", Int(CFAbsoluteTimeGetCurrent()*1e9) & 0xffffff)
+        //persistence now selects at-least-once delivery (QoS 1) instead of the former QoS 2
+        self.qos = persistence ? 1 : 0
     }
-    
-    func connect(address: String) {
-        self.address = address
-        mqttService.connect(address: address, receiveTopic: receiveTopic)
-    }
-    
-    func disconnect() {
-        mqttService.disconnect()
-    }
-    
+
     func execute(send: [String : NetworkSendableData], requestCallbacks: [NetworkServiceRequestCallback]) {
-        let state = mqttService.getState()
+        let state = getState()
         if state != .success {
             requestCallbacks.forEach{$0.requestFinished(result: state)}
             return
@@ -450,14 +464,28 @@ class MqttJsonService: NetworkService {
             requestCallbacks.forEach{$0.requestFinished(result: .genericError(message: "Could not encode JSON."))}
             return
         }
-            
-        mqttService.publish(topic: sendTopic, payload: payload)
-        
+
+        publish(topic: sendTopic, payload: payload)
+
         requestCallbacks.forEach{$0.requestFinished(result: .success)}
     }
-    
-    func getResults() -> [Data]? {
-        return mqttService.getResults()
+}
+
+class MqttTlsCsvService: MqttCsvService {
+    init(receiveTopic: String, username: String, password: String, certificateFileName: String?) {
+        super.init(receiveTopic: receiveTopic, username: username, password: password)
+        self.tls = true
+        self.clientID = username //the mqtts services use the username as the client id, like Android
+        self.certificateFileName = certificateFileName //optional: nil uses the system trust store
+    }
+}
+
+class MqttTlsJsonService: MqttJsonService {
+    init(receiveTopic: String, sendTopic: String, username: String, password: String, certificateFileName: String?, persistence: Bool) {
+        super.init(receiveTopic: receiveTopic, sendTopic: sendTopic, username: username, password: password, persistence: persistence)
+        self.tls = true
+        self.clientID = username //the mqtts services use the username as the client id, like Android
+        self.certificateFileName = certificateFileName //optional: nil uses the system trust store
     }
 }
 

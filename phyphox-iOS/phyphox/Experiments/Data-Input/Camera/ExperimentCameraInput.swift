@@ -14,7 +14,7 @@ enum CameraInputError : Error {
 
 final class ExperimentCameraInput {
 
-    enum AutoExposureStrategy: String, LosslessStringConvertible {
+    enum AutoExposureStrategy: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case mean, avoidOverexposure, avoidUnderexposure, prioritizeFramerate
     }
     
@@ -28,14 +28,15 @@ final class ExperimentCameraInput {
     var experimentCameraBuffers: ExperimentCameraBuffers?
     let autoExposure: Bool
     let aeStrategy: AutoExposureStrategy
+    let aeFPSTarget: Double
 
     let locked: [String:Float?]
-    let feature: String
+    let feature: CameraFeature
     
     lazy var session: Any? = nil
     
    
-    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, autoExposure: Bool, aeStrategy: AutoExposureStrategy, locked: [String:Float?], feature: String) {
+    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, pixelPosition: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, autoExposure: Bool, aeStrategy: AutoExposureStrategy, aeFPSTarget: Double, locked: [String:Float?], feature: CameraFeature) {
                 
         experimentCameraBuffers = ExperimentCameraBuffers(
             luminanceBuffer: luminanceBuffer,
@@ -43,11 +44,11 @@ final class ExperimentCameraInput {
             hueBuffer: hueBuffer,
             saturationBuffer: saturationBuffer,
             valueBuffer: valueBuffer,
-            thresholdBuffer: thresholdBuffer,
             shutterSpeedBuffer: shutterSpeedBuffer,
             isoBuffer: isoBuffer,
             apertureBuffer: apertureBuffer,
-            tBuffer: tBuffer
+            tBuffer: tBuffer,
+            pixelPosition: pixelPosition
         )
         
         self.initx1 = x1
@@ -58,7 +59,8 @@ final class ExperimentCameraInput {
         self.timeReference = timeReference
         self.autoExposure = autoExposure
         self.aeStrategy = aeStrategy
-       
+        self.aeFPSTarget = aeFPSTarget
+
         self.locked = locked
         self.feature = feature
         
@@ -95,7 +97,8 @@ final class ExperimentCameraInput {
         
         session.autoExposure = autoExposure
         session.aeStrategy = aeStrategy
-      
+        session.aeFPSTarget = aeFPSTarget
+
         session.locked = locked
         session.feature = feature
     }
@@ -134,19 +137,19 @@ final class ExperimentCameraInput {
 }
 
 class ExperimentCameraBuffers {
-    var luminanceBuffer, lumaBuffer, hueBuffer, saturationBuffer, valueBuffer, thresholdBuffer, shutterSpeedBuffer, isoBuffer, apertureBuffer, tBuffer: DataBuffer?
-    
-    init(luminanceBuffer: DataBuffer? = nil, lumaBuffer: DataBuffer? = nil, hueBuffer: DataBuffer? = nil, saturationBuffer: DataBuffer? = nil, valueBuffer: DataBuffer? = nil, thresholdBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer? = nil, isoBuffer: DataBuffer? = nil, apertureBuffer: DataBuffer? = nil, tBuffer: DataBuffer? = nil) {
+    var luminanceBuffer, lumaBuffer, hueBuffer, saturationBuffer, valueBuffer, shutterSpeedBuffer, isoBuffer, apertureBuffer, pixelPosition, tBuffer: DataBuffer?
+
+    init(luminanceBuffer: DataBuffer? = nil, lumaBuffer: DataBuffer? = nil, hueBuffer: DataBuffer? = nil, saturationBuffer: DataBuffer? = nil, valueBuffer: DataBuffer? = nil, shutterSpeedBuffer: DataBuffer? = nil, isoBuffer: DataBuffer? = nil, apertureBuffer: DataBuffer? = nil, tBuffer: DataBuffer? = nil, pixelPosition: DataBuffer? = nil) {
         self.luminanceBuffer = luminanceBuffer
         self.lumaBuffer = lumaBuffer
         self.hueBuffer = hueBuffer
         self.saturationBuffer = saturationBuffer
         self.valueBuffer = valueBuffer
-        self.thresholdBuffer = thresholdBuffer
         self.shutterSpeedBuffer = shutterSpeedBuffer
         self.isoBuffer = isoBuffer
         self.apertureBuffer = apertureBuffer
         self.tBuffer = tBuffer
+        self.pixelPosition = pixelPosition
     }
 }
 
@@ -165,6 +168,7 @@ extension ExperimentCameraInput: Equatable {
                 lhs.experimentCameraBuffers?.shutterSpeedBuffer == rhs.experimentCameraBuffers?.shutterSpeedBuffer &&
                 lhs.experimentCameraBuffers?.isoBuffer == rhs.experimentCameraBuffers?.isoBuffer &&
                 lhs.experimentCameraBuffers?.apertureBuffer == rhs.experimentCameraBuffers?.apertureBuffer &&
-                lhs.experimentCameraBuffers?.tBuffer == rhs.experimentCameraBuffers?.tBuffer
+                lhs.experimentCameraBuffers?.tBuffer == rhs.experimentCameraBuffers?.tBuffer &&
+                lhs.experimentCameraBuffers?.pixelPosition == rhs.experimentCameraBuffers?.pixelPosition
     }
 }

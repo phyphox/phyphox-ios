@@ -10,6 +10,14 @@ import Foundation
 import Accelerate
 
 final class PowerAnalysis: ExperimentComplexUpdateValueAnalysis {
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [
+            AnalysisIOSlot(name: "base", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1),
+            AnalysisIOSlot(name: "exponent", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+        ], outputs: [
+            AnalysisIOSlot(name: "power", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+        ])
+    }
     
     override func update() {
         updateAllWithMethod({ (inputs) -> ValueSource in
@@ -22,7 +30,7 @@ final class PowerAnalysis: ExperimentComplexUpdateValueAnalysis {
             }
             
             return main
-            },  priorityInputKey: "base")
+            })
     }
     
     func powValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {

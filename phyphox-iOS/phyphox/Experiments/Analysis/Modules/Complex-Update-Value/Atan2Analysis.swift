@@ -10,7 +10,15 @@ import Foundation
 import Accelerate
 
 final class Atan2Analysis: ExperimentComplexUpdateValueAnalysis {
-    private let deg: Bool
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [
+            AnalysisIOSlot(name: "y", asRequired: false, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1),
+            AnalysisIOSlot(name: "x", asRequired: false, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+        ], outputs: [
+            AnalysisIOSlot(name: "atan2", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+        ])
+    }
+    var deg: Bool //internal for the unit tests, which cannot construct attributes
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         let attributes = additionalAttributes.attributes(keyedBy: String.self)
@@ -30,7 +38,7 @@ final class Atan2Analysis: ExperimentComplexUpdateValueAnalysis {
             }
             
             return main
-            },  priorityInputKey: "y")
+            })
     }
     
     func Atan2ValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {
@@ -45,26 +53,14 @@ final class Atan2Analysis: ExperimentComplexUpdateValueAnalysis {
             return ValueSource(scalar: result)
         }
         else if let scalarA = a.scalar, let vector = b.vector { // scalar*vector
-            let scalarB = vector[0]
-            var result = atan2(scalarA, scalarB)
+            let f = self.deg ? 180.0/Double.pi : 1.0
             
-            if self.deg {
-                let f = 180.0/Double.pi
-                result = result * f
-            }
-            
-            return ValueSource(scalar: result)
+            return ValueSource(vector: vector.map { atan2(scalarA, $0) * f })
         }
         else if let vector = a.vector, let scalarB = b.scalar { // vector*scalar
-            let scalarA = vector[0]
-            var result = atan2(scalarA, scalarB)
+            let f = self.deg ? 180.0/Double.pi : 1.0
             
-            if self.deg {
-                let f = 180.0/Double.pi
-                result = result * f
-            }
-            
-            return ValueSource(scalar: result)
+            return ValueSource(vector: vector.map { atan2($0, scalarB) * f })
         }
         else if let vectorA = a.vector, let vectorB = b.vector { // vector*vector
             var results = vectorA

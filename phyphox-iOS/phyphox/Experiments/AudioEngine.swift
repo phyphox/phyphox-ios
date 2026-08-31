@@ -87,15 +87,19 @@ final class AudioEngine {
         }
         
         let avSession = AVAudioSession.sharedInstance()
+        //mixWithOthers so phyphox coexists with audio from other apps rather than interrupting it -
+        //in particular so a playback experiment (a tone generator, say) works while music is
+        //playing. This matches Android, which uses an AudioTrack without requesting audio focus and
+        //therefore never takes exclusive audio in any mode.
         if playbackOut != nil && recordIn != nil {
-            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: AVAudioSession.CategoryOptions.defaultToSpeaker)
+            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: [.defaultToSpeaker, .mixWithOthers])
         } else if playbackOut != nil {
-            try avSession.setCategory(AVAudioSession.Category.playback)
+            try avSession.setCategory(AVAudioSession.Category.playback, options: [.mixWithOthers])
         } else if recordIn != nil {
             if !avSession.isInputAvailable {
                 throw AudioEngineError.NoInput
             }
-            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: AVAudioSession.CategoryOptions.defaultToSpeaker) //Just setting AVAudioSessionCategoryRecord interferes with VoiceOver as it silences every other audio output (as documented)
+            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: [.defaultToSpeaker, .mixWithOthers]) //Just setting AVAudioSessionCategoryRecord interferes with VoiceOver as it silences every other audio output (as documented)
         }
         try avSession.setMode(AVAudioSession.Mode.measurement)
         if (avSession.isInputGainSettable) {
@@ -107,8 +111,9 @@ final class AudioEngine {
         
         try avSession.setActive(true)
         
-        var audioDescription = monoFloatFormatWithSampleRate(Double(sampleRate))
-        format = AVAudioFormat(streamDescription: &audioDescription)
+        //Stereo output since the introduction of the pan parameter with file format 1.20,
+        //matching the Android implementation
+        format = AVAudioFormat(standardFormatWithSampleRate: Double(sampleRate), channels: 2)
         
         self.engine = AVAudioEngine()
         
@@ -143,6 +148,32 @@ final class AudioEngine {
         try self.engine!.start()
     }
     
+    //Audio parameters are handled like on Android, which processes them as float and replaces
+    //non-finite values (including doubles beyond float range) with zero, so an invalid buffer
+    //value cannot permanently disable the tone generator.
+    private func sanitizedParameter(_ value: Double?) -> Double {
+        guard let value = value else {
+            return 0.0
+        }
+        let f = Float(value)
+        return f.isFinite ? Double(f) : 0.0
+    }
+
+    //Double to Int like a Java (int) cast: NaN becomes 0, out-of-range values saturate instead
+    //of trapping.
+    private func javaInt(_ value: Double) -> Int {
+        if value.isNaN {
+            return 0
+        }
+        if value >= Double(Int32.max) {
+            return Int(Int32.max)
+        }
+        if value <= Double(Int32.min) {
+            return Int(Int32.min)
+        }
+        return Int(value)
+    }
+
     func play() {
         guard let playbackOut = playbackOut else {
             return
@@ -161,10 +192,10 @@ final class AudioEngine {
                 endIndex = max(endIndex, inBuffer.count);
             }
             for tone in playbackOut.tones {
-                endIndex = max(endIndex, Int((tone.duration.getValue() ?? 0.0) * format.sampleRate))
+                endIndex = max(endIndex, javaInt(sanitizedParameter(tone.duration.getValue()) * format.sampleRate))
             }
             if let noise = playbackOut.noise {
-                endIndex = max(endIndex, Int((noise.duration.getValue() ?? 0.0) * format.sampleRate))
+                endIndex = max(endIndex, javaInt(sanitizedParameter(noise.duration.getValue()) * format.sampleRate))
             }
             
             appendBufferToPlayback()
@@ -184,9 +215,21 @@ final class AudioEngine {
             return
         }
         
-        var data = [Float](repeating: 0, count: Int(bufferFrameCount))
-        
+        var dataLeft = [Float](repeating: 0, count: Int(bufferFrameCount))
+        var dataRight = [Float](repeating: 0, count: Int(bufferFrameCount))
+
         var totalAmplitude: Float = 0.0
+
+        //Stereo factors for a pan parameter, matching the Android implementation: a centred
+        //signal plays at full amplitude on both channels and panning attenuates the opposite
+        //channel rather than boosting the near one.
+        func panFactors(_ parameter: AudioParameter) -> (left: Float, right: Float) {
+            var p = Float(parameter.getValue() ?? 0.0)
+            if !p.isFinite {
+                p = 0.0
+            }
+            return (left: p > 0 ? 1.0 - p : 1.0, right: p < 0 ? 1.0 + p : 1.0)
+        }
 
         //Beeper
         var beeping = false
@@ -208,14 +251,16 @@ final class AudioEngine {
             let phaseStep = beeper.f / (Double)(format.sampleRate)
             for i in 0..<end {
                 let lookupIndex = Int(beep!.phase*Double(sineLookupSize)) % sineLookupSize
-                data[i] += amplitude*sineLookup[lookupIndex]
+                let v = amplitude*sineLookup[lookupIndex]
+                dataLeft[i] += v
+                dataRight[i] += v
                 beep!.phase += phaseStep
             }
             if frameIndex > beep!.startFrame + beeper.duration {
                 beep = nil
             }
         }
-        
+
         if !beepOnly {
             addDirectBuffer: if let inBuffer = playbackOut.directSource {
                 let inArray = inBuffer.toArray()
@@ -226,13 +271,21 @@ final class AudioEngine {
                 let start = playbackOut.loop ? frameIndex % sampleCount : frameIndex
                 let end = min(inArray.count, start+Int(bufferFrameCount))
                 if end > start {
-                    data.replaceSubrange(0..<end-start, with: inArray[start..<end].map { Float($0) })
+                    for i in 0..<end-start {
+                        let v = Float(inArray[start+i])
+                        dataLeft[i] += v
+                        dataRight[i] += v
+                    }
                 }
                 if playbackOut.loop {
                     var offset = end-start
                     while offset < Int(bufferFrameCount) {
                         let subEnd = min(inArray.count, Int(bufferFrameCount)-offset)
-                        data.replaceSubrange(offset..<offset+subEnd, with: inArray[0..<subEnd].map { Float($0) })
+                        for i in 0..<subEnd {
+                            let v = Float(inArray[i])
+                            dataLeft[offset+i] += v
+                            dataRight[offset+i] += v
+                        }
                         offset += subEnd
                     }
                 }
@@ -240,14 +293,17 @@ final class AudioEngine {
             }
 
             for (i, tone) in playbackOut.tones.enumerated() {
-                guard let f = tone.frequency.getValue(), f > 0 else {
+                let f = sanitizedParameter(tone.frequency.getValue())
+                guard f > 0 else {
                     continue
                 }
-                guard let a = tone.amplitude.getValue(), a > 0 else {
+                let a = sanitizedParameter(tone.amplitude.getValue())
+                guard a > 0 else {
                     continue
                 }
                 totalAmplitude += Float(a)
-                guard let d = tone.duration.getValue(), d > 0 else {
+                let d = sanitizedParameter(tone.duration.getValue())
+                guard d > 0 else {
                     continue
                 }
                 guard let sineLookup = sineLookup else {
@@ -257,31 +313,38 @@ final class AudioEngine {
                 if playbackOut.loop {
                     end = Int(bufferFrameCount)
                 } else {
-                    end = min(Int(bufferFrameCount), Int(d * format.sampleRate)-frameIndex)
+                    end = min(Int(bufferFrameCount), javaInt(d * format.sampleRate)-frameIndex)
                 }
                 if end < 1 {
                     continue
                 }
+                let (panLeft, panRight) = panFactors(tone.pan)
                 //Phase is not tracked at a periodicity of 0..2pi but 0..1 as it is converted to the range of the lookuptable anyways
                 let phaseStep = f / (Double)(format.sampleRate)
                 var phase = phases[i]
                 switch tone.waveform {
                 case .sine:
                     for i in 0..<end {
-                        let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
-                        data[i] += Float(a)*sineLookup[lookupIndex]
+                        let lookupIndex = javaInt(phase*Double(sineLookupSize)) % sineLookupSize
+                        let v = Float(a)*sineLookup[lookupIndex]
+                        dataLeft[i] += panLeft * v
+                        dataRight[i] += panRight * v
                         phase += phaseStep
                     }
                 case .square:
                     for i in 0..<end {
-                        let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
-                        data[i] += (2*lookupIndex > sineLookupSize ? Float(a) : -Float(a))
+                        let lookupIndex = javaInt(phase*Double(sineLookupSize)) % sineLookupSize
+                        let v = (2*lookupIndex > sineLookupSize ? Float(a) : -Float(a))
+                        dataLeft[i] += panLeft * v
+                        dataRight[i] += panRight * v
                         phase += phaseStep
                     }
                 case .sawtooth:
                     for i in 0..<end {
-                        let lookupIndex = Int(phase*Double(sineLookupSize)) % sineLookupSize
-                        data[i] += Float(a) * (2 * Float(lookupIndex) / Float(sineLookupSize) - 1.0)
+                        let lookupIndex = javaInt(phase*Double(sineLookupSize)) % sineLookupSize
+                        let v = Float(a) * (2 * Float(lookupIndex) / Float(sineLookupSize) - 1.0)
+                        dataLeft[i] += panLeft * v
+                        dataRight[i] += panRight * v
                         phase += phaseStep
                     }
                 }
@@ -290,24 +353,30 @@ final class AudioEngine {
             }
 
             addNoise: if let noise = playbackOut.noise {
-                guard let a = noise.amplitude.getValue(), a > 0 else {
+                let a = sanitizedParameter(noise.amplitude.getValue())
+                guard a > 0 else {
                     break addNoise
                 }
                 totalAmplitude += Float(a)
-                guard let d = noise.duration.getValue(), d > 0 else {
+                let d = sanitizedParameter(noise.duration.getValue())
+                guard d > 0 else {
                     break addNoise
                 }
                 let end: Int
                 if playbackOut.loop {
                     end = Int(bufferFrameCount)
                 } else {
-                    end = min(Int(bufferFrameCount), Int(d * format.sampleRate)-frameIndex)
+                    end = min(Int(bufferFrameCount), javaInt(d * format.sampleRate)-frameIndex)
                 }
                 if end < 1 {
                     break addNoise
                 }
+                let (panLeft, panRight) = panFactors(noise.pan)
+                //Like on Android, both channels receive the same random value
                 for i in 0..<end {
-                    data[i] += Float.random(in: -Float(a)...Float(a))
+                    let v = Float.random(in: -Float(a)...Float(a))
+                    dataLeft[i] += panLeft * v
+                    dataRight[i] += panRight * v
                 }
             }
         }
@@ -316,20 +385,22 @@ final class AudioEngine {
             stop()
             return
         }
-        
+
         if playbackOut.normalize {
             for i in 0..<Int(bufferFrameCount) {
-                data[i] = data[i] / totalAmplitude
+                dataLeft[i] = dataLeft[i] / totalAmplitude
+                dataRight[i] = dataRight[i] / totalAmplitude
             }
         }
-        
+
         frameIndex += Int(bufferFrameCount)
-            
+
         guard let buffer = AVAudioPCMBuffer(pcmFormat: self.format!, frameCapacity: bufferFrameCount) else {
             stop()
             return
         }
-        buffer.floatChannelData?[0].update(from: &data, count: Int(bufferFrameCount))
+        buffer.floatChannelData?[0].update(from: &dataLeft, count: Int(bufferFrameCount))
+        buffer.floatChannelData?[1].update(from: &dataRight, count: Int(bufferFrameCount))
         buffer.frameLength = UInt32(bufferFrameCount)
         
         if !playing {

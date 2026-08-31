@@ -18,7 +18,7 @@ final class IconElementHandler: ResultElementHandler, ChildlessElementHandler {
         case format
     }
 
-    private enum Format: String, LosslessStringConvertible {
+    private enum Format: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case base64
         case string
     }

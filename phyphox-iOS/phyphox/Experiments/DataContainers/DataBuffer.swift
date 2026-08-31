@@ -28,6 +28,48 @@ enum DataBufferError: Error {
     case baseContentsTooLarge
 }
 
+/**
+ A single reader/writer lock shared by all data buffers of one experiment, giving remote reads a
+ consistent snapshot across buffers.
+
+ Each `DataBuffer` is individually thread-safe, but a group of buffers written together for one
+ event (a sensor sample's x/y/z/t, a camera frame's h/s/v/t, an analysis cycle's outputs) is not
+ atomic across buffers on its own: a `/get` request reading the group one buffer at a time can
+ catch some buffers already advanced by a concurrent write and others not, so their lengths differ
+ by a sample or two (GitHub issue 22). Android avoids this with a single `experiment.dataLock` held
+ across each write batch and across the remote read; this is the equivalent.
+
+ A writer wraps its multi-buffer group in `write`; the remote `/get` handler snapshots all requested
+ buffers in one `read`. Because the lock is always taken *around* buffer access and never from
+ inside a `DataBuffer` (whose own lock stays the inner leaf), and is never held across a queue or
+ main-thread hop, it cannot deadlock: the acquisition order is always this lock, then a buffer lock,
+ never the reverse, and write groups never nest.
+ */
+final class BufferLock {
+    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.dataaccess", attributes: .concurrent)
+
+    func read<T>(_ body: () throws -> T) rethrows -> T {
+        return try queue.sync(execute: body)
+    }
+
+    func write(_ body: () -> Void) {
+        queue.sync(flags: .barrier, execute: body)
+    }
+}
+
+/**
+ Runs a multi-buffer write as one atomic group with respect to remote reads. The lock is taken from
+ whichever of the buffers is non-nil (they all share the experiment's lock); before the experiment
+ wires up the lock, or in unit tests, it is nil and the writes run directly, exactly as before.
+ */
+func synchronizedBufferWrite(_ buffers: [DataBuffer?], _ body: () -> Void) {
+    if let lock = buffers.lazy.compactMap({ $0?.dataLock }).first {
+        lock.write(body)
+    } else {
+        body()
+    }
+}
+
 extension DataBufferError: LocalizedError {
     var localizedDescription: String {
         switch self {
@@ -41,6 +83,10 @@ extension DataBufferError: LocalizedError {
  Data buffer used to store data from sensors or processed data from analysis modules. Thread safe.
  */
 final class DataBuffer {
+
+    //The experiment-wide lock shared by all of an experiment's buffers, wired up in Experiment.init.
+    //nil for a standalone buffer (e.g. in unit tests), where no cross-buffer coordination is needed.
+    weak var dataLock: BufferLock?
 
     let name: String
     let size: Int
@@ -56,8 +102,6 @@ final class DataBuffer {
             return size
         }
     }
-
-    var attachedToTextField = false
 
     private let baseContents: [Double]
     
@@ -118,7 +162,15 @@ final class DataBuffer {
     }
     
     let staticBuffer: Bool
-    private var written: Bool = false
+
+    //If set, the buffer is exempt from a clear by the user unless the group is explicitly
+    //selected. The reserved name "_" protects the buffer without offering it for selection.
+    let clearGroup: String?
+
+    //Mirrors Android's staticAndSet: a static buffer is locked once the side writing it declares
+    //its write complete (markSet), even if it wrote nothing - not on the first write itself, so a
+    //module can fill a static buffer value by value. The user's clear-data action unlocks it again.
+    private var staticAndSet: Bool = false
 
     /**
      Total number of values stored in memory. Only the values are accessible via Collection or Sequence methods.
@@ -143,7 +195,7 @@ final class DataBuffer {
 
     private var contents: [Double]
 
-    init(name: String, size: Int, baseContents: [Double], static staticBuffer: Bool) throws {
+    init(name: String, size: Int, baseContents: [Double], static staticBuffer: Bool, clearGroup: String? = nil) throws {
         self.size = size
         self.name = name
         self.baseContents = baseContents
@@ -151,12 +203,19 @@ final class DataBuffer {
         contents = []
         contents.reserveCapacity(size)
         self.staticBuffer = staticBuffer
+        self.clearGroup = clearGroup
 
         guard baseContents.count <= effectiveMemorySize else {
             throw DataBufferError.baseContentsTooLarge
         }
 
         appendFromArray(baseContents)
+
+        //A static buffer that carries init values is filled and locked right away, like any other
+        //completed write (Android: DataBuffer.setInit)
+        if !baseContents.isEmpty {
+            markSet()
+        }
     }
 
     private func syncWrite<T>(_ body: () throws -> T) rethrows -> T {
@@ -177,12 +236,32 @@ final class DataBuffer {
         }
     }
 
-    private func willWrite() {
-        written = true
-    }
-
     private func didWrite() {
         bufferMutated()
+    }
+
+    /**
+     Declares the write into this buffer complete. A static buffer locks here - even if nothing was
+     written - and ignores every further write until it is reset (Android: DataBuffer.markSet).
+     */
+    func markSet() {
+        guard staticBuffer else { return }
+
+        syncWrite {
+            staticAndSet = true
+        }
+    }
+
+    //A static buffer ignores an ordinary clear, but the user's clear-data action (reset) unlocks it
+    //and restores its init values - static data does not survive a user clear (Android:
+    //DataBuffer.clear). Only to be used from within the locking queue.
+    private func unlockedForClear(reset: Bool) -> Bool {
+        guard staticBuffer else { return true }
+        guard reset else { return false }
+
+        staticAndSet = false
+
+        return true
     }
 
     func removeFirst(_ n: Int) {
@@ -193,9 +272,7 @@ final class DataBuffer {
 
     func clear(reset: Bool) {
         syncWrite {
-            guard !staticBuffer || !written else { return }
-
-            willWrite()
+            guard unlockedForClear(reset: reset) else { return }
 
             if reset {
                 contents = baseContents
@@ -209,9 +286,7 @@ final class DataBuffer {
     
     func readAndClear(reset: Bool) -> [Double] {
         return syncWrite {
-            guard !staticBuffer || !written else { return contents }
-
-            willWrite()
+            guard unlockedForClear(reset: reset) else { return contents }
 
             let copy = contents
             
@@ -229,9 +304,7 @@ final class DataBuffer {
 
     func replaceValues(_ values: [Double]) {
         syncWrite {
-            guard !staticBuffer || !written else { return }
-
-            willWrite()
+            guard !staticAndSet else { return }
 
             autoreleasepool {
                 var cutValues = values
@@ -251,9 +324,7 @@ final class DataBuffer {
 
     func append(_ value: Double) {
         syncWrite {
-            guard !staticBuffer || !written else { return }
-
-            willWrite()
+            guard !staticAndSet else { return }
 
             contents.append(value)
 
@@ -269,9 +340,7 @@ final class DataBuffer {
         guard !values.isEmpty else { return }
 
         syncWrite {
-            guard !staticBuffer || !written else { return }
-
-            willWrite()
+            guard !staticAndSet else { return }
 
             autoreleasepool {
 

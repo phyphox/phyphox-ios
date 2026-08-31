@@ -13,9 +13,12 @@ protocol ExperimentWebServerDelegate: AnyObject {
     var timerRunning: Bool { get }
     var remainingTimerTime: Double { get }
     
-    func startExperiment()
+    //Answers whether the measurement (or, with a timed run, its countdown) actually began.
+    //A start can be refused, most commonly by a Bluetooth device that is not connected yet,
+    //and /control?cmd=start has to report that (control-start-refused).
+    func startExperiment() -> Bool
     func stopExperiment()
-    func clearData()
+    func clearData(clearGroups: [String])
     func buttonPressed(viewDescriptor: ButtonViewDescriptor, buttonViewTriggerCallback: ButtonViewTriggerCallback?)
     func runExport(_ export: ExperimentExport, singleSet: Bool, format: ExportFileFormat, completion: @escaping (NSError?, URL?) -> Void)
 }
@@ -45,6 +48,128 @@ final class ExperimentWebServer {
     init(experiment: Experiment) {
         self.experiment = experiment
     }
+
+    //CORS: allow cross-origin browser pages to read remote-access responses, matching the
+    //Android implementation (RemoteServer.respond()). Wraps a handler's completion block so
+    //every response, including error responses, carries the header.
+    private static func cors(_ completionBlock: @escaping GCDWebServerCompletionBlock) -> GCDWebServerCompletionBlock {
+        return { response in
+            response?.setValue("*", forAdditionalHeader: "Access-Control-Allow-Origin")
+            completionBlock(response)
+        }
+    }
+
+    //An error response is never empty: it carries {"error": "<reason>"} as application/json
+    //whatever the status code, the pattern /export and /res already use
+    //(error-response-content-type in phyphox-docs; must stay in step with Android). The reason
+    //is human-readable and not part of the contract - clients must not match on it.
+    private static func errorResponse(statusCode: Int, reason: String) -> GCDWebServerResponse? {
+        let response = GCDWebServerDataResponse(jsonObject: ["error": reason])
+        response?.statusCode = statusCode
+        return response
+    }
+
+    //Registers a handler for both GET and POST: every endpoint accepts POST as well as GET with
+    //the same parameters (see control-post in phyphox-docs). POST is registered with
+    //GCDWebServerDataRequest so the request body is available to requestParams.
+    private func addGETPOSTHandler(pathRegex: String, asyncProcessBlock: @escaping (GCDWebServerRequest, @escaping GCDWebServerCompletionBlock) -> Void) {
+        server!.addHandler(forMethod: "GET", pathRegex: pathRegex, request: GCDWebServerRequest.self, asyncProcessBlock: asyncProcessBlock)
+        server!.addHandler(forMethod: "POST", pathRegex: pathRegex, request: GCDWebServerDataRequest.self, asyncProcessBlock: asyncProcessBlock)
+    }
+
+    //Form decoding: + means space, the rest is percent-encoded
+    private static func formDecode(_ s: String) -> String? {
+        return s.replacingOccurrences(of: "+", with: " ").removingPercentEncoding
+    }
+
+    //Coerce every scalar to its string form; JSON null becomes an empty value, as an empty form
+    //field would. Nested objects/arrays are not part of this flat API and simply stringify (and
+    //will then fail the value parsing of the endpoint). Must stay in step with Android
+    //(RemoteServer.requestParamsList).
+    private static func coerceJSONValue(_ value: Any) -> String {
+        if value is NSNull {
+            return ""
+        }
+        if let s = value as? String {
+            return s
+        }
+        if let n = value as? NSNumber {
+            if CFGetTypeID(n) == CFBooleanGetTypeID() {
+                return n.boolValue ? "true" : "false"
+            }
+            return n.stringValue
+        }
+        if let data = try? JSONSerialization.data(withJSONObject: value, options: []), let s = String(data: data, encoding: .utf8) {
+            return s
+        }
+        return ""
+    }
+
+    //Reads the request's parameters: the query string plus, for a POST, a JSON or form-encoded
+    //body chosen by Content-Type, with body parameters taking precedence over query parameters
+    //of the same name (control-post; must stay in step with Android's requestParams). Answers
+    //400 and returns nil for a malformed or oversized body.
+    private static func requestParams(_ request: GCDWebServerRequest, orRespond completionBlock: @escaping GCDWebServerCompletionBlock) -> [String: String]? {
+        var params: [String: String] = [:]
+
+        func malformed() -> [String: String]? {
+            cors(completionBlock)(errorResponse(statusCode: 400, reason: "Malformed request body."))
+            return nil
+        }
+
+        if let dataRequest = request as? GCDWebServerDataRequest, dataRequest.data.count > 0 {
+            guard dataRequest.data.count <= 2097152 else { //2 MB, matching the Android limit
+                return malformed()
+            }
+            let contentType = (request.contentType ?? "").lowercased()
+            if contentType.hasPrefix("application/json") {
+                //A flat JSON object; anything else, including bare Infinity/NaN, is a malformed
+                //body
+                guard let obj = try? JSONSerialization.jsonObject(with: dataRequest.data), let dict = obj as? [String: Any] else {
+                    return malformed()
+                }
+                for (key, value) in dict {
+                    params[key] = coerceJSONValue(value)
+                }
+            } else if contentType.hasPrefix("application/x-www-form-urlencoded") {
+                guard let body = String(data: dataRequest.data, encoding: .utf8) else {
+                    return malformed()
+                }
+                for item in body.components(separatedBy: "&") {
+                    let c = item.components(separatedBy: "=")
+                    guard let key = formDecode(c[0]), !key.isEmpty, params[key] == nil else { continue }
+                    params[key] = c.count > 1 ? (formDecode(c.dropFirst().joined(separator: "=")) ?? "") : ""
+                }
+            }
+            //Any other content type: the body is ignored, like on Android
+        }
+
+        if let queryString = URLComponents(url: request.url, resolvingAgainstBaseURL: true)?.query {
+            for (key, value) in queryDictionary(queryString) where params[key] == nil && !key.isEmpty {
+                params[key] = value
+            }
+        }
+
+        return params
+    }
+
+    //Relative path resolved against the served directory without ever escaping it
+    private static func sanitizedRelativePath(_ urlPath: String) -> String {
+        var components: [String] = []
+        for component in urlPath.components(separatedBy: "/") {
+            switch component {
+            case "", ".":
+                continue
+            case "..":
+                if !components.isEmpty {
+                    components.removeLast()
+                }
+            default:
+                components.append(component)
+            }
+        }
+        return components.joined(separator: "/")
+    }
     
     convenience init(experiment: Experiment, delegate: ExperimentWebServerDelegate) {
         self.init(experiment: experiment)
@@ -64,9 +189,25 @@ final class ExperimentWebServer {
         
         server = GCDWebServer()
         
-        server!.addGETHandler(forBasePath: "/", directoryPath: path, indexFilename: "index.html", cacheAge: 0, allowRangeRequests: false)
+        //Serves the prepared web interface files. Replaces GCDWebServer's addGETHandler so the
+        //CORS header is present on the static files as well.
+        let staticPath = path
+        addGETPOSTHandler(pathRegex: "/.*", asyncProcessBlock: { (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
+            var filePath = (staticPath as NSString).appendingPathComponent(ExperimentWebServer.sanitizedRelativePath(request.path))
+            var isDirectory: ObjCBool = false
+            if FileManager.default.fileExists(atPath: filePath, isDirectory: &isDirectory), isDirectory.boolValue {
+                filePath = (filePath as NSString).appendingPathComponent("index.html")
+            }
+            if FileManager.default.fileExists(atPath: filePath, isDirectory: &isDirectory), !isDirectory.boolValue, let response = GCDWebServerFileResponse(file: filePath) {
+                completionBlock(response)
+            } else {
+                completionBlock(GCDWebServerResponse(statusCode: 404))
+            }
+        })
         
-        server!.addHandler(forMethod: "GET", pathRegex: "/logo", request:GCDWebServerRequest.self, asyncProcessBlock: { (request, completionBlock) in
+        addGETPOSTHandler(pathRegex: "/logo", asyncProcessBlock: { (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             let file = Bundle.main.path(forResource: "phyphox-webinterface/phyphox_orange", ofType: "png")
             let image = UIImage.init(contentsOfFile: file!)
             let response = GCDWebServerDataResponse(data: image!.pngData()!, contentType: "image/png")
@@ -74,7 +215,8 @@ final class ExperimentWebServer {
             completionBlock(response)
         })
         
-        server!.addHandler(forMethod: "GET", pathRegex: "/res", request:GCDWebServerRequest.self, asyncProcessBlock: { (request, completionBlock) in
+        addGETPOSTHandler(pathRegex: "/res", asyncProcessBlock: { (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             
             func returnErrorResponse(_ response: AnyObject) {
                 let response = GCDWebServerDataResponse(jsonObject: response)
@@ -82,51 +224,55 @@ final class ExperimentWebServer {
                 completionBlock(response)
             }
             
-            let components = URLComponents(url: (request.url), resolvingAgainstBaseURL: true)
-            let query = queryDictionary(components?.query ?? "")
-            if let src = query["src"] {
-                if self.experiment.resources.contains(src) {
-                    if let file = self.experiment.resourceFolder?.appendingPathComponent(src) {
-                        if FileManager.default.fileExists(atPath: file.path) {
-                            completionBlock(GCDWebServerFileResponse(file: file.path))
-                            return
-                        }
-                    }
-                }
-                returnErrorResponse(["error": "Unknown file."] as AnyObject)
-            } else {
-                returnErrorResponse(["error": "No file requested."] as AnyObject)
+            guard let query = ExperimentWebServer.requestParams(request, orRespond: completionBlock) else { return }
+            //Resolves against the experiment's res folder with a fallback to the images
+            //bundled with phyphox, matching the fallback of the image view element. The content
+            //type is always application/octet-stream - the client determines what it received
+            //(res-content-type) - and a missing src answers the same "Unknown file." as an
+            //unknown one (res-fallback).
+            if let src = query["src"], self.experiment.resources.contains(src), let file = self.experiment.resolveResource(src), let data = try? Data(contentsOf: file) {
+                completionBlock(GCDWebServerDataResponse(data: data, contentType: "application/octet-stream"))
+                return
             }
+            returnErrorResponse(["error": "Unknown file."] as AnyObject)
         })
         
-        server!.addHandler(forMethod: "GET", pathRegex: "/export", request:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+        addGETPOSTHandler(pathRegex: "/export", asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse(_ response: AnyObject) {
                 let response = GCDWebServerDataResponse(jsonObject: response)
                 
                 completionBlock(response)
             }
                         
-            let components = URLComponents(url: (request.url), resolvingAgainstBaseURL: true)
-            let query = queryDictionary(components?.query ?? "")
-            
-            if let formatStr = query["format"], let format = WebServerUtilities.mapFormatString(formatStr) {
-                self.delegate!.runExport(self.experiment.export!, singleSet: false, format: format) { error, URL in
-                    if error == nil {
-                        self.temporaryFiles.append(URL!.path)
-                        let response = GCDWebServerFileResponse(file: URL!.path, isAttachment: true)
-                        completionBlock(response)
+            guard let query = ExperimentWebServer.requestParams(request, orRespond: completionBlock) else { return }
+
+            //Error messages match the Android implementation: a missing or non-numeric format
+            //is "Invalid format.", a numeric one outside the format list "Format out of range."
+            if let formatStr = query["format"], Int(formatStr) != nil {
+                if let format = WebServerUtilities.mapFormatString(formatStr) {
+                    self.delegate!.runExport(self.experiment.export!, singleSet: false, format: format) { error, URL in
+                        if error == nil {
+                            self.temporaryFiles.append(URL!.path)
+                            let response = GCDWebServerFileResponse(file: URL!.path, isAttachment: true)
+                            completionBlock(response)
+                        }
+                        else {
+                            returnErrorResponse(["error": error!.localizedDescription] as AnyObject)
+                        }
                     }
-                    else {
-                        returnErrorResponse(["error": error!.localizedDescription] as AnyObject)
-                    }
+                }
+                else {
+                    returnErrorResponse(["error": "Format out of range."] as AnyObject)
                 }
             }
             else {
-                returnErrorResponse(["error": "Format out of range"] as AnyObject)
+                returnErrorResponse(["error": "Invalid format."] as AnyObject)
             }
             })
         
-        server!.addHandler(forMethod: "GET", pathRegex: "/control", request:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+        addGETPOSTHandler(pathRegex: "/control", asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
                 let response = GCDWebServerDataResponse(jsonObject: ["result": false])
                 
@@ -139,17 +285,21 @@ final class ExperimentWebServer {
                 completionBlock(response)
             }
                         
-            let components = URLComponents(url: (request.url), resolvingAgainstBaseURL: true)!
-            let query = queryDictionary(components.query ?? "")
-            
+            guard let query = ExperimentWebServer.requestParams(request, orRespond: completionBlock) else { return }
+
             let cmd = query["cmd"]
             
             if cmd == "start" {
+                //Unlike the other commands, the answer says whether the measurement began and
+                //not merely that the command was accepted, so wait for the attempt on the main
+                //thread and report its outcome (control-start-refused).
                 mainThread {
-                    self.delegate!.startExperiment()
+                    if self.delegate!.startExperiment() {
+                        returnSuccessResponse()
+                    } else {
+                        returnErrorResponse()
+                    }
                 }
-                
-                returnSuccessResponse()
             }
             else if cmd == "stop" {
                 mainThread {
@@ -158,8 +308,18 @@ final class ExperimentWebServer {
                 returnSuccessResponse()
             }
             else if cmd == "clear" {
+                //Like on Android, clearGroup1, clearGroup2, ... name the clear groups the user
+                //selected; the first gap ends the list. The web interface sends them
+                //form-encoded, so a "+" stands for a space (the rest of the query arrives
+                //percent-decoded already).
+                var clearGroups: [String] = []
+                var i = 1
+                while let clearGroup = query["clearGroup\(i)"] {
+                    clearGroups.append(clearGroup.replacingOccurrences(of: "+", with: " "))
+                    i += 1
+                }
                 mainThread {
-                    self.delegate!.clearData()
+                    self.delegate!.clearData(clearGroups: clearGroups)
                 }
                 returnSuccessResponse()
             }
@@ -183,49 +343,172 @@ final class ExperimentWebServer {
                     return
                 }
                 
-                if (self.htmlId2ViewElement.count > elementIndex) {
-                    if let buttonDescriptor = self.htmlId2ViewElement[elementIndex] as? ButtonViewDescriptor {
-                        self.delegate?.buttonPressed(viewDescriptor: buttonDescriptor, buttonViewTriggerCallback: nil)
-                    }
+                //An out-of-range index or an element that is not a button is a bad request:
+                //answer {"result": false} instead of reporting success for a trigger that was
+                //not performed (control-trigger-out-of-range)
+                if elementIndex >= 0 && self.htmlId2ViewElement.count > elementIndex, let buttonDescriptor = self.htmlId2ViewElement[elementIndex] as? ButtonViewDescriptor {
+                    self.delegate?.buttonPressed(viewDescriptor: buttonDescriptor, buttonViewTriggerCallback: nil)
+                    returnSuccessResponse()
+                } else {
+                    returnErrorResponse()
                 }
-                
-                returnSuccessResponse()
             }
             else {
                 returnErrorResponse()
             }
             })
-        
-        server!.addHandler(forMethod: "GET", pathRegex: "/get", request:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
-            func returnErrorResponse() {
-                let response = GCDWebServerResponse(statusCode: 400)
-                
-                completionBlock(response)
+
+        //Bulk write of buffer values from a JSON body: the array-valued counterpart of
+        //control?cmd=set, specified in phyphox-docs (openapi.yaml, path /set). GET is
+        //registered so it can be answered with a clean result:false instead of a 405. Must
+        //stay in step with Android (RemoteServer.handleSet), error messages included.
+        addGETPOSTHandler(pathRegex: "/set", asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
+            func returnSetError(_ error: String) {
+                completionBlock(GCDWebServerDataResponse(jsonObject: ["result": false, "error": error]))
             }
-            
-            guard let queryString = request.url.query?.removingPercentEncoding else {
-                returnErrorResponse()
+
+            //A GET or a form-encoded body is a well-formed request that cannot carry the
+            //documented shape - rejected with result:false, while a body that is not
+            //parseable JSON at all (or not a JSON object) is a 400 like everywhere else
+            guard let dataRequest = request as? GCDWebServerDataRequest, (request.contentType ?? "").lowercased().hasPrefix("application/json") else {
+                returnSetError("A JSON body of the form {\"buffers\": {...}} is required.")
                 return
             }
+            guard dataRequest.data.count <= 2097152, //2 MB, matching the Android limit
+                  let obj = try? JSONSerialization.jsonObject(with: dataRequest.data),
+                  let json = obj as? [String: Any] else {
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: "Malformed request body."))
+                return
+            }
+
+            //Validate everything first: the mode, every buffer name and every entry...
+            var append = false
+            if let mode = json["mode"] {
+                if (mode as? String) == "append" {
+                    append = true
+                }
+                else if (mode as? String) != "replace" { //Anything but the two enum strings, including null
+                    returnSetError("Unknown mode \"\(mode is NSNull ? "null" : mode)\".")
+                    return
+                }
+            }
+
+            guard let buffersObject = json["buffers"] as? [String: Any] else {
+                returnSetError("A \"buffers\" object is required.")
+                return
+            }
+
+            var writes: [(DataBuffer, [Double])] = []
+            for (name, entriesAny) in buffersObject {
+                guard let buffer = self.experiment.buffers[name] else {
+                    returnSetError("Unknown buffer \"\(name)\".")
+                    return
+                }
+                guard let entries = entriesAny as? [Any] else {
+                    returnSetError("The values for buffer \"\(name)\" must be an array.")
+                    return
+                }
+                var values: [Double] = []
+                values.reserveCapacity(entries.count)
+                for entry in entries {
+                    if entry is NSNull {
+                        //null is exactly the representation /get uses for every non-finite
+                        //value, so /get output can be fed back unchanged
+                        values.append(.nan)
+                    }
+                    else if let number = entry as? NSNumber, CFGetTypeID(number) != CFBooleanGetTypeID() {
+                        values.append(number.doubleValue)
+                    }
+                    else if let string = entry as? String {
+                        //The file format's number lexical space, with the same helper the
+                        //experiment parser uses: "nan"/"Infinity"/"-infinity" work, "inf"
+                        //does not
+                        guard let value = parseExperimentNumber(string) else {
+                            returnSetError("Invalid value \"\(string)\" for buffer \"\(name)\".")
+                            return
+                        }
+                        values.append(value)
+                    }
+                    else {
+                        //Booleans, nested arrays/objects
+                        returnSetError("Invalid entry for buffer \"\(name)\": must be a number, null or a number string.")
+                        return
+                    }
+                }
+                writes.append((buffer, values))
+            }
+
+            //...then write: on any error above nothing was written. The buffer writes mark
+            //the analysis as having new data through the observer mechanism, exactly like
+            //cmd=set. An empty buffers object is a valid no-op.
+            for (buffer, values) in writes {
+                if !append {
+                    buffer.clear(reset: false) //Normal buffer semantics apply, so this cannot clear a written static buffer
+                }
+                buffer.appendFromArray(values)
+            }
+            completionBlock(GCDWebServerDataResponse(jsonObject: ["result": true]))
+            })
+
+        addGETPOSTHandler(pathRegex: "/get", asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
+            func returnErrorResponse(_ reason: String) {
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: reason))
+            }
             
-            let query = queryDictionary(queryString)
+            guard let query = ExperimentWebServer.requestParams(request, orRespond: completionBlock) else { return }
+            //A request without any parameters is fine: it answers an empty buffer object and
+            //the status object, the natural way to poll only the status (get-no-parameters)
             
             var mainDict = [String: AnyObject]()
-            
+
             var bufferDict = [String: AnyObject]()
-            
-            for (bufferName, value) in query {
-                guard let b = self.experiment.buffers[bufferName] else {
-                    continue //Just ignore buffers that do not exist. The user might have changed to a different experiment, so we need to send a session id to inform the browser - even if we do not understand this request
+
+            //Read the force-full flag once, so it is consistent with the snapshot below and with
+            //the reset at the end of the request
+            let forceFullUpdate = self.forceFullUpdate
+
+            //Snapshot all requested buffers (and any referenced threshold buffers) in one read on
+            //the experiment's data lock, so their lengths are mutually consistent even though inputs
+            //and analysis keep writing during the measurement. Without this, a buffer written to
+            //after another was already read comes back one sample longer (GitHub issue 22). The JSON
+            //is built afterwards, outside the lock, to keep the writers blocked as briefly as
+            //possible.
+            var snapshots: [String: (raw: [Double], size: Int)] = [:]
+            var extraSnapshots: [String: [Double]] = [:]
+            self.experiment.dataLock.read {
+                for (bufferName, value) in query {
+                    guard let b = self.experiment.buffers[bufferName] else {
+                        continue //Just ignore buffers that do not exist. The user might have changed to a different experiment, so we need to send a session id to inform the browser - even if we do not understand this request
+                    }
+                    snapshots[bufferName] = (raw: b.toArray(), size: b.size)
+
+                    //A partial request may reference a second buffer (t) as the threshold axis;
+                    //capture it in the same snapshot so it aligns with the data buffer
+                    if value.count > 0 && value != "full" && !forceFullUpdate {
+                        let extraComponents = value.components(separatedBy: "|")
+                        if extraComponents.count > 1, let extra = extraComponents.last, let extraBuffer = self.experiment.buffers[extra] {
+                            extraSnapshots[extra] = extraBuffer.toArray()
+                        }
+                    }
                 }
-                
+            }
+
+            for (bufferName, value) in query {
+                guard let snapshot = snapshots[bufferName] else {
+                    continue //Buffer does not exist, see above
+                }
+
                 var dict = [String: AnyObject]()
-                dict["size"] = b.size as AnyObject
-                
+                dict["size"] = snapshot.size as AnyObject
+
                 if value.count > 0 {
-                    let raw = b.toArray()
-                    
-                    if value == "full" || (value == "partial" && self.forceFullUpdate == true) {
+                    let raw = snapshot.raw
+
+                    //After a clear, every requested buffer is upgraded to a full update,
+                    //whatever its request asked for (get-force-full-update)
+                    if value == "full" || forceFullUpdate {
                         dict["updateMode"] = "full" as AnyObject
                         dict["buffer"] = raw.map({$0.isFinite ? $0 as AnyObject : NSNull() as AnyObject}) as AnyObject //The array may contain NaN or Inf, which will throw an error in the JSON conversion.
                         //Detailed thoughts on this problem:
@@ -233,26 +516,30 @@ final class ExperimentWebServer {
                     }
                     else {
                         let extraComponents = value.components(separatedBy: "|")
-                        let thresholdGiven = (Double(extraComponents.first!) ?? -Double.infinity)
+                        //A threshold that does not parse as a number is a malformed request
+                        //(get-invalid-threshold)
+                        guard let thresholdGiven = Double(extraComponents.first!) else {
+                            returnErrorResponse("Invalid threshold.")
+                            return
+                        }
                         
                         //We only offer 8-digit precision, so we need to move the threshold to avoid receiving a close number multiple times.
                         //Missing something will probably not be visible on a remote graph and a missing value will be recent after stopping anyway.
-                        let threshold = thresholdGiven.isFinite ? thresholdGiven + pow(10.0, floor(log10(thresholdGiven/1e7))) : -Double.infinity
+                        //The nudge magnitude derives from the absolute value (log10 of a negative
+                        //threshold would be NaN and break the request); its direction stays
+                        //positive (get-negative-threshold)
+                        let threshold = thresholdGiven.isFinite ? thresholdGiven + pow(10.0, floor(log10(abs(thresholdGiven)/1e7))) : thresholdGiven
                         
                         var final: [Double] = []
                         
                         if extraComponents.count > 1 {
                             let extra = extraComponents.last!
 
-                            guard let extraBuffer = self.experiment.buffers[extra] else {
-                                let response = GCDWebServerResponse(statusCode: 400)
-                                
-                                completionBlock(response)
+                            guard let extraArray = extraSnapshots[extra] else {
+                                returnErrorResponse("Unknown reference buffer.")
                                 return
                             }
-                            
-                            let extraArray = extraBuffer.toArray()
-                            
+
                             for (i, v) in extraArray.enumerated() {
                                 if i >= raw.count {
                                     break
@@ -275,12 +562,10 @@ final class ExperimentWebServer {
                 }
                 else {
                     dict["updateMode"] = "single" as AnyObject
-                    if let v = b.last {
-                        if v.isFinite {
-                            dict["buffer"] = [v] as AnyObject
-                        } else {
-                            dict["buffer"] = [String(v)] as AnyObject
-                        }
+                    //JSON has no representation for NaN or infinity, so a non-finite value is
+                    //null in every update mode (get-nonfinite-single-value)
+                    if let v = snapshot.raw.last, v.isFinite {
+                        dict["buffer"] = [v] as AnyObject
                     } else {
                         dict["buffer"] = [NSNull()] as AnyObject
                     }
@@ -300,11 +585,10 @@ final class ExperimentWebServer {
             completionBlock(response)
         })
         
-        server!.addHandler(forMethod: "GET", pathRegex: "/config", request:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+        addGETPOSTHandler(pathRegex: "/config", asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
-                let response = GCDWebServerResponse(statusCode: 400)
-                
-                completionBlock(response)
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: "Bad request."))
             }
             
             var json = [String: AnyObject]()
@@ -411,11 +695,10 @@ final class ExperimentWebServer {
             completionBlock(response)
         })
         
-        server!.addHandler(forMethod: "GET", pathRegex: "/meta", request:GCDWebServerRequest.self, asyncProcessBlock: { (request, completionBlock) in
+        addGETPOSTHandler(pathRegex: "/meta", asyncProcessBlock: { (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
-                let response = GCDWebServerResponse(statusCode: 400)
-                
-                completionBlock(response)
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: "Bad request."))
             }
             
             var json = [String: AnyObject]()
@@ -425,7 +708,11 @@ final class ExperimentWebServer {
                 case .uniqueId:
                     continue
                 default:
-                    json[metadata.identifier] = metadata.get(hash: "") as AnyObject
+                    //An unavailable value omits its key entirely instead of answering null
+                    //(meta-missing-value-representation)
+                    if let value = metadata.get(hash: "") {
+                        json[metadata.identifier] = value as AnyObject
+                    }
                 }
             }
             
@@ -434,11 +721,10 @@ final class ExperimentWebServer {
             completionBlock(response)
         })
         
-        server!.addHandler(forMethod: "GET", pathRegex: "/time", request:GCDWebServerRequest.self, asyncProcessBlock: { [unowned self] (request, completionBlock) in
+        addGETPOSTHandler(pathRegex: "/time", asyncProcessBlock: { [unowned self] (request, completionBlock) in
+            let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnErrorResponse() {
-                let response = GCDWebServerResponse(statusCode: 400)
-                
-                completionBlock(response)
+                completionBlock(ExperimentWebServer.errorResponse(statusCode: 400, reason: "Bad request."))
             }
             
             var json = [AnyObject]()
@@ -456,20 +742,31 @@ final class ExperimentWebServer {
             completionBlock(response)
         })
         
-        port = UInt(UserDefaults.standard.string(forKey: "remoteAccessPort") ?? "80") ?? 80
-        
-        if server!.start(withPort: port, bonjourName: nil){
-            print("Webserver running on \(String(describing: server!.serverURL))")
-            return true
-        } else if server!.start(withPort: 8080, bonjourName: nil) {
-            port = 8080
-            print("Webserver running on \(String(describing: server!.serverURL))")
-            return true
+        //-phyphoxRemotePort pins the port for unattended automation (see AutomationLaunchOptions
+        //in AppDelegate); otherwise the user's setting applies
+        let configuredPort = AutomationLaunchOptions.remotePort ?? UInt(UserDefaults.standard.string(forKey: "remoteAccessPort") ?? "80") ?? 80
+
+        //If the port setting is at its default, we assume that the user does not care (or might
+        //not even know) which port is used, so if the default port is taken, we try 8080 and then
+        //count upwards from there until we find a free one. A custom port, however, is used
+        //exactly as configured.
+        var candidates: [UInt] = [configuredPort]
+        if configuredPort == 80 {
+            candidates.append(contentsOf: (8080...8180).map { UInt($0) })
         }
-        else {
-            server = nil
-            return false
+
+        for candidate in candidates {
+            if server!.start(withPort: candidate, bonjourName: nil) {
+                port = candidate
+                print("Webserver running on \(String(describing: server!.serverURL))")
+                return true
+            }
         }
+
+        //No free port found. Clean up and report the configured port as blocked.
+        port = configuredPort
+        server = nil
+        return false
     }
     
     func stop() {

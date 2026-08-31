@@ -12,7 +12,9 @@ import CoreBluetooth
 // MARK: - Extensions required for the initialization of an Experiment instance.
 private extension SensorDescriptor {
     func buffer(for component: String, from buffers: [String: DataBuffer]) -> DataBuffer? {
-        return (outputs.first(where: { $0.component == component })?.bufferName).map { buffers[$0] } ?? nil
+        //Component names from the experiment file are matched case-insensitively
+        //(enum-case-insensitive rule in phyphox-docs, matching Android)
+        return (outputs.first(where: { $0.component?.lowercased() == component.lowercased() })?.bufferName).map { buffers[$0] } ?? nil
     }
 }
 
@@ -46,12 +48,12 @@ private extension ExperimentCameraInput {
         let hueBuffer = descriptor.buffer(for: "hue", from: buffers)
         let saturationBuffer = descriptor.buffer(for: "saturation", from: buffers)
         let valueBuffer = descriptor.buffer(for: "value", from: buffers)
-        let threasholdBuffer = descriptor.buffer(for: "threshold", from: buffers)
         let shutterSpeedBuffer = descriptor.buffer(for: "shutterSpeed", from: buffers)
         let isoBuffer = descriptor.buffer(for: "iso", from: buffers)
         let apertureBuffer = descriptor.buffer(for: "aperture", from: buffers)
+        let pixelPosition = descriptor.buffer(for: "pixelPosition", from: buffers)
 
-        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, thresholdBuffer: threasholdBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, autoExposure: descriptor.autoExposure, aeStrategy: descriptor.aeStrategy, locked: descriptor.locked, feature: descriptor.feature)
+        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, pixelPosition: pixelPosition, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, autoExposure: descriptor.autoExposure, aeStrategy: descriptor.aeStrategy, aeFPSTarget: descriptor.aeFPSTarget, locked: descriptor.locked, feature: descriptor.feature)
     }
 }
 
@@ -108,7 +110,7 @@ private extension ExperimentBluetoothOutput {
             guard let inBuffer = buffers[input.bufferName] else {
                 throw ElementHandlerError.message("No such buffer: \(input.bufferName)")
             }
-            inputs.append(BluetoothInput(char: input.char, conversion: input.conversion, offset: input.offset, buffer: inBuffer, keep: input.keep))
+            inputs.append(BluetoothInput(char: input.char, conversion: input.conversion, offset: input.offset, buffer: inBuffer, keep: input.keep, triggerId: input.triggerId))
         }
         
         self.init(device: device, inputList: inputs, configList: descriptor.configs)
@@ -116,7 +118,7 @@ private extension ExperimentBluetoothOutput {
 }
 
 // Mark: - Constants
-public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 19, patch: 0)
+public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 20, patch: 0)
 
 // Mark: - Phyphox Element Handler
 
@@ -167,7 +169,12 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         
         let isLink = try attributes.optionalValue(for: .isLink) ?? false
 
-        guard let version = SemanticVersion(string: versionString) else {
+        //The file format version is strictly "major.minor". Reject any other shape - in particular
+        //a three-part app version like "1.2.0" mistakenly used here, which SemanticVersion would
+        //otherwise reinterpret as 1.2.0 and load, even on an app that a genuine newer file version
+        //would have refused. This matches the Android parser, which requires a plain integer after
+        //the dot and rejects "1.2.0" ("Unable to interpret the file version").
+        guard versionString.components(separatedBy: ".").count == 2, let version = SemanticVersion(string: versionString) else {
             throw ElementHandlerError.unexpectedAttributeValue("version")
         }
 
@@ -175,26 +182,49 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             throw ElementHandlerError.message("File version \(versionString) is not supported")
         }
 
-        let translations = try translationsHandler.expectOptionalResult().map { ExperimentTranslationCollection(translations: $0, defaultLanguageCode: locale) } ?? ExperimentTranslationCollection(translations: [:], defaultLanguageCode: "en")
+        let translationBlocks = try translationsHandler.expectOptionalResult()
+        let translations = translationBlocks.map { ExperimentTranslationCollection(translations: $0, defaultLanguageCode: locale) } ?? ExperimentTranslationCollection(translations: [:], defaultLanguageCode: "en")
 
-        guard let title = try titleHandler.expectOptionalResult() ?? translations.selectedTranslation?.titleString else {
+        //The metadata children tolerate repetition, last occurrence wins (lastResult above) -
+        //unlike every other child of the root element, where a duplicate stays an error
+        guard let title = titleHandler.lastResult() ?? translations.selectedTranslation?.titleString else {
             throw ElementHandlerError.missingElement("title")
         }
-        
-        let stateTitle = try stateTitleHandler.expectOptionalResult()
 
-        guard let category = try categoryHandler.expectOptionalResult() ?? translations.selectedTranslation?.categoryString else {
+        let stateTitle = stateTitleHandler.lastResult()
+
+        guard let category = categoryHandler.lastResult() ?? translations.selectedTranslation?.categoryString else {
             throw ElementHandlerError.missingElement("category")
         }
 
-        let description = try descriptionHandler.expectOptionalResult() ?? translations.selectedTranslation?.descriptionString ?? ""
-        
+        let description = descriptionHandler.lastResult() ?? translations.selectedTranslation?.descriptionString ?? ""
+
         let maxIndex = title.index(title.startIndex, offsetBy: min(2, title.count))
-        let icon = try iconHandler.expectOptionalResult() ?? .string(String(title[..<maxIndex]).uppercased())
-        
-        let color = try colorHandler.expectOptionalResult()
+        let icon = iconHandler.lastResult() ?? .string(String(title[..<maxIndex]).uppercased())
+
+        let color = colorHandler.lastResult()
         
         let links = linkHandler.results
+
+        //The label identifies a link, so it must be unique among the root links, and a link in a
+        //translation block that matches no base label is an addition, which needs a URL of its
+        //own. Both are checked for every translation block, not just the applied one, so an
+        //invalid file fails to load regardless of the user's locale
+        //(translation-link-matching in phyphox-docs).
+        var seenLinkLabels = Set<String>()
+        for link in links {
+            guard seenLinkLabels.insert(link.label).inserted else {
+                throw ElementHandlerError.message("Duplicate link label \"\(link.label)\"")
+            }
+        }
+
+        if let translationBlocks = translationBlocks {
+            for (blockLocale, translation) in translationBlocks {
+                for translatedLink in translation.translatedLinks where translatedLink.url == nil && !seenLinkLabels.contains(translatedLink.label) {
+                    throw ElementHandlerError.message("Link \"\(translatedLink.label)\" in translation block \"\(blockLocale)\" matches no link and has no URL")
+                }
+            }
+        }
 
         let dataContainersDescriptor = try dataContainersHandler.expectOptionalResult()
         let analysisDescriptor = try analysisHandler.expectOptionalResult() ?? AnalysisDescriptor(sleep: 0, dynamicSleepName: nil, onUserInput: false, requireFillName: nil, requireFillThreshold: 1, requireFillDynamicName: nil, timedRun: false, timedRunStartDelay: 3, timedRunStopDelay: 10, modules: [])
@@ -203,7 +233,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let buffers: [String : DataBuffer]
         if let dataContainersDescriptor = dataContainersDescriptor {
-            buffers = try makeBuffers(from: dataContainersDescriptor, analysisInputBufferNames: analysisInputBufferNames)
+            buffers = try makeBuffers(from: dataContainersDescriptor, analysisInputBufferNames: analysisInputBufferNames, translations: translations)
         } else {
             buffers = [String : DataBuffer]()
         }
@@ -211,7 +241,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let timeReference = ExperimentTimeReference()
         if let eventsDescriptor = try eventsHandler.expectOptionalResult() {
             for (type, event) in zip(eventsDescriptor.types, eventsDescriptor.events) {
-                timeReference.timeMappings.append(ExperimentTimeReference.TimeMapping(event: type, experimentTime: event.experimentTime, eventTime: 0.0, systemTime: event.systemTime))
+                timeReference.appendMapping(ExperimentTimeReference.TimeMapping(event: type, experimentTime: event.experimentTime, eventTime: 0.0, systemTime: event.systemTime))
             }
         }
 
@@ -235,6 +265,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let audioInputs = try inputDescriptor?.audio.map { try ExperimentAudioInput(descriptor: $0, buffers: buffers) } ?? []
         
         let audioOutput = try makeAudioOutput(from: outputDescriptor?.audioOutput, buffers: buffers)
+
+        let flashlightOutput = try makeFlashlightOutput(from: outputDescriptor?.flashlight, buffers: buffers)
         
         let analysisModules = try analysisDescriptor.modules.map({ try ExperimentAnalysisFactory.analysisModule(from: $1, for: $0, buffers: buffers) })
         let analysis = ExperimentAnalysis(modules: analysisModules, sleep: analysisDescriptor.sleep, dynamicSleep: analysisDescriptor.dynamicSleepName.map { buffers[$0] } ?? nil, onUserInput: analysisDescriptor.onUserInput, requireFill: analysisDescriptor.requireFillName.map { buffers[$0] } ?? nil, requireFillThreshold: analysisDescriptor.requireFillThreshold, requireFillDynamic: analysisDescriptor.requireFillDynamicName.map { buffers[$0] } ?? nil, timedRun: analysisDescriptor.timedRun, timedRunStartDelay: analysisDescriptor.timedRunStartDelay, timedRunStopDelay: analysisDescriptor.timedRunStopDelay, timeReference: timeReference, sensorInputs: sensorInputs, audioInputs: audioInputs)
@@ -287,32 +319,35 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         send[item.id] = NetworkSendableData(source: .Buffer(buffer, keep: item.keep), additionalAttributes: item.additionalAttributes)
                     case .meta:
                         let metadata: NetworkSendableData.Source
-                        switch (item.name) {
-                        case "uniqueID": metadata = .Metadata(.uniqueId)
+                        //Metadata identifiers are matched case-insensitively, like the enumerated
+                        //attribute values (enum-case-insensitive in phyphox-docs)
+                        switch (item.name.lowercased()) {
+                        case "uniqueid": metadata = .Metadata(.uniqueId)
                         case "version": metadata = .Metadata(.version)
                         case "build": metadata = .Metadata(.build)
-                        case "fileFormat": metadata = .Metadata(.fileFormat)
-                        case "deviceModel": metadata = .Metadata(.deviceModel)
-                        case "deviceBrand": metadata = .Metadata(.deviceBrand)
-                        case "deviceBoard": metadata = .Metadata(.deviceBoard)
-                        case "deviceManufacturer": metadata = .Metadata(.deviceManufacturer)
-                        case "deviceBaseOS": metadata = .Metadata(.deviceBaseOS)
-                        case "deviceCodename": metadata = .Metadata(.deviceCodename)
-                        case "deviceRelease": metadata = .Metadata(.deviceRelease)
-                        case "depthFrontSensor": metadata = .Metadata(.depthFrontSensor)
-                        case "depthFrontResolution": metadata = .Metadata(.depthFrontResolution)
-                        case "depthFrontRate": metadata = .Metadata(.depthFrontRate)
-                        case "depthBackSensor": metadata = .Metadata(.depthBackSensor)
-                        case "depthBackResolution": metadata = .Metadata(.depthBackResolution)
-                        case "depthBackRate": metadata = .Metadata(.depthBackRate)
+                        case "fileformat": metadata = .Metadata(.fileFormat)
+                        case "devicemodel": metadata = .Metadata(.deviceModel)
+                        case "devicebrand": metadata = .Metadata(.deviceBrand)
+                        case "deviceboard": metadata = .Metadata(.deviceBoard)
+                        case "devicemanufacturer": metadata = .Metadata(.deviceManufacturer)
+                        case "devicebaseos": metadata = .Metadata(.deviceBaseOS)
+                        case "devicecodename": metadata = .Metadata(.deviceCodename)
+                        case "devicerelease": metadata = .Metadata(.deviceRelease)
+                        case "depthfrontsensor": metadata = .Metadata(.depthFrontSensor)
+                        case "depthfrontresolution": metadata = .Metadata(.depthFrontResolution)
+                        case "depthfrontrate": metadata = .Metadata(.depthFrontRate)
+                        case "depthbacksensor": metadata = .Metadata(.depthBackSensor)
+                        case "depthbackresolution": metadata = .Metadata(.depthBackResolution)
+                        case "depthbackrate": metadata = .Metadata(.depthBackRate)
                         case "camera2api": metadata = .Metadata(.camera2api)
-                        case "camera2apiFull": metadata = .Metadata(.camera2apiFull)
+                        case "camera2apifull": metadata = .Metadata(.camera2apiFull)
                         default:
                             func matchSensor(name: String, sensor: SensorType) throws -> NetworkSendableData.Source? {
-                                if name.starts(with: sensor.description) {
-                                    let sensorMetadata = name.dropFirst(sensor.description.count)
-                                    let sensorMetadataMatch = sensorMetadata.prefix(1).lowercased() + sensorMetadata.dropFirst()
-                                    guard let sensorMeta = SensorMetadata(rawValue: String(sensorMetadataMatch)) else {
+                                if name.lowercased().starts(with: sensor.description.lowercased()) {
+                                    let sensorMetadata = String(name.dropFirst(sensor.description.count))
+                                    //The folding attribute decode replaces the former ad-hoc
+                                    //lowercasing of just the first letter
+                                    guard let sensorMeta = SensorMetadata(attributeValue: sensorMetadata) else {
                                         throw ElementHandlerError.message("Unknown metadata name \(name)")
                                     }
                                     return .Metadata(.sensor(sensor, sensorMeta))
@@ -375,7 +410,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             }
         }
         
-        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, isLink: isLink, translation: translations, buffers: buffers, timeReference: timeReference, sensorInputs: sensorInputs, depthInput: depthInput, cameraInput: cameraInput, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, isLink: isLink, translation: translations, buffers: buffers, timeReference: timeReference, sensorInputs: sensorInputs, depthInput: depthInput, cameraInput: cameraInput, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, flashlightOutput: flashlightOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
 
         results.append(experiment)
     }
@@ -385,17 +420,28 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
     private func makeViewDescriptor(from descriptor: ViewElementDescriptor, timeReference: ExperimentTimeReference, buffers: [String: DataBuffer], translations: ExperimentTranslationCollection?) throws -> ViewDescriptor {
         switch descriptor {
         case .separator(let descriptor):
-            return SeparatorViewDescriptor(height: descriptor.height, color: descriptor.color)
+
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "separator")
+
+            return SeparatorViewDescriptor(height: descriptor.height, color: descriptor.color, visibilityBuffer: visibilityBuffer)
         case .image(let descriptor):
-            return ImageViewDescriptor(src: descriptor.src, scale: descriptor.scale, darkFilter: descriptor.darkFilter, lightFilter: descriptor.lightFilter)
+            
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "image")
+            
+            return ImageViewDescriptor(visibilityBuffer: visibilityBuffer,  src: descriptor.src, scale: descriptor.scale, darkFilter: descriptor.darkFilter, lightFilter: descriptor.lightFilter)
         case .info(let descriptor):
-            return InfoViewDescriptor(label: descriptor.label, color: descriptor.color, fontSize: descriptor.fontSize, align: descriptor.align, bold: descriptor.bold, italic: descriptor.italic, translation: translations)
+            
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "info")
+            
+            return InfoViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, color: descriptor.color, fontSize: descriptor.fontSize, align: descriptor.align, bold: descriptor.bold, italic: descriptor.italic, translation: translations)
         case .value(let descriptor):
             guard let buffer = buffers[descriptor.inputBufferName] else {
                 throw ElementHandlerError.missingElement("data-container")
             }
+            
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "value")
 
-            return ValueViewDescriptor(label: descriptor.label, color: descriptor.color, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings, positiveUnit: descriptor.positiveUnit, negativeUnit: descriptor.negativeUnit, valueFormat: descriptor.valueFormat)
+            return ValueViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, color: descriptor.color, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings, positiveUnit: descriptor.positiveUnit, negativeUnit: descriptor.negativeUnit, valueFormat: descriptor.valueFormat)
                 
         case .edit(let descriptor):
             guard let buffer = buffers[descriptor.outputBufferName] else {
@@ -405,8 +451,10 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             if buffer.isEmpty {
                 buffer.append(descriptor.defaultValue)
             }
+            
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "edit")
 
-            return EditViewDescriptor(label: descriptor.label, translation: translations, signed: descriptor.signed, decimal: descriptor.decimal, unit: descriptor.unit, factor: descriptor.factor, min: descriptor.min, max: descriptor.max, defaultValue: descriptor.defaultValue, buffer: buffer)
+            return EditViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, translation: translations, signed: descriptor.signed, decimal: descriptor.decimal, unit: descriptor.unit, factor: descriptor.factor, min: descriptor.min, max: descriptor.max, defaultValue: descriptor.defaultValue, buffer: buffer)
 
         case .button(let descriptor):
             let dataFlow = try descriptor.dataFlow.map { flow -> (ExperimentAnalysisDataInput, DataBuffer) in
@@ -442,7 +490,9 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 buffer = nil
             }
             
-            return ButtonViewDescriptor(label: descriptor.label, translation: translations, dataFlow: dataFlow, triggers: descriptor.triggers, mappings: descriptor.mappings, buffer: buffer)
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "button")
+            
+            return ButtonViewDescriptor(label: descriptor.label,visibilityBuffer: visibilityBuffer, translation: translations, dataFlow: dataFlow, triggers: descriptor.triggers, mappings: descriptor.mappings, buffer: buffer)
 
         case .graph(let descriptor):
             let xBuffers = try descriptor.xInputBufferNames.map({ name -> DataBuffer? in
@@ -471,10 +521,28 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 }
                 return buffer
             })
+            
+            
+            let pickOutputs = try descriptor.pickOutputs.map({ output -> GraphViewDescriptor.PickOutput? in
+                guard let output = output else {
+                    return nil
+                }
+                guard let buffer = buffers[output.bufferName] else {
+                    throw ElementHandlerError.missingElement("data-container \(output.bufferName) for graph \(descriptor.label)")
+                }
+                return GraphViewDescriptor.PickOutput(label: output.label, buffer: buffer)
+            })
 
-            return GraphViewDescriptor(label: descriptor.label, translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, zUnit: descriptor.zUnit, yxUnit: descriptor.yxUnit, timeReference: timeReference, timeOnX: descriptor.timeOnX, timeOnY: descriptor.timeOnY, systemTime: descriptor.systemTime, linearTime: descriptor.linearTime, hideTimeMarkers: descriptor.hideTimeMarkers, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, suppressScientificNotation: descriptor.suppressScientificNotation, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, followX: descriptor.followX, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap, showColorScale: descriptor.showColorScale)
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "graph")
+            
+
+            return GraphViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer,  translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, zUnit: descriptor.zUnit, yxUnit: descriptor.yxUnit, timeReference: timeReference, timeOnX: descriptor.timeOnX, timeOnY: descriptor.timeOnY, systemTime: descriptor.systemTime, linearTime: descriptor.linearTime, hideTimeMarkers: descriptor.hideTimeMarkers, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, suppressScientificNotation: descriptor.suppressScientificNotation, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, followX: descriptor.followX, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap, showColorScale: descriptor.showColorScale, interpolateMapColors: descriptor.interpolateMapColors, pickLabel: descriptor.pickLabel, pickOutputs: pickOutputs)
+            
         case .depthGUI(let descriptor):
-            return DepthGUIViewDescriptor(label: descriptor.label, aspectRatio: descriptor.aspectRatio, translation: translations)
+            
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "depth")
+            
+            return DepthGUIViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, aspectRatio: descriptor.aspectRatio, translation: translations)
             
         case .switchView(let descriptor):
             guard let buffer = buffers[descriptor.outputBufferName] else {
@@ -485,7 +553,9 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 buffer.append(descriptor.defaultValue)
             }
             
-            return SwitchViewDescriptor(label: descriptor.label, translation: translations, defaultValue: descriptor.defaultValue, buffer: buffer)
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "switch")
+            
+            return SwitchViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, translation: translations, defaultValue: descriptor.defaultValue, buffer: buffer)
             
         case .dropdown(let descriptor):
             guard let buffer = buffers[descriptor.outputBufferName] else {
@@ -496,7 +566,9 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 buffer.append(descriptor.defaultValue)
             }
             
-            return DropdownViewDescriptor(label: descriptor.label, defaultValue: descriptor.defaultValue, buffer: buffer, mappings: descriptor.mappings, translation: translations)
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "dropdown")
+            
+            return DropdownViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, defaultValue: descriptor.defaultValue, buffer: buffer, mappings: descriptor.mappings, translation: translations)
             
         case .slider(let descriptor):
             
@@ -533,16 +605,53 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 
             }
             
-            return SliderViewDescriptor(label: descriptor.label, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, outputBuffers: outputBuffers, translation: translations, type: descriptor.type, showValue: descriptor.showValue)
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "slider")
+            
+            return SliderViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, outputBuffers: outputBuffers, translation: translations, type: descriptor.type, showValue: descriptor.showValue)
             
             
             
         case .camera(let descriptor):
-            return CameraViewDescriptor(label: descriptor.label, exposureAdjustmentLevel: descriptor.exposureAdjustmentLevel,
+            
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "camera")
+            
+            return CameraViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, exposureAdjustmentLevel: descriptor.exposureAdjustmentLevel,
                                         grayscale: descriptor.grayscale, markOverexposure: descriptor.markOverexposure, markUnderexposure: descriptor.markUnderexposure, showControls: descriptor.showControls, translation: translations)
             
         }
         
+    }
+
+    private func makeFlashlightOutput(from descriptor: FlashlightOutputDescriptor?, buffers: [String: DataBuffer]) throws -> ExperimentFlashlightOutput? {
+        guard let descriptor = descriptor else { return nil }
+
+        var intensity = FlashlightParameter.value(value: 1.0)
+        var frequency = FlashlightParameter.value(value: 0.0)
+        var dutycycle = FlashlightParameter.value(value: 0.5)
+
+        for input in descriptor.inputs {
+            let target: String
+            let parameter: FlashlightParameter
+            switch input {
+            case .buffer(name: let name, usedAs: let usedAs):
+                target = usedAs
+                guard let buffer = buffers[name] else {
+                    throw ElementHandlerError.missingElement("data-container")
+                }
+                parameter = FlashlightParameter.buffer(buffer: buffer)
+            case .value(value: let value, usedAs: let usedAs):
+                target = usedAs
+                parameter = FlashlightParameter.value(value: value)
+            }
+            switch target.lowercased() { //Enumerated values are matched case-insensitively
+            case "intensity": intensity = parameter
+            case "frequency": frequency = parameter
+            case "dutycycle": dutycycle = parameter
+            default: throw ElementHandlerError.message("Invalid parameter for input of flashlight output.")
+            }
+        }
+
+        return ExperimentFlashlightOutput(intensity: intensity, frequency: frequency, dutycycle: dutycycle)
     }
 
     private func makeAudioOutput(from descriptor: AudioOutputDescriptor?, buffers: [String: DataBuffer]) throws -> ExperimentAudioOutput? {
@@ -565,7 +674,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 var frequency = AudioParameter.value(value: 440.0)
                 var amplitude = AudioParameter.value(value: 1.0)
                 var duration = AudioParameter.value(value: 1.0)
-                
+                var pan = AudioParameter.value(value: 0.0)
+
                 for input in toneDescriptor.inputs {
                     let target: String
                     let parameter: AudioParameter
@@ -580,21 +690,23 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         target = usedAs
                         parameter = AudioParameter.value(value: value)
                     }
-                    switch target {
+                    switch target.lowercased() { //Enumerated values are matched case-insensitively
                     case "frequency": frequency = parameter
                     case "amplitude": amplitude = parameter
                     case "duration": duration = parameter
+                    case "pan": pan = parameter
                     default: throw ElementHandlerError.message("Invalid parameter for input of audio output tone.")
                     }
                 }
-                
-                let tone = ExperimentAudioOutputTone(waveform: toneDescriptor.waveform, frequency: frequency, amplitude: amplitude, duration: duration)
+
+                let tone = ExperimentAudioOutputTone(waveform: toneDescriptor.waveform, frequency: frequency, amplitude: amplitude, duration: duration, pan: pan)
                 tones.append(tone)
             }
-            
+
             var amplitude = AudioParameter.value(value: 1.0)
             var duration = AudioParameter.value(value: 1.0)
-            
+            var pan = AudioParameter.value(value: 0.0)
+
             if let noiseDescriptor = audioOutput.noise {
                 for input in noiseDescriptor.inputs {
                     let target: String
@@ -610,13 +722,14 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         target = usedAs
                         parameter = AudioParameter.value(value: value)
                     }
-                    switch target {
+                    switch target.lowercased() { //Enumerated values are matched case-insensitively
                     case "amplitude": amplitude = parameter
                     case "duration": duration = parameter
+                    case "pan": pan = parameter
                     default: throw ElementHandlerError.message("Invalid parameter for input of audio output noise.")
                     }
                 }
-                noise = ExperimentAudioOutputNoise(amplitude: amplitude, duration: duration)
+                noise = ExperimentAudioOutputNoise(amplitude: amplitude, duration: duration, pan: pan)
             } else {
                 noise = nil
             }
@@ -646,7 +759,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         return ExperimentExport(sets: sets)
     }
 
-    private func makeBuffers(from descriptors: [BufferDescriptor], analysisInputBufferNames: Set<String>) throws -> [String: DataBuffer] {
+    private func makeBuffers(from descriptors: [BufferDescriptor], analysisInputBufferNames: Set<String>, translations: ExperimentTranslationCollection) throws -> [String: DataBuffer] {
         var buffers: [String: DataBuffer] = [:]
 
         for descriptor in descriptors {
@@ -655,7 +768,11 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             let staticBuffer = descriptor.staticBuffer
             let baseContents = descriptor.baseContents
 
-            let buffer = try DataBuffer(name: name, size: bufferSize, baseContents: baseContents, static: staticBuffer)
+            //The clearGroup name is translatable and, like on Android, resolved at parse time:
+            //buffers are grouped by the translated name, which is also what the user selects.
+            let clearGroup = descriptor.clearGroup.map { translations.localizeString($0) }
+
+            let buffer = try DataBuffer(name: name, size: bufferSize, baseContents: baseContents, static: staticBuffer, clearGroup: clearGroup)
 
             buffers[name] = buffer
 
@@ -677,5 +794,13 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         })
 
         return Set(inputBufferNames)
+    }
+    
+    func getVisibilityBuffer(visibilityKey: String, buffers: [String: DataBuffer], context: String) throws -> DataBuffer? {
+        guard !visibilityKey.isEmpty else { return nil }
+        guard let buffer = buffers[visibilityKey] else {
+            throw ElementHandlerError.missingElement("data-container \(visibilityKey) for \(context)")
+        }
+        return buffer
     }
 }

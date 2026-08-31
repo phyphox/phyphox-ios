@@ -43,21 +43,96 @@ kernel void computeLuma(texture2d<float, access::read> yTexture [[ texture(0) ]]
         for (uint i = 0; i < groupSize.x; i++) {
             totalRowSum += localSums[tid.y * groupSize.x + i];
         }
-        
+
         localSums[tid.y * groupSize.x] = totalRowSum;
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-        
-        if (tid.y == 0) {
-            float totalGroupSum = 0.0;
-            for (uint i = 0; i < (groupSize.x * groupSize.y); i+=groupSize.x) {
-                totalGroupSum += localSums[i];
-            }
-            
-            partialSums[groupId.x + groupId.y * groupsPerGrid.x ] = totalGroupSum;
-            threadgroup_barrier(mem_flags::mem_device);
-        }
     }
-    
+    //Every thread of the threadgroup must reach this barrier. Placing a threadgroup_barrier in
+    //divergent control flow (as it was, inside if(tid.x==0)) is undefined behaviour and hangs the
+    //GPU on older hardware such as the A9 (iPhone 6s). Hoisted to uniform scope so the row sums are
+    //written before the final sum reads them.
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    if (tid.x == 0 && tid.y == 0) {
+        float totalGroupSum = 0.0;
+        for (uint i = 0; i < (groupSize.x * groupSize.y); i+=groupSize.x) {
+            totalGroupSum += localSums[i];
+        }
+
+        partialSums[groupId.x + groupId.y * groupsPerGrid.x ] = totalGroupSum;
+    }
+
+}
+
+//Spectroscopy: one value per pixel along the dispersion axis of the camera image, obtained by
+//averaging the linear luminance of the selected analysis area across the perpendicular axis.
+//The camera texture is in sensor orientation, so computeSpectrumAlongX serves a device held in
+//landscape orientation relative to the spectrum and computeSpectrumAlongY one held in portrait
+//orientation. One thread computes one spectrum pixel; the dispatch is one-dimensional along the
+//dispersion axis.
+kernel void computeSpectrumAlongX(
+     texture2d<float, access::read> yTexture [[texture(0)]],
+     texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],
+     device float *outBuffer [[buffer(0)]],
+     constant SelectionState& selectionState [[buffer(1)]],
+     uint gid [[thread_position_in_grid]]
+                            )
+{
+    uint x1 = uint(selectionState.x1);
+    uint x2 = min(uint(selectionState.x2), yTexture.get_width());
+    uint y1 = uint(selectionState.y1);
+    uint y2 = min(uint(selectionState.y2), yTexture.get_height());
+
+    uint x = x1 + gid;
+    if (x >= x2) {
+        return;
+    }
+
+    float sum = 0.0;
+
+    for (uint y = y1; y < y2; y++) {
+        uint2 pixelCoord = uint2(x, y);
+        float4 rgb = ycbcrToRGBTransform(
+                                         yTexture.read(pixelCoord),
+                                         cameraImageTextureCbCr.read(pixelCoord/2)
+                                         );
+        sum += 0.2126 * linearizeGamma(rgb.r) + 0.7152 * linearizeGamma(rgb.g) + 0.0722 * linearizeGamma(rgb.b);
+    }
+
+    outBuffer[gid] = y2 > y1 ? sum / float(y2 - y1) : 0.0;
+
+}
+
+kernel void computeSpectrumAlongY(
+     texture2d<float, access::read> yTexture [[texture(0)]],
+     texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],
+     device float *outBuffer [[buffer(0)]],
+     constant SelectionState& selectionState [[buffer(1)]],
+     uint gid [[thread_position_in_grid]]
+                            )
+{
+    uint x1 = uint(selectionState.x1);
+    uint x2 = min(uint(selectionState.x2), yTexture.get_width());
+    uint y1 = uint(selectionState.y1);
+    uint y2 = min(uint(selectionState.y2), yTexture.get_height());
+
+    uint y = y1 + gid;
+    if (y >= y2) {
+        return;
+    }
+
+    float sum = 0.0;
+
+    for (uint x = x1; x < x2; x++) {
+        uint2 pixelCoord = uint2(x, y);
+        float4 rgb = ycbcrToRGBTransform(
+                                         yTexture.read(pixelCoord),
+                                         cameraImageTextureCbCr.read(pixelCoord/2)
+                                         );
+        sum += 0.2126 * linearizeGamma(rgb.r) + 0.7152 * linearizeGamma(rgb.g) + 0.0722 * linearizeGamma(rgb.b);
+    }
+
+    outBuffer[gid] = x2 > x1 ? sum / float(x2 - x1) : 0.0;
+
 }
 
 
@@ -103,19 +178,19 @@ kernel void computeLuminance(texture2d<float, access::read> cameraImageTextureY 
         for (uint i = 0; i < groupSize.x; i++) {
             totalRowSum += localSums[tid.y * groupSize.x + i];
         }
-        
+
         localSums[tid.y * groupSize.x] = totalRowSum;
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-        
-        if (tid.y == 0) {
-            float totalGroupSum = 0.0;
-            for (uint i = 0; i < (groupSize.x * groupSize.y); i+=groupSize.x) {
-                totalGroupSum += localSums[i];
-            }
-            
-            partialSums[groupId.x + groupId.y * groupsPerGrid.x ] = totalGroupSum;
-            threadgroup_barrier(mem_flags::mem_device);
+    }
+    //Uniform barrier - see computeLuma; a divergent threadgroup_barrier hangs the A9 GPU.
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    if (tid.x == 0 && tid.y == 0) {
+        float totalGroupSum = 0.0;
+        for (uint i = 0; i < (groupSize.x * groupSize.y); i+=groupSize.x) {
+            totalGroupSum += localSums[i];
         }
+
+        partialSums[groupId.x + groupId.y * groupsPerGrid.x ] = totalGroupSum;
     }
 }
 
@@ -165,28 +240,28 @@ kernel void computeMinMaxRGB(texture2d<float, access::read> cameraImageTextureY 
             if (localMaxs[index] > max)
                 max = localMaxs[index];
         }
-        
+
         localMins[tid.y * groupSize.x] = min;
         localMaxs[tid.y * groupSize.x] = max;
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-        
-        if (tid.y == 0) {
-            min = INFINITY;
-            max = -INFINITY;
-            for (uint i = 0; i < (groupSize.x * groupSize.y); i+=groupSize.x) {
-                if (localMins[i] < min)
-                    min = localMins[i];
-                if (localMaxs[i] > max)
-                    max = localMaxs[i];
-            }
-            
-            index = groupId.x + groupId.y * groupsPerGrid.x;
-            partialMins[index] = min;
-            partialMaxs[index] = max;
-            threadgroup_barrier(mem_flags::mem_device);
-        }
     }
-    
+    //Uniform barrier - see computeLuma; a divergent threadgroup_barrier hangs the A9 GPU.
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    if (tid.x == 0 && tid.y == 0) {
+        min = INFINITY;
+        max = -INFINITY;
+        for (uint i = 0; i < (groupSize.x * groupSize.y); i+=groupSize.x) {
+            if (localMins[i] < min)
+                min = localMins[i];
+            if (localMaxs[i] > max)
+                max = localMaxs[i];
+        }
+
+        index = groupId.x + groupId.y * groupsPerGrid.x;
+        partialMins[index] = min;
+        partialMaxs[index] = max;
+    }
+
 }
 
 kernel void computeHue(texture2d<float, access::read> cameraImageTextureY [[ texture(0) ]],
@@ -250,23 +325,23 @@ kernel void computeHue(texture2d<float, access::read> cameraImageTextureY [[ tex
             totalRowSumY += localSumsY[tid.y * groupSize.x + i];
             totalRowSumX += localSumsX[tid.y * groupSize.x + i];
         }
-        
+
         localSumsX[tid.y * groupSize.x] = totalRowSumX;
         localSumsY[tid.y * groupSize.x] = totalRowSumY;
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-        
-        if (tid.y == 0) {
-            float totalGroupSumY = 0.0;
-            float totalGroupSumX = 0.0;
-            for (uint i = 0; i < (groupSize.x * groupSize.y); i+=groupSize.x) {
-                totalGroupSumY += localSumsY[i];
-                totalGroupSumX += localSumsX[i];
-            }
+    }
+    //Uniform barrier - see computeLuma; a divergent threadgroup_barrier hangs the A9 GPU.
+    threadgroup_barrier(mem_flags::mem_threadgroup);
 
-            partialSumsY[groupId.x + groupId.y * groupsPerGrid.x] = totalGroupSumY;
-            partialSumsX[groupId.x + groupId.y * groupsPerGrid.x] = totalGroupSumX;
-            threadgroup_barrier(mem_flags::mem_device);
+    if (tid.x == 0 && tid.y == 0) {
+        float totalGroupSumY = 0.0;
+        float totalGroupSumX = 0.0;
+        for (uint i = 0; i < (groupSize.x * groupSize.y); i+=groupSize.x) {
+            totalGroupSumY += localSumsY[i];
+            totalGroupSumX += localSumsX[i];
         }
+
+        partialSumsY[groupId.x + groupId.y * groupsPerGrid.x] = totalGroupSumY;
+        partialSumsX[groupId.x + groupId.y * groupsPerGrid.x] = totalGroupSumX;
     }
 }
 
@@ -336,19 +411,19 @@ kernel void computeSaturationAndValue(texture2d<float, access::read> cameraImage
         for (uint i = 0; i < groupSize.x; i++) {
             totalRowSum += localSums[tid.y * groupSize.x + i];
         }
-        
+
         localSums[tid.y * groupSize.x] = totalRowSum;
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-        
-        if (tid.y == 0) {
-            float totalGroupSum = 0.0;
-            for (uint i = 0; i < (groupSize.x * groupSize.y); i+=groupSize.x) {
-                totalGroupSum += localSums[i];
-            }
-            
-            partialSums[groupId.x + groupId.y * groupsPerGrid.x ] = totalGroupSum;
-            threadgroup_barrier(mem_flags::mem_device);
+    }
+    //Uniform barrier - see computeLuma; a divergent threadgroup_barrier hangs the A9 GPU.
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    if (tid.x == 0 && tid.y == 0) {
+        float totalGroupSum = 0.0;
+        for (uint i = 0; i < (groupSize.x * groupSize.y); i+=groupSize.x) {
+            totalGroupSum += localSums[i];
         }
+
+        partialSums[groupId.x + groupId.y * groupsPerGrid.x ] = totalGroupSum;
     }
 }
 
@@ -378,8 +453,9 @@ kernel void computeFinalSum(device float *partialSums [[ buffer(0) ]],
     }
     
     if (gid == 0) {
+        //No barrier here: it was inside single-thread control flow (divergent, a GPU hang on the
+        //A9) and served no purpose - the write to device memory is visible once the kernel completes.
         *result = localSums[0];
-        threadgroup_barrier(mem_flags::mem_device);
     }
 }
 
@@ -420,8 +496,8 @@ kernel void computeFinalMinMax(device float *partialMins [[ buffer(0) ]],
     }
     
     if (gid == 0) {
+        //No barrier here - see computeFinalSum; it was divergent and pointless.
         result->min = localMins[0];
         result->max = localMaxs[0];
-        threadgroup_barrier(mem_flags::mem_device);
     }
 }

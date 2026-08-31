@@ -57,7 +57,7 @@ private final class ViewElementHandler: ResultElementHandler {
     func childHandler(for elementName: String) throws -> ElementHandler {
         let handler: ViewComponentElementHandler
 
-        switch elementName {
+        switch elementName.lowercased() { //Element names are matched case-insensitively
         case "info":
             handler = infoHandler
         case "separator":

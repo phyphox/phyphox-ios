@@ -41,7 +41,7 @@ private extension ExperimentAnalysisDataOutput {
 }
 
 final class ExperimentAnalysisFactory {
-    private static let classMap = [
+    static let classMap = [
         "add": AdditionAnalysis.self,
         "subtract": SubtractionAnalysis.self,
         "multiply": MultiplicationAnalysis.self,
@@ -55,9 +55,9 @@ final class ExperimentAnalysisFactory {
         "sin": SinAnalysis.self,
         "cos": CosAnalysis.self,
         "tan": TanAnalysis.self,
-        "sinh": SinAnalysis.self,
-        "cosh": CosAnalysis.self,
-        "tanh": TanAnalysis.self,
+        "sinh": SinhAnalysis.self,
+        "cosh": CoshAnalysis.self,
+        "tanh": TanhAnalysis.self,
         "asin": AsinAnalysis.self,
         "acos": AcosAnalysis.self,
         "atan": AtanAnalysis.self,
@@ -86,6 +86,8 @@ final class ExperimentAnalysisFactory {
         "count": CountAnalysis.self,
         "average": AverageAnalysis.self,
         "binning": BinningAnalysis.self,
+        "butterworth": ButterworthAnalysis.self,
+        "imagedecode": ImageDecodeAnalysis.self,
         "if": IfAnalysis.self,
         "reduce": ReduceAnalysis.self,
         "map": MapAnalysis.self,
@@ -99,6 +101,15 @@ final class ExperimentAnalysisFactory {
     static func analysisModule(from descriptor: AnalysisModuleDescriptor, for key: String, buffers: [String: DataBuffer]) throws -> ExperimentAnalysisModule {
         guard let analysisClass = classMap[key] else {
             throw ElementHandlerError.unexpectedChildElement(key)
+        }
+
+        //Enforce the module's slot table before building it: whether the as attribute is required
+        //per slot, how many tags may fill it, and whether a value or empty input is allowed
+        //(mirroring Android's ioBlockParser).
+        //Every module declares its own table next to the code consuming the slot names; a unit
+        //test walks this classMap to make sure none is missing.
+        if let mapping = analysisClass.ioMapping {
+            try IOMappingValidation.validate(mapping: mapping, inputs: descriptor.inputs, outputs: descriptor.outputs)
         }
 
         let inputs = try descriptor.inputs.map { try ExperimentAnalysisDataInput(descriptor: $0, buffers: buffers) }

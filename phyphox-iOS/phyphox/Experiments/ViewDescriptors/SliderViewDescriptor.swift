@@ -17,6 +17,7 @@ enum SliderOutputValueType {
 
 struct SliderViewDescriptor: ViewDescriptor, Equatable {
     var label: String
+    var visibilityBuffer: DataBuffer?
     
     let minValue: Double
     let maxValue: Double
@@ -30,8 +31,10 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     
     var translation: ExperimentTranslationCollection?
     
-    init(label: String, minValue: Double, maxValue: Double, stepSize: Double, defaultValue: Double, precision: Int, outputBuffers: [SliderOutputValueType: DataBuffer], translation: ExperimentTranslationCollection?, type: SliderType, showValue: Bool) {
+    init(label: String, visibilityBuffer: DataBuffer?, minValue: Double, maxValue: Double, stepSize: Double, defaultValue: Double, precision: Int, outputBuffers: [SliderOutputValueType: DataBuffer], translation: ExperimentTranslationCollection?, type: SliderType, showValue: Bool) {
         self.label = label
+        self.visibilityBuffer = visibilityBuffer
+        
         self.minValue = minValue
         self.maxValue = maxValue
         self.stepSize = stepSize
@@ -52,32 +55,26 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
         }
     }
     
+    //Careful: All numbers written into the web interface's HTML and JavaScript must be plain
+    //(locale-independent) values. A locale-aware formatter turns 0.5 into "0,5" or 1000 into
+    //"1,000" and either silently misassigns via the JavaScript comma operator or is a syntax
+    //error. Android writes plain values here as well.
     func generateViewHTMLWithID(_ id: Int) -> String {
-        
-        let minValueFormatted = numberFormatter(for: minValue)
-        let maxValueFormatted = numberFormatter(for: maxValue)
-        let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
-        
-        let bufferName = outputBuffers[.Empty]?.name ?? ""
-        
-        let valueTag = showValue ? "<span class=\"label\">\(localizedLabel)</span><span class=\"value\" id=\"value\(id)\">\(defaultValueFormatted)</span>" : ""
-        
+
+        let valueTag = showValue ? "<span class=\"label\">\(localizedLabel)</span><span class=\"value\" id=\"value\(id)\">\(defaultValue)</span>" : ""
+
         return (type == SliderType.Range) ? generateTwoSlidersHTML(id) :
-        
-        "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\">\(valueTag)<div class=\"sliderContainer\"><span class=\"minValue\" id=\"minValue\(id)\">\(minValueFormatted)</span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" step=\(getStepSize())></input><span class=\"maxValue\" id=\"maxValue\(id)\">\(maxValueFormatted)</span></div></div>"
+
+        "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\">\(valueTag)<div class=\"sliderContainer\"><span class=\"minValue\" id=\"minValue\(id)\">\(minValue)</span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" step=\(getStepSize())></input><span class=\"maxValue\" id=\"maxValue\(id)\">\(maxValue)</span></div></div>"
     }
-    
+
     private func generateTwoSlidersHTML(_ id: Int) -> String{
-        let minValueFormatted = numberFormatter(for: minValue)
-        let maxValueFormatted = numberFormatter(for: maxValue)
-        let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
-        
         let valueTag = showValue ? "<span class=\"label\">\(localizedLabel)</span>" +
-        "<span class=\"value\" id=\"value\(id)\">\(defaultValueFormatted)</span>" : ""
+        "<span class=\"value\" id=\"value\(id)\">\(defaultValue)</span>" : ""
         
         return "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\">" + valueTag +
                                                     "<div class=\"sliderContainer\">" +
-                                                    "<span class=\"minValue\" >\(minValueFormatted)</span>" +
+                                                    "<span class=\"minValue\" >\(minValue)</span>" +
                                                         "<input type=\"range\" class=\"slider\" id=\"input\(id)\"" +
                                                             "min=\"1\" max=\"100\" value=\"100\" step=\(stepSize)\"" +
                                                             ">" +
@@ -90,30 +87,14 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                                                             "min=\"1\" max=\"100\" value=\"100\" step=\(stepSize)\"" +
                                                             ">" +
                                                             "</input>" +
-                                                        "<span class=\"maxValue\">\(maxValueFormatted)</span>" +
+                                                        "<span class=\"maxValue\">\(maxValue)</span>" +
                                                     "</div>" +
                                             "</div>";
     }
-    
-    func numberFormatter(for value: Double) -> String{
-        let formatter = NumberFormatter()
-        formatter.minimumFractionDigits = self.precision
-        formatter.maximumFractionDigits = self.precision
-        formatter.minimumIntegerDigits = 1
-        formatter.numberStyle = .decimal
-        
-        let number = NSNumber(value: value)
-        
-        return formatter.string(from: number) ?? " "
-        
-    }
-    
+
     func setDataHTMLWithID(_ id: Int) -> String {
-        
+
         let bufferName = outputBuffers[.Empty]?.name ?? ""
-        let minValueFormatted = numberFormatter(for: minValue)
-        let maxValueFormatted = numberFormatter(for: maxValue)
-        let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
 
         return (type == SliderType.Range) ? setDataHTMLWithIDForRangeSlider(id) :
         
@@ -123,19 +104,19 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                 if (!data.hasOwnProperty("\(bufferName)"))
                        return;
                 var x = data["\(bufferName)"]["data"][data["\(bufferName)"]["data"].length - 1];
-                var selectedValue = parseFloat(x).toFixed("+precision+")
+                var selectedValue = parseFloat(x).toFixed(\(precision))
                 var sliderElement = document.getElementById("input\(id)")
-                           
+
                 var valueDisplay = document.getElementById("value\(id)");
 
                 if (sliderElement) {
-                   sliderElement.min = \(minValueFormatted);
-                   sliderElement.max = \(maxValueFormatted);
+                   sliderElement.min = \(minValue);
+                   sliderElement.max = \(maxValue);
                    sliderElement.step = \(getStepSize());
                 }
-                
+
                 if (!sliderElement.classList.contains(\"isSliderUpdating\")) {
-                    sliderElement.value = selectedValue || \(defaultValueFormatted) ;
+                    sliderElement.value = selectedValue || \(defaultValue) ;
                 }
             
                 if(valueDisplay){
@@ -166,13 +147,7 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     private func setDataHTMLWithIDForRangeSlider(_ id: Int) -> String {
         let lowerValueBufferName = outputBuffers[.LowerValue]?.name ?? ""
         let upperValueBufferName = outputBuffers[.UpperValue]?.name ?? ""
-        let minValueFormatted = numberFormatter(for: minValue)
-        let maxValueFormatted = numberFormatter(for: maxValue)
-        let defaultValueFormatted = numberFormatter(for: defaultValue ?? 0.0)
-        
-        let lowerBuffer = outputBuffers[.LowerValue]?.last ?? 0.0
-        let upperBuffer = outputBuffers[.UpperValue]?.last ?? 0.0
-        
+
         return """
                 function (data) {
                           if (!data.hasOwnProperty("\(lowerValueBufferName)"))
@@ -191,10 +166,10 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
                             var valueDisplay = document.getElementById(\"value\(id)")
 
                             if (sliderElementOne && sliderElementTwo) {
-                                sliderElementOne.min = \(minValueFormatted)
-                                sliderElementTwo.min = \(minValueFormatted)
-                                sliderElementOne.max = \(maxValueFormatted)
-                                sliderElementTwo.max = \(maxValueFormatted)
+                                sliderElementOne.min = \(minValue)
+                                sliderElementTwo.min = \(minValue)
+                                sliderElementOne.max = \(maxValue)
+                                sliderElementTwo.max = \(maxValue)
                                 sliderElementOne.step = \(stepSize)
                                 sliderElementTwo.step = \(stepSize)
                             } else { return; }

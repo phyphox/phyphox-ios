@@ -12,7 +12,6 @@ import Foundation
 import ARKit
 import Metal
 import MetalKit
-import CocoaMQTT
 
 @available(iOS 14.0, *)
 protocol DepthGUIDelegate {
@@ -353,4 +352,9 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
             cameraBtn.setTitleColor(cameraBtn.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
         }
     }
+}
+
+@available(iOS 14.0, *)
+extension ExperimentDepthGUIView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
 }

@@ -9,9 +9,19 @@
 import Foundation
 
 final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
-    private var averageX = false
-    private var averageY = false
-    private var sumY = false
+    private static let factorInSlot = AnalysisIOSlot(name: "factor", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let xInSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let xOutSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let yOutSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.factorInSlot, Self.xInSlot, Self.yInSlot], outputs: [Self.xOutSlot, Self.yOutSlot])
+    }
+    //internal for the unit tests, which cannot construct attributes
+    var averageX = false
+    var averageY = false
+    var sumY = false
     
     private var factor: ExperimentAnalysisDataInput? = nil
     private var inX: MutableDoubleArray? = nil
@@ -27,44 +37,17 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
         averageY = try attributes.optionalValue(for: "averageY") ?? false
         sumY = try attributes.optionalValue(for: "sumY") ?? false
         
-        for input in inputs {
-            if input.asString == "x" {
-                switch input {
-                    case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                        inX = data
-                    default:
-                        throw SerializationError.genericError(message: "Error: Input x for reduce module has to be a buffer.")
-                }
-            }
-            else if input.asString == "y" {
-                switch input {
-                    case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                        inY = data
-                    default:
-                        throw SerializationError.genericError(message: "Error: Input y for reduce module has to be a buffer.")
-                }
-            }
-            else if input.asString == "factor" {
-                factor = input
-            }
-            else {
-                throw SerializationError.genericError(message: "Error: Unknown input for reduce module: \(input.asString).")
-            }
-        }
-        
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        factor = io.input(Self.factorInSlot)
+        inX = io.data(Self.xInSlot)
+        inY = io.data(Self.yInSlot)
+
         if (outputs.count < 1) {
             throw SerializationError.genericError(message: "Error: No output for reduce-module specified.")
         }
-        
-        for output in outputs {
-            if output.asString == "x" {
-                outX = output
-            } else if output.asString == "y" {
-                outY = output
-            } else {
-                throw SerializationError.genericError(message: "Error: Unknown output for reduce module: \(output.asString).")
-            }
-        }
+
+        outX = io.output(Self.xOutSlot)
+        outY = io.output(Self.yOutSlot)
         
         if factor == nil {
             throw SerializationError.genericError(message: "Error: Reduce module requires input \"factor\".")
@@ -86,24 +69,39 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
             return
         }
         
+        //A non-finite factor is an error state yielding empty outputs (and must not reach the
+        //Int conversions below)
+        guard fac.isFinite else {
+            return
+        }
+
         let x = inX!.data
         let y = inY?.data
-        
+
+        //Processing truncates to the shortest present buffer; only an absent y input keeps
+        //processing all of x (with 0 as the y contribution)
+        let count = y.map { Swift.min(x.count, $0.count) } ?? x.count
+
         var resX = [Double]()
         var resY = [Double]()
-        
+
         if fac > 1 {
+            guard fac < 9e18 else {
+                return
+            }
             let ifac = Int(round(fac))
             var index = 0
             var i = 0
-            while index < x.count {
+            while index < count {
                 var newX = 0.0
                 var newY = 0.0
+                var used = 0
                 for j in 0..<ifac {
                     index = i*ifac+j
-                    if index >= x.count {
+                    if index >= count {
                         break
                     }
+                    used += 1
                     if j == 0 {
                         newX = x[index]
                         newY = y != nil ? y![index] : 0.0
@@ -116,24 +114,30 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
                         }
                     }
                 }
+                //The incomplete final chunk is averaged over the number of values actually
+                //summed, not the nominal factor
                 if averageX {
-                    newX /= Double(ifac)
+                    newX /= Double(used)
                 }
                 if averageY {
-                    newY /= Double(ifac)
+                    newY /= Double(used)
                 }
-                
+
                 resX.append(newX)
                 resY.append(newY)
                 i += 1
                 index = i*ifac
             }
         } else if fac > 0 {
-            let ifac = Int(round(1.0/fac))
-            for i in 0..<x.count {
+            let upFactor = round(1.0/fac)
+            guard upFactor < 9e18 else {
+                return
+            }
+            let ifac = Int(upFactor)
+            for i in 0..<count {
                 for _ in 0..<ifac {
                     resX.append(x[i])
-                    resY.append(y != nil && y!.count > i ? y![i] : 0.0)
+                    resY.append(y != nil ? y![i] : 0.0)
                 }
             }
         }

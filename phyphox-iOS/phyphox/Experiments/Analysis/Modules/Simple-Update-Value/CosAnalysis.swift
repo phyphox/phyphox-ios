@@ -10,6 +10,13 @@ import Foundation
 import Accelerate
 
 final class CosAnalysis: UpdateValueAnalysis {
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [
+            AnalysisIOSlot(name: "value", asRequired: false, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 1)
+        ], outputs: [
+            AnalysisIOSlot(name: "cos", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+        ])
+    }
     private let deg: Bool
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {

@@ -154,14 +154,20 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
     }
    
     private func writeToBuffers(_ values: [Double],dataBufferIn: DataBuffer) {
-        
+
         func tryAppend(myValues: [Double], to buffer: DataBuffer?) {
             guard let buffer = buffer else { return }
-            
+
             buffer.appendFromArray(myValues)
+            //Completes the write, locking a static input buffer (Android: markSet)
+            buffer.markSet()
         }
-        
-        tryAppend(myValues: values, to: dataBufferIn)
+
+        //Coordinate with remote reads so a /get read snapshot is taken either fully before or fully
+        //after this write, not partway through (see BufferLock)
+        synchronizedBufferWrite([dataBufferIn]) {
+            tryAppend(myValues: values, to: dataBufferIn)
+        }
     }
    
     private func dataIn(_ values: [Double], dataBufferIn: DataBuffer) {
@@ -182,9 +188,11 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
 
 extension ExperimentBluetoothInput: Equatable {
     static func ==(lhs: ExperimentBluetoothInput, rhs: ExperimentBluetoothInput) -> Bool {
+        //The device is compared by its configuration - NSObject's identity == made two parses of
+        //the same file unequal. Also fixes mode being compared against itself.
         return lhs.configList == rhs.configList &&
-                lhs.device == rhs.device &&
-                lhs.mode == lhs.mode &&
+                ExperimentBluetoothDevice.valueEqual(lhs: lhs.device, rhs: rhs.device) &&
+                lhs.mode == rhs.mode &&
                 lhs.outputList == rhs.outputList &&
                 lhs.rate == rhs.rate &&
                 lhs.subscribeOnStart == rhs.subscribeOnStart

@@ -9,6 +9,15 @@
 import Foundation
 
 final class SplitAnalysis: AutoClearingExperimentAnalysisModule {
+    private static let dataInSlot = AnalysisIOSlot(name: "data", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+    private static let indexInSlot = AnalysisIOSlot(name: "index", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let overlapInSlot = AnalysisIOSlot(name: "overlap", asRequired: true, repeatOffset: -1, valueAllowed: true, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let out1OutSlot = AnalysisIOSlot(name: "out1", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+    private static let out2OutSlot = AnalysisIOSlot(name: "out2", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
+
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [Self.dataInSlot, Self.indexInSlot, Self.overlapInSlot], outputs: [Self.out1OutSlot, Self.out2OutSlot])
+    }
     private var dataIn: MutableDoubleArray!
     private var indexIn: ExperimentAnalysisDataInput?
     private var overlapIn: ExperimentAnalysisDataInput?
@@ -17,53 +26,36 @@ final class SplitAnalysis: AutoClearingExperimentAnalysisModule {
     private var out2Out: ExperimentAnalysisDataOutput?
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
-        
-        for input in inputs {
-            if input.asString == "data" {
-                switch input {
-                case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
-                    dataIn = data
-                case .value(value: _, usedAs: _):
-                    break
-                }
-            }
-            else if input.asString == "index" {
-                indexIn = input
-            }
-            else if input.asString == "overlap" {
-                overlapIn = input
-            }
-            else {
-                print("Error: Invalid analysis input: \(String(describing: input.asString))")
-            }
-        }
-        
-        for output in outputs {
-            if output.asString == "out1" {
-                out1Out = output
-            }
-            else if output.asString == "out2" {
-                out2Out = output
-            }
-            else {
-                if (out1Out == nil) {
-                    out1Out = output
-                } else {
-                    out2Out = output
-                }
-            }
-        }
-        
+
+        let io = try Self.mapIO(inputs: inputs, outputs: outputs)
+        dataIn = io.data(Self.dataInSlot)
+        indexIn = io.input(Self.indexInSlot)
+        overlapIn = io.input(Self.overlapInSlot)
+        out1Out = io.output(Self.out1OutSlot)
+        out2Out = io.output(Self.out2OutSlot)
+
         try super.init(inputs: inputs, outputs: outputs, additionalAttributes: additionalAttributes)
     }
     
     override func update() {
-        
+
         let inArray = dataIn.data
-        
-        let index = Int(indexIn?.getSingleValue() ?? Double(inArray.count))
-        let overlap = Int(overlapIn?.getSingleValue() ?? 0.0)
-        
+
+        //A present but non-finite index or overlap is an error state yielding empty outputs.
+        //Finite values are clamped: negative and out-of-range positive indices are clamped into
+        //range, and the overlap is clamped to the span that still affects the result - which
+        //also keeps huge values out of the trapping Int conversion. Absent inputs keep the
+        //defaults (index = input length, overlap = 0).
+        let indexValue = indexIn?.getSingleValue() ?? Double(inArray.count)
+        let overlapValue = overlapIn?.getSingleValue() ?? 0.0
+        guard indexValue.isFinite && overlapValue.isFinite else {
+            return
+        }
+
+        let count = Double(inArray.count)
+        let index = Int(min(max(indexValue, 0), count))
+        let overlap = Int(min(max(overlapValue, -(count + 1)), count + 1))
+
         var limit = min(index, inArray.count)
         if let out1Out = out1Out, limit > 0 {
             switch out1Out {

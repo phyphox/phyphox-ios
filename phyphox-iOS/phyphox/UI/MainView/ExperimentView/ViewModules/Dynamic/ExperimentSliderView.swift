@@ -12,16 +12,28 @@ import QuartzCore
 
 private let spacing: CGFloat = 10.0
 
+//Like the RangeSlider below, a touch on the slider must never start a scroll or the swipe to the
+//next tab, which would otherwise claim a horizontal drag of the thumb. Unlike the RangeSlider,
+//UISlider may use internal gesture recognizers for its own tracking, so only recognizers of
+//other views are blocked.
+private final class PhyphoxSlider: UISlider {
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        if gestureRecognizer.view === self {
+            return super.gestureRecognizerShouldBegin(gestureRecognizer)
+        }
+        return false
+    }
+}
 
 final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundViewModule, AnalysisLimitedViewModule {
 
     var descriptor: SliderViewDescriptor
     var analysisRunning: Bool = false
-    
+
     private let displayLink = DisplayLink(refreshRate: 5)
-    
+
     private var wantsUpdate = false
-    
+
     var active = false {
         didSet {
             displayLink.active = active
@@ -30,10 +42,10 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             }
         }
     }
-    
+
     var dynamicLabelHeight = 0.0
     private var textFieldWidth: CGFloat = 100.0
-    
+
     private let uiSlider: UISlider
     private let rangeSlider = RangeSlider(frame: CGRectZero)
     private let label = UILabel()
@@ -50,7 +62,7 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     required init(descriptor: SliderViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
         
-        uiSlider = UISlider()
+        uiSlider = PhyphoxSlider()
         super.init(frame: .zero)
         
         
@@ -230,14 +242,27 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     }
     
     func update(){
-       
+        //If a buffer was cleared, write the default back while the slider is not being
+        //dragged, so the setting is not lost for subsequent analysis cycles (matching
+        //Android's re-init)
         if(SliderType.Normal == descriptor.type){
+            if let buffer = sliderBuffer, buffer.last == nil, !uiSlider.isTracking {
+                buffer.replaceValues([descriptor.defaultValue])
+            }
             uiSlider.value = Float(sliderBuffer?.last ?? descriptor.defaultValue)
             sliderValue.text = numberFormatter(for: sliderBuffer?.last ?? descriptor.defaultValue)
         }
-        
+
         if(SliderType.Range == descriptor.type){
-            
+            if !rangeSlider.isTracking {
+                if let buffer = rangeSliderLowerBuffer, buffer.last == nil {
+                    buffer.replaceValues([descriptor.minValue])
+                }
+                if let buffer = rangeSliderUpperBuffer, buffer.last == nil {
+                    buffer.replaceValues([descriptor.maxValue])
+                }
+            }
+
             let lowerValue = rangeSliderLowerBuffer?.last ?? descriptor.minValue
             let upperValue = rangeSliderUpperBuffer?.last ?? descriptor.maxValue
             
@@ -493,6 +518,91 @@ class RangeSlider: UIControl{
             updateLayerFrames()
         }
     }
+
+    // MARK: - Accessibility
+
+    //The thumbs are CALayers of a custom UIControl, which carries no accessibility semantics of
+    //its own: without these elements VoiceOver and Switch Control cannot reach either end of the
+    //range (and neither can a UI test). Each thumb is an adjustable element that moves by the
+    //slider's step, or by a twentieth of the range where no step is given, and stays bounded by
+    //the other thumb exactly as dragging does.
+    private lazy var thumbElements: [RangeSliderThumbAccessibilityElement] = [
+        RangeSliderThumbAccessibilityElement(slider: self, isLower: true),
+        RangeSliderThumbAccessibilityElement(slider: self, isLower: false)
+    ]
+
+    override var isAccessibilityElement: Bool {
+        get { return false }
+        set { }
+    }
+
+    override var accessibilityElements: [Any]? {
+        get {
+            updateAccessibilityFrames()
+            return thumbElements
+        }
+        set { }
+    }
+
+    private func updateAccessibilityFrames() {
+        //A thumb is small; the touchable area around it is what a user aims at, so that is what
+        //the accessibility frame describes
+        for element in thumbElements {
+            let layer = element.isLower ? lowerThumbLayer : upperThumbLayer
+            element.accessibilityFrameInContainerSpace = layer.frame.insetBy(dx: -thumbWidth / 2, dy: -thumbWidth / 2)
+        }
+    }
+
+    ///One step of adjustment, as an assistive technology would make it
+    fileprivate func adjust(lower: Bool, by steps: Double) {
+        let step = stepSize > 0 ? stepSize : (maximumValue - minimumValue) / 20
+        if lower {
+            let value = boundValue(value: lowerValue + steps * step, toLowerValue: minimumValue, upperValue: upperValue)
+            guard value != lowerValue else { return }
+            lowerValue = value
+        } else {
+            let value = boundValue(value: upperValue + steps * step, toLowerValue: lowerValue, upperValue: maximumValue)
+            guard value != upperValue else { return }
+            upperValue = value
+        }
+        sendActions(for: .valueChanged)
+    }
+
+    fileprivate func value(lower: Bool) -> Double {
+        return lower ? lowerValue : upperValue
+    }
+}
+
+//One end of a RangeSlider, as assistive technology sees it: an adjustable element reporting the
+//value it stands for and moving that end by one step per adjustment.
+private final class RangeSliderThumbAccessibilityElement: UIAccessibilityElement {
+    private weak var slider: RangeSlider?
+    let isLower: Bool
+
+    init(slider: RangeSlider, isLower: Bool) {
+        self.slider = slider
+        self.isLower = isLower
+        super.init(accessibilityContainer: slider)
+        accessibilityLabel = localize(isLower ? "rangeSliderLowerValue" : "rangeSliderUpperValue")
+        accessibilityTraits = .adjustable
+    }
+
+    override var accessibilityValue: String? {
+        get {
+            guard let slider = slider else { return nil }
+            let value = slider.value(lower: isLower)
+            return String(format: value == value.rounded() ? "%.0f" : "%g", value)
+        }
+        set { }
+    }
+
+    override func accessibilityIncrement() {
+        slider?.adjust(lower: isLower, by: 1)
+    }
+
+    override func accessibilityDecrement() {
+        slider?.adjust(lower: isLower, by: -1)
+    }
 }
 
 class RangeSliderThumbLayer: CALayer {
@@ -567,3 +677,7 @@ class RangeSliderTrackLayer: CALayer {
 
 }
 
+
+extension ExperimentSliderView: VisibilityControllableViewModule {
+    var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
+}

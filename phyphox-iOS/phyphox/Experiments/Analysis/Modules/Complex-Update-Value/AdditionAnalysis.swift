@@ -10,6 +10,13 @@ import Foundation
 import Accelerate
 
 final class AdditionAnalysis: ExperimentComplexUpdateValueAnalysis {
+    override class var ioMapping: AnalysisIOMapping? {
+        return AnalysisIOMapping(inputs: [
+            AnalysisIOSlot(name: "summand", asRequired: false, repeatOffset: 0, valueAllowed: true, emptyAllowed: false, minCount: 1, maxCount: 0)
+        ], outputs: [
+            AnalysisIOSlot(name: "sum", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
+        ])
+    }
     
     override func update() {
         updateAllWithMethod({ (inputs) -> ValueSource in
@@ -22,7 +29,7 @@ final class AdditionAnalysis: ExperimentComplexUpdateValueAnalysis {
             }
             
             return main
-            },  priorityInputKey: nil)
+            })
     }
     
     func addValueSources(_ a: ValueSource, b: ValueSource) -> ValueSource {

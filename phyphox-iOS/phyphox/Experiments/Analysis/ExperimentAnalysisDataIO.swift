@@ -32,6 +32,16 @@ enum ExperimentAnalysisDataInput: Equatable {
             return value
         }
     }
+
+    //A value input acts as a one-element buffer, matching Android's DataInput.getArray()
+    func getArray() -> [Double] {
+        switch self {
+        case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
+            return data.data
+        case .value(value: let value, usedAs: _):
+            return [value]
+        }
+    }
     
     func getSingleValueAsInt() -> Int? {
         if let d = getSingleValue() {
@@ -54,12 +64,27 @@ enum ExperimentAnalysisDataInput: Equatable {
         }
     }
 
+    ///Compares the "as" name from the experiment file with a canonical slot name, folding case
+    ///(enum-case-insensitive rule in phyphox-docs, matching Android)
+    func used(as name: String) -> Bool {
+        return asString.lowercased() == name.lowercased()
+    }
+
     var isBuffer: Bool {
         switch self {
         case .buffer(buffer: _, data: _, usedAs: _, keep: _):
             return true
         case .value(value: _, usedAs: _):
             return false
+        }
+    }
+
+    var dataBuffer: DataBuffer? {
+        switch self {
+        case .buffer(buffer: let buffer, data: _, usedAs: _, keep: _):
+            return buffer
+        case .value(value: _, usedAs: _):
+            return nil
         }
     }
     
@@ -76,7 +101,9 @@ enum ExperimentAnalysisDataInput: Equatable {
     func clear() {
         switch self {
         case .buffer(buffer: let buffer, data: _, usedAs: _, keep: let keep):
-            if !keep && !buffer.staticBuffer && !buffer.attachedToTextField {
+            //Buffers bound to interactive view elements are NOT exempt from clearing: the
+            //element re-initializes its buffer to the default value instead (matching Android)
+            if !keep && !buffer.staticBuffer {
                 buffer.clear(reset: false)
             }
             return
@@ -115,11 +142,34 @@ enum ExperimentAnalysisDataOutput: Equatable {
         }
     }
 
+    ///Compares the "as" name from the experiment file with a canonical slot name, folding case
+    ///(enum-case-insensitive rule in phyphox-docs, matching Android)
+    func used(as name: String) -> Bool {
+        return asString.lowercased() == name.lowercased()
+    }
+
     var isBuffer: Bool {
         switch self {
         case .buffer(buffer: _, data: _, usedAs: _, append: _):
             return true
         }
+    }
+
+    var dataBuffer: DataBuffer {
+        switch self {
+        case .buffer(buffer: let buffer, data: _, usedAs: _, append: _):
+            return buffer
+        }
+    }
+
+    var isStatic: Bool {
+        return dataBuffer.staticBuffer
+    }
+
+    //Declares the module's write into this output complete, which locks a static buffer even if
+    //the module wrote nothing (Android: DataOutput.markSet)
+    func markSet() {
+        dataBuffer.markSet()
     }
     
     func retainData() {
@@ -133,7 +183,7 @@ enum ExperimentAnalysisDataOutput: Equatable {
     func clear() {
         switch self {
         case .buffer(buffer: let buffer, data: _, usedAs: _, append: let append):
-            if !append && !buffer.staticBuffer && !buffer.attachedToTextField {
+            if !append && !buffer.staticBuffer {
                 buffer.clear(reset: false)
             }
             return

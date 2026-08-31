@@ -40,43 +40,41 @@ final class ValueSource: CustomStringConvertible {
 }
 
 class ExperimentComplexUpdateValueAnalysis: AutoClearingExperimentAnalysisModule {
-    func updateAllWithMethod(_ method: ([ValueSource]) -> ValueSource, priorityInputKey: String?) {
+    func updateAllWithMethod(_ method: ([ValueSource]) -> ValueSource) {
+        //Operands follow the validated slot mapping: as attributes are matched
+        //case-insensitively and unnamed inputs fill the remaining slots in declaration order,
+        //matching Android's ioBlockParser. Consuming document order with an exact-match
+        //priority key used to silently swap operands for files that name only the second
+        //operand or write the first slot's name with different case.
+        let orderedInputs: [ExperimentAnalysisDataInput]
+        if let mapping = type(of: self).ioMapping, let mapped = try? type(of: self).mapIO(inputs: inputs, outputs: outputs) {
+            orderedInputs = mapping.inputs.flatMap { mapped.inputs($0) }
+        } else {
+            orderedInputs = inputs
+        }
+
         var values: [ValueSource] = []
         var maxCount = 0
         var emptyVector = false //Scalar and an empty vector should give an empty result
-        
-        for input in inputs {
+
+        for input in orderedInputs {
             switch input {
             case .buffer(buffer: _, data: let data, usedAs: _, keep: _):
                 let array = data.data
 
-                let src = ValueSource(vector: array)
-
-                if priorityInputKey != nil && input.asString == priorityInputKey! {
-                    values.insert(src, at: 0)
-                }
-                else {
-                    values.append(src)
-                }
+                values.append(ValueSource(vector: array))
 
                 if (array.count == 0) {
                     emptyVector = true
                 }
                 maxCount = Swift.max(maxCount, array.count)
-                
+
                 if array.count == 0 {
                     maxCount = 0
                     break
                 }
             case .value(value: let fixed, usedAs: _):
-                let src = ValueSource(scalar: fixed)
-
-                if priorityInputKey != nil && input.asString == priorityInputKey! {
-                    values.insert(src, at: 0)
-                }
-                else {
-                    values.append(src)
-                }
+                values.append(ValueSource(scalar: fixed))
 
                 maxCount = Swift.max(maxCount, 1)
             }
