@@ -428,6 +428,15 @@ jobs:
           fi
           xcrun simctl install "$IPAD" "$GITHUB_WORKSPACE/dd/Build/Products/Debug-iphonesimulator/phyphox.app"
           xcrun simctl privacy "$IPAD" grant all "$BUNDLE" || true
+          # Installing on a struggling device took 5.4 minutes once (run 33388729717), and the
+          # device was gone by the end of it - xcodebuild then listed no simulator at all and the
+          # job failed on a runner problem rather than on the app. The tablet is the optional half
+          # of this job, so a device that does not survive its own setup skips the tests it was
+          # for.
+          if ! xcrun simctl list devices | grep -q "$IPAD.*Booted"; then
+            echo "::warning::the iPad simulator was lost while the app was installed - tablet layouts not covered"
+            exit 0
+          fi
           xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
             -destination "id=$IPAD" -only-testing:phyphoxUITests/AppChromeTests
 

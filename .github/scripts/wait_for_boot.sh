@@ -30,4 +30,13 @@ while kill -0 "$WAITER" 2>/dev/null; do
   ELAPSED=$((ELAPSED + 5))
 done
 
-wait "$WAITER"
+wait "$WAITER" || exit 1
+
+# bootstatus exiting 0 is not the same as a usable device: it reports "Finished" with a terminal
+# status of 4294967295 either way, so what the caller gets told has to come from the device list
+# rather than from an exit code. A caller that is allowed to skip its tests can only skip them if
+# it hears about this.
+if ! xcrun simctl list devices | grep -q "$UDID.*Booted"; then
+  echo "$UDID is not booted although bootstatus finished"
+  exit 1
+fi
