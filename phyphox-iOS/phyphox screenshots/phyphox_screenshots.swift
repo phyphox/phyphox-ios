@@ -18,6 +18,11 @@ class phyphox_screenshots: XCTestCase {
         
         setupSnapshot(app)
         
+        //The app no longer honours this argument: it used to make the app open a pre-recorded
+        //experiment from a cloud link and treat every sensor as available, and was replaced by
+        //-phyphoxAssumeSensors and the host-driven screenshot system (see AutomationLaunchOptions
+        //in AppDelegate). This target is kept until that replacement has shipped a listing, but it
+        //no longer produces screenshots with data.
         app.launchArguments.append("screenshot")
         app.launch()
 

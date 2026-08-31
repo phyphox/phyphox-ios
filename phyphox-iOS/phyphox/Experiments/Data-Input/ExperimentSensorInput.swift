@@ -247,9 +247,16 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     }
     
     static func verifySensorAvailibility(sensorType: SensorType, motionSession: MotionSession) throws {
-        //The following line is used by the UI test to automatically generate screenshots for the App Store using fastlane. The UI test sets the argument "screenshot" and we will then ignore sensor tests as otherwise the generated screenshots in the simulator will show almost all sensors as missing
-        if ProcessInfo.processInfo.arguments.contains("screenshot") {
-            if sensorType != .light {
+        //-phyphoxAssumeSensors (see AutomationLaunchOptions in AppDelegate) is what the store
+        //screenshot system uses: the simulator it captures on reports almost every sensor as
+        //missing, which would leave the collection screenshot a wall of greyed-out entries. Only
+        //the hardware tests below are skipped - the sensor types iOS supports on no device at all
+        //still fail, because there the greyed-out entry is the truth and not a simulator artefact.
+        if AutomationLaunchOptions.assumeSensors {
+            switch sensorType {
+            case .light, .temperature, .humidity, .custom:
+                break
+            default:
                 return
             }
         }

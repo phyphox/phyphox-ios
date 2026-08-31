@@ -45,6 +45,26 @@ import UIKit
 //                             connection setup, so the network fixture experiments cannot run
 //                             without this. It skips no user choice and no system permission
 //                             dialog, which the app cannot dismiss anyway.
+//  -phyphoxAssumeSensors      treats every sensor the device could have as present while an
+//                             experiment is loaded, so no entry of the collection is greyed out
+//                             as unavailable. This one is for the store screenshot system, not
+//                             for the lab driver: the simulators it captures on report almost
+//                             every sensor as missing, which would turn the collection
+//                             screenshot into a wall of greyed-out entries. It only affects
+//                             whether an experiment loads - one that is started anyway still
+//                             finds no sensor and records nothing, which is fine for a
+//                             generated copy that carries its data as init values. Sensor types
+//                             iOS supports on no device at all (ambient light, temperature,
+//                             humidity) keep failing, because there the greyed-out entry is the
+//                             truth rather than a simulator artefact. Android mirrors this with
+//                             the shell-only system property "debug.phyphox.assumeSensors".
+//  -phyphoxView <n>           the view (tab) index the experiment opens on, counting from 0 in
+//                             the order the views appear in the file. Absent, not a number or
+//                             out of range means the first view, i.e. the normal behaviour.
+//                             Also for the screenshot system: one scene shows the second view,
+//                             and tapping a tab at coordinates that differ per form factor is
+//                             what made the old screenshot tests unmaintainable. Android:
+//                             "debug.phyphox.view".
 //
 //Example:
 //xcrun simctl launch <udid> de.rwth-aachen.physics.phyphox -phyphoxUrl "phyphox://asset=accelerometer.phyphox" -phyphoxRemote
@@ -66,6 +86,18 @@ enum AutomationLaunchOptions {
 
     ///The Bluetooth device to take an experiment from, for the compatibility suite
     static let bluetoothDeviceName: String? = value(after: "-phyphoxBleConnect")
+
+    ///Whether every sensor the device could have should be treated as available, for the store
+    ///screenshot system
+    static let assumeSensors = arguments.contains("-phyphoxAssumeSensors")
+
+    ///The view (tab) index an experiment should open on, or 0 if the argument is absent or does
+    ///not name a positive index. The caller still has to check it against the number of views
+    ///the experiment actually has.
+    static let startView: Int = {
+        guard let view = value(after: "-phyphoxView").flatMap({ Int($0) }), view > 0 else { return 0 }
+        return view
+    }()
 }
 
 @UIApplicationMain
@@ -85,10 +117,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         UILabel.appearance().adjustsFontForContentSizeCategory = true
 
         //The automation launch arguments are documented at AutomationLaunchOptions above
-        let arguments = ProcessInfo.processInfo.arguments
         let automationURL = AutomationLaunchOptions.url
 
-        experimentsCollectionViewController = ExperimentsCollectionViewController(willBeFirstViewForUser: (url == nil && automationURL == nil) || arguments.contains("screenshot"))
+        experimentsCollectionViewController = ExperimentsCollectionViewController(willBeFirstViewForUser: url == nil && automationURL == nil)
 
         main = MainNavigationViewController(navigationBarClass: MainNavigationBar.self, toolbarClass: nil)
         main.pushViewController(experimentsCollectionViewController, animated: false)
@@ -96,11 +127,6 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         mainNavViewController = ScalableViewController(hostedVC: main)
         window!.rootViewController = mainNavViewController
         window!.makeKeyAndVisible()
-
-        //The following is used by the UI test to automatically generate screenshots for the App Store using fastlane. The UI test sets the argument "screenshot" and the app will launch a pre-recorded experiment to allow for screenshots with data.
-        if arguments.contains("screenshot") {
-            return experimentsCollectionViewController.launchExperimentByURL(URL(string: "https://rwth-aachen.sciebo.de/s/5MzNo8IIe8bJuoD/download")!, chosenPeripheral: nil)
-        }
 
         if let automationURL = automationURL {
             return experimentsCollectionViewController.launchExperimentByURL(automationURL, chosenPeripheral: nil)

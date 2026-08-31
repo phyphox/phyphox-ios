@@ -148,11 +148,18 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         viewModules = modules
         
-        selectedViewCollection = 0
+        //Usually the first view. The store screenshot system can name another one through a
+        //launch argument (-phyphoxView, see AutomationLaunchOptions in AppDelegate) because one of
+        //its scenes shows the second view. An index this experiment does not have means the first
+        //view, i.e. the normal behaviour.
+        let requestedViewCollection = AutomationLaunchOptions.startView
+        selectedViewCollection = requestedViewCollection < experimentViewControllers.count ? requestedViewCollection : 0
         
         super.init(nibName: nil, bundle: nil)
         
-        experimentViewControllers.first?.active = true
+        if experimentViewControllers.indices.contains(selectedViewCollection) {
+            experimentViewControllers[selectedViewCollection].active = true
+        }
         
         for module in viewModules.flatMap({ $0 }) {
             if let button = module.view as? ExperimentButtonView {
@@ -422,7 +429,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         pageViewControler.delegate = self
         pageViewControler.dataSource = self
-        pageViewControler.setViewControllers([experimentViewControllers[0]], direction: .forward, animated: false, completion: nil)
+        pageViewControler.setViewControllers([experimentViewControllers[selectedViewCollection]], direction: .forward, animated: false, completion: nil)
         pageViewControler.view.autoresizingMask = [.flexibleHeight, .flexibleWidth]
         
         updateLayout()
