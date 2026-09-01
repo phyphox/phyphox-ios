@@ -256,12 +256,65 @@ def description_for(mod, po_locale):
     # Before formatting, so the separator is still a separator: formatDescription
     # turns a lone "- " into a bullet.
     text, _how = strip_android_section(text, po_locale)
+    text, dropped = drop_light_sensor(text, po_locale)
     text = ANCHOR.sub(r"\1", mod.formatDescription(text))
     left = sorted(set(TAG.findall(text)))
     if left:
         return None, (f"{po_locale}: markup the App Store would print literally: "
                       f"{', '.join(left)}")
-    return text, None
+    return (text, dropped), None
+
+
+BULLET = re.compile(r"^\s*-\s*\S")
+# The sensor list, in the order every translation keeps it: accelerometer,
+# magnetometer, gyroscope, LIGHT, pressure, microphone, proximity, GPS.
+SENSOR_LIST_LENGTH = 8
+LIGHT_SENSOR_POSITION = 3
+
+
+def drop_light_sensor(text, where):
+    """Remove the ambient light sensor from the list of supported sensors.
+
+    iOS exposes no ambient light sensor on any device - it is the one entry the
+    app itself always greys out (ExperimentSensorInput.verifySensorAvailibility
+    keeps failing for .light even under -phyphoxAssumeSensors) - so a listing
+    that advertises it is promising something the app cannot do there. Four of
+    the twenty App Store listings had the line removed by hand; the other
+    sixteen still carry it (maintainer, 2026-09-01: remove it in all twenty).
+
+    Found by position, not by word: the store text names the sensor differently
+    from the app in eleven of the twenty languages, so matching a translation of
+    "light" would quietly miss more than half of them. Every description has
+    exactly one bulleted block of eight items and the light sensor is the
+    fourth, which was checked in all twenty by reading them.
+
+    The guards are the point. A description without exactly one eight-item
+    block stops the run rather than losing some other line, and the line that
+    was dropped is printed on every run, so a translation that reorders the
+    list shows up in the review instead of silently costing the app a sensor.
+    """
+    lines = text.split("\n")
+    blocks, cur = [], []
+    for i, l in enumerate(lines):
+        if BULLET.match(l):
+            cur.append(i)
+        else:
+            if cur:
+                blocks.append(cur)
+            cur = []
+    if cur:
+        blocks.append(cur)
+    eight = [b for b in blocks if len(b) == SENSOR_LIST_LENGTH]
+    if len(eight) != 1:
+        raise SystemExit(
+            f"{where}: expected exactly one bulleted block of "
+            f"{SENSOR_LIST_LENGTH} items - the list of supported sensors - but "
+            f"found {len(eight)} (block sizes: "
+            f"{', '.join(str(len(b)) for b in blocks)}). The description was "
+            f"restructured; check by hand which line names the light sensor.")
+    at = eight[0][LIGHT_SENSOR_POSITION]
+    dropped = lines[at].strip()
+    return "\n".join(lines[:at] + lines[at + 1:]), dropped
 
 
 def png_size(path):
@@ -489,6 +542,11 @@ def show_diff(live, ours, rows):
                     continue
                 added = [l for l in b if l not in a]
                 removed = [l for l in a if l not in b]
+                if not added and not removed:
+                    # same lines, different order - worth saying so, because
+                    # "+0 -0 lines" on its own reads like a bug
+                    print(f"  {locale:8s} {field:11s} same lines, reordered")
+                    continue
                 print(f"  {locale:8s} {field:11s} CHANGED "
                       f"({len(before)} -> {len(after)} chars, "
                       f"+{len(added)} -{len(removed)} lines)")
@@ -518,10 +576,12 @@ def build_tree(rows, out, mod, live=None, seed_from=None):
     written, problems = {}, []
     for locale, row in rows:
         po_locale = row["app"].replace("-", "_")
-        text, why = description_for(mod, po_locale)
-        if text is None:
+        result, why = description_for(mod, po_locale)
+        if result is None:
             problems.append(f"{locale}: {why}")
             continue
+        text, dropped = result
+        print(f"  {locale:8s} dropped the light sensor: {dropped}")
         name = "phyphox"
         over = [(k, len(v)) for k, v in (("name", name), ("description", text))
                 if len(v) > LIMITS[k]]
