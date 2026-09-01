@@ -137,6 +137,17 @@ LIMITS = {"name": 30, "description": 4000}
 SIZES = {(1320, 2868): '6.9" iPhone', (2064, 2752): '13" iPad'}
 
 
+def store_locales(row):
+    """The App Store listings one app language feeds. Usually one.
+
+    Portuguese is one language in the app and two listings on the store,
+    knowingly given the same translation (maintainer, 2026-09-01), the same
+    compromise already made on Play.
+    """
+    ios = row["ios"]
+    return ios if isinstance(ios, list) else [ios]
+
+
 def formatter():
     """phyphox-translation's own formatting rules, imported rather than copied.
 
@@ -381,10 +392,12 @@ def read_field(root, locale, field):
 def show_diff(live, ours, rows):
     """What --upload would change, field by field, and what it would not."""
     print("\nwhat --upload would change:")
-    for row in rows:
-        locale = row["ios"]
+    for locale, _row in rows:
         if not os.path.isdir(os.path.join(live, locale)):
-            print(f"  {locale:8s} NOT ON THE STORE YET - deliver would create it")
+            seeded = [f for f in SEEDED if read_field(ours, locale, f)]
+            print(f"  {locale:8s} NEW LISTING - name, description"
+                  + (f", {', '.join(seeded)}" if seeded else "")
+                  + (" (copied from the seed locale)" if seeded else ""))
             continue
         for field in ("name", "description"):
             before, after = read_field(live, locale, field), read_field(ours, locale, field)
@@ -399,7 +412,7 @@ def show_diff(live, ours, rows):
                       f"({len(before)} -> {len(after)} chars)")
     print("\nleft exactly as it is (no file is written for these):")
     for field in LEFT_ALONE:
-        have = sorted(r["ios"] for r in rows if read_field(live, r["ios"], field))
+        have = sorted(loc for loc, _r in rows if read_field(live, loc, field))
         if have:
             print(f"  {field:17s} set in {len(have)} locale(s): "
                   + ", ".join(have[:8]) + (" ..." if len(have) > 8 else ""))
@@ -407,12 +420,18 @@ def show_diff(live, ours, rows):
             print(f"  {field:17s} not set anywhere on the store either")
 
 
-def build_tree(rows, out, mod):
+# Copied into a locale that does not exist on the store yet, from the source
+# locale, because there is nothing there to leave alone (maintainer,
+# 2026-09-01). Everywhere else these are the store's to keep - see D4 above.
+SEEDED = ["subtitle", "keywords", "support_url", "privacy_url"]
+
+
+def build_tree(rows, out, mod, live=None, seed_from=None):
     """Write the metadata tree, and return what went into it."""
     shutil.rmtree(out, ignore_errors=True)
     written, problems = {}, []
-    for row in rows:
-        locale, po_locale = row["ios"], row["app"].replace("-", "_")
+    for locale, row in rows:
+        po_locale = row["app"].replace("-", "_")
         text, why = description_for(mod, po_locale)
         if text is None:
             problems.append(f"{locale}: {why}")
@@ -433,6 +452,19 @@ def build_tree(rows, out, mod):
             assert value.strip(), f"{locale}/{fn} would be empty"
             with open(os.path.join(d, fn), "w", encoding="utf-8") as f:
                 f.write(value)
+        if seed_from and live and not os.path.isdir(os.path.join(live, locale)):
+            copied = []
+            for field in SEEDED:
+                value = read_field(live, seed_from, field)
+                if not value:
+                    continue
+                with open(os.path.join(d, f"{field}.txt"), "w",
+                          encoding="utf-8") as f:
+                    f.write(value)
+                copied.append(field)
+            if copied:
+                print(f"  {locale:8s} new on the store - copied "
+                      f"{', '.join(copied)} from {seed_from}")
         written[locale] = len(text)
     if problems:
         raise SystemExit(
@@ -478,6 +510,11 @@ def main():
                                         "Integrations")
     ap.add_argument("--skip-screenshots", action="store_true",
                     help="upload only the text")
+    ap.add_argument("--seed-new-from", metavar="LOCALE",
+                    help="for a locale that has no listing yet, copy "
+                         + ", ".join(SEEDED) + " from this one - there is "
+                         "nothing on the store to leave alone. Reads the live "
+                         "listing, so it needs the key.")
     ap.add_argument("--diff", action="store_true",
                     help="download the live listing and show what --upload "
                          "would change. Reads the store, writes nothing.")
@@ -494,16 +531,35 @@ def main():
     import yaml
     with open(os.path.join(DOCS, "screenshots", "locales.yml")) as f:
         locales = yaml.safe_load(f)
-    rows = [r for r in locales["locales"] if r.get("ios")]
+    # One entry per App Store LISTING, not per app language: Portuguese is one
+    # language and two listings.
+    rows = [(locale, r) for r in locales["locales"] if r.get("ios")
+            for locale in store_locales(r)]
     if args.languages:
         wanted = args.languages.split(",")
-        unknown = [w for w in wanted if w not in {r["ios"] for r in rows}]
+        unknown = [w for w in wanted if w not in {loc for loc, _ in rows}]
         if unknown:
             sys.exit(f"no such App Store locale in locales.yml: "
                      f"{', '.join(unknown)}")
-        rows = [r for r in rows if r["ios"] in wanted]
+        rows = [(loc, r) for loc, r in rows if loc in wanted]
 
-    written = build_tree(rows, args.metadata, formatter())
+    # The live listing is needed before the tree is built when new locales are
+    # to be seeded from it, so the download happens first either way.
+    live = None
+    if args.diff or args.seed_new_from:
+        if args.api_key and not os.path.isfile(args.api_key):
+            raise SystemExit(f"no key file at {args.api_key}")
+        with key_file(args.api_key) as key_path:
+            live = os.path.join(REPO, "build", "appstore", "live")
+            shutil.rmtree(live, ignore_errors=True)
+            download_live(key_path, live)
+        if args.seed_new_from and not os.path.isdir(
+                os.path.join(live, args.seed_new_from)):
+            raise SystemExit(f"--seed-new-from {args.seed_new_from}: that "
+                             f"locale is not on the store either")
+
+    written = build_tree(rows, args.metadata, formatter(), live,
+                         args.seed_new_from)
     print(f"metadata for {len(written)} locale(s) in {args.metadata}")
     print("  (name and description only - subtitle, keywords, promotional text, "
           "release notes\n   and the URLs are left to the store on purpose; see "
@@ -511,8 +567,7 @@ def main():
 
     known = known_sizes()
     total, missing = 0, []
-    for row in rows:
-        locale = row["ios"]
+    for locale, _row in rows:
         found = screenshots_for(locale)
         counts = ", ".join(f"{SIZES.get(s, f'{s[0]}x{s[1]}')}: {len(v)}"
                            for s, v in sorted(found.items()))
@@ -548,12 +603,6 @@ def main():
               + " and ".join(f"{w}x{h}" for w, h in SIZES) + ")")
 
     if args.diff:
-        if args.api_key and not os.path.isfile(args.api_key):
-            raise SystemExit(f"no key file at {args.api_key}")
-        with key_file(args.api_key) as key_path:
-            live = os.path.join(REPO, "build", "appstore", "live")
-            shutil.rmtree(live, ignore_errors=True)
-            download_live(key_path, live)
         show_diff(live, args.metadata, rows)
 
     if not args.upload:

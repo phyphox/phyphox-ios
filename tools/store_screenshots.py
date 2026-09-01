@@ -382,6 +382,17 @@ def launch(sim, scene, language, theme, view, version, url=None):
     simctl(*args)
 
 
+def store_locales(row):
+    """The App Store listings one app language feeds. Usually one.
+
+    Portuguese is one language in the app and two listings on both stores,
+    knowingly given the same translation - so it gets the same screenshots,
+    captured once and written to each.
+    """
+    ios = row["ios"]
+    return ios if isinstance(ios, list) else [ios]
+
+
 ORANGE = (255, 126, 34)
 
 
@@ -600,7 +611,8 @@ def main():
         stamp = prepare(sim, app)
         for row in rows:
             check_still_ours(sim, stamp)
-            target = os.path.join(args.out, row["ios"])
+            targets = [os.path.join(args.out, name) for name in store_locales(row)]
+            target = targets[0]
             for sid in capture:
                 scene = scenes[sid]
                 n = order.index(sid) + 1        # the store's display order
@@ -627,8 +639,13 @@ def main():
                 if scene.get("composite") == "camera":
                     top, bottom = composite_camera(shot, asset, factor["scale"])
                     extra = f"  (preview composited into y {top}-{bottom})"
-                total += 1
-                print(f"  {row['ios']:8s} {theme:5s} {n:02d}-{sid}{extra}")
+                for other in targets[1:]:
+                    os.makedirs(other, exist_ok=True)
+                    shutil.copyfile(shot, os.path.join(other,
+                                                       os.path.basename(shot)))
+                total += len(targets)
+                print(f"  {'/'.join(store_locales(row)):8s} {theme:5s} "
+                      f"{n:02d}-{sid}{extra}")
         print(f"{total} screenshot(s) into {args.out}")
     finally:
         status_bar(sim, on=False)
