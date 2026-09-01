@@ -58,7 +58,11 @@ It is a private key that can rewrite this app's listing and submit builds for
 it, so it goes in the login keychain, not in a file - see KEYCHAIN_SERVICE
 below for why that one and not age, gpg or pass.
 
-    tools/appstore_upload.py --import-key <file>   # then delete the file
+    tools/appstore_upload.py --import-key ~/Downloads/AuthKey_XXXXXXXXXX.p8 \\
+        --issuer-id <the UUID under Users and Access -> Integrations>
+
+taking Apple's download as it comes - the JSON that fastlane wants around it is
+assembled here rather than by hand. Delete the .p8 afterwards.
 
 `--upload` reads it back from there and writes it out as a 0600 file in a 0700
 directory only for as long as deliver runs, because fastlane takes a path
@@ -235,11 +239,47 @@ def key_json(text, where):
     return blob
 
 
-def import_key(path):
-    """Put a key JSON into the login keychain, replacing any earlier one."""
+KEY_ID_FROM_NAME = re.compile(r"AuthKey_([A-Z0-9]{8,12})\.p8$", re.IGNORECASE)
+
+
+def key_blob_from(path, key_id, issuer_id):
+    """fastlane's key JSON, from either a .p8 or an already-assembled JSON.
+
+    Apple hands out `AuthKey_<KEYID>.p8` and nothing else; the JSON is
+    fastlane's own wrapper (spaceship's Token.from_json_file wants `key_id` and
+    `key`, and the App Store Connect API needs `issuer_id` to sign with). Asking
+    for that JSON to be written by hand means pasting a PEM into a string with
+    its newlines escaped, which is a fine way to spend an afternoon on an
+    authentication error - so this builds it.
+
+    The key id is taken from the file name, which is where Apple already put it;
+    --key-id overrides that for a file that has been renamed.
+    """
     with open(path) as f:
         text = f.read()
-    blob = key_json(text, path)
+    if text.lstrip().startswith("{"):
+        return key_json(text, path)
+    if "PRIVATE KEY" not in text:
+        raise SystemExit(f"{path} is neither a .p8 private key nor a key JSON")
+    if not key_id:
+        m = KEY_ID_FROM_NAME.search(os.path.basename(path))
+        if not m:
+            raise SystemExit(
+                f"cannot tell the key id from {os.path.basename(path)} - Apple "
+                f"names the download AuthKey_<KEYID>.p8. Pass --key-id.")
+        key_id = m.group(1)
+    if not issuer_id:
+        raise SystemExit(
+            "--issuer-id is required with a .p8. It is the UUID at the top of "
+            "App Store Connect -> Users and Access -> Integrations -> App Store "
+            "Connect API, the same for every key on the team.")
+    return {"key_id": key_id, "issuer_id": issuer_id, "key": text}
+
+
+def import_key(path, key_id=None, issuer_id=None):
+    """Put a key into the login keychain, replacing any earlier one."""
+    blob = key_blob_from(path, key_id, issuer_id)
+    text = json.dumps(blob)
     subprocess.run(["security", "add-generic-password",
                     "-a", KEYCHAIN_ACCOUNT, "-s", KEYCHAIN_SERVICE,
                     "-w", text, "-U",
@@ -248,10 +288,9 @@ def import_key(path):
                    check=True)
     print(f"stored key {blob['key_id']} in the login keychain as "
           f"{KEYCHAIN_SERVICE!r}")
-    print(f"Now delete the plain copy - it is the same secret lying about:\n"
+    print(f"Now delete the file - it is the same secret lying about:\n"
           f"  rm -P {path}\n"
-          f"and the .p8 Apple let you download once, if you kept it. Losing "
-          f"both is survivable: revoke the key in App Store Connect and "
+          f"Losing it is survivable: revoke the key in App Store Connect and "
           f"generate another.")
 
 
@@ -282,14 +321,14 @@ def key_file(explicit):
             "no App Store Connect API key.\n"
             "Create an INDIVIDUAL key (App Store Connect -> Users and Access -> "
             "the phyphox user -> Edit Profile -> Generate an Individual API Key; "
-            "a team key cannot be restricted to one app), write fastlane's JSON "
-            "form of it to a file:\n"
-            '  {"key_id": "...", "issuer_id": "...", "key": '
-            '"-----BEGIN PRIVATE KEY-----\\n..."}\n'
-            f"then put it in the login keychain and delete the file:\n"
-            f"  tools/appstore_upload.py --import-key <file>\n"
-            f"A file is still accepted directly with --api-key, but keep it out "
-            f"of the working root - that syncs.")
+            "a team key cannot be restricted to one app). Apple downloads it "
+            "once, as AuthKey_<KEYID>.p8. Put that in the login keychain:\n"
+            "  tools/appstore_upload.py --import-key ~/Downloads/AuthKey_XXXX.p8 "
+            "--issuer-id <uuid>\n"
+            "and then delete the file. The issuer id is the UUID on the same "
+            "page, under Integrations.\n"
+            "A key file is still accepted directly with --api-key, but keep it "
+            "out of the working root - that syncs.")
     key_json(text, "the keychain entry")
     d = tempfile.mkdtemp(prefix="phyphox-asc-")
     os.chmod(d, stat.S_IRWXU)
@@ -365,8 +404,14 @@ def main():
     ap.add_argument("--api-key",
                     help="a key JSON file to use instead of the login keychain")
     ap.add_argument("--import-key", metavar="FILE",
-                    help="put a key JSON into the login keychain and exit; "
-                         "delete the file afterwards")
+                    help="put Apple's AuthKey_<KEYID>.p8 (or an assembled key "
+                         "JSON) into the login keychain and exit; delete the "
+                         "file afterwards")
+    ap.add_argument("--key-id", help="with --import-key, if the .p8 has been "
+                                     "renamed away from AuthKey_<KEYID>.p8")
+    ap.add_argument("--issuer-id", help="with --import-key: the UUID from App "
+                                        "Store Connect -> Users and Access -> "
+                                        "Integrations")
     ap.add_argument("--skip-screenshots", action="store_true",
                     help="upload only the text")
     ap.add_argument("--upload", action="store_true",
@@ -375,7 +420,7 @@ def main():
     args = ap.parse_args()
 
     if args.import_key:
-        import_key(args.import_key)
+        import_key(args.import_key, args.key_id, args.issuer_id)
         return
 
     sys.path.insert(0, os.path.join(DOCS, "tools", "screenshots"))
