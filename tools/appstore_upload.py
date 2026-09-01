@@ -174,6 +174,71 @@ def formatter():
 
 ANCHOR = re.compile(r'<a href="[^"]*">([^<]*)</a>')
 TAG = re.compile(r"</?[a-zA-Z][^>]*>")
+# A separator line: nothing but dashes. "--" is what the source uses and what
+# updateMetadata.py's bullet rule deliberately leaves alone ("^-(?!-)"); three
+# translations have worn it down to "-" or "- ", which is the same intent.
+SEPARATOR = re.compile(r"^\s*-{1,5}\s*$")
+
+
+def strip_android_section(text, where):
+    """Drop the Android permissions explanation from a store description.
+
+    Every store description ends with a section explaining the Android
+    permissions the app asks for - which is required reading on Play and is
+    nonsense on the App Store, where those permissions do not exist and Apple
+    would rightly object to being told about them.
+
+    The section is marked off by a separator line of dashes, and every
+    translation mentions "Android" exactly once, inside it. So: cut at the last
+    separator before that mention. Where a translation has lost the separator
+    altogether (nl, 2026-09-01), fall back to the paragraph before the one that
+    mentions Android, which is the section's own heading in all twenty
+    languages.
+
+    Then CHECK, because a heuristic that quietly does nothing is worse than one
+    that fails: the result must no longer mention Android, must not have lost
+    most of the text, and must not be empty. Anything else stops the run for
+    that locale rather than sending Apple a description of Android permissions.
+    """
+    lines = text.split("\n")
+    hits = [i for i, l in enumerate(lines) if "android" in l.lower()]
+    if not hits:
+        return text, None
+    first = hits[0]
+
+    seps = [i for i in range(first) if SEPARATOR.match(lines[i])]
+    if seps:
+        cut, how = seps[-1], "separator"
+    else:
+        # start of the paragraph mentioning Android, then back over the blank
+        # line, then to the start of the paragraph before it - the heading
+        i = first
+        while i > 0 and lines[i - 1].strip():
+            i -= 1
+        while i > 0 and not lines[i - 1].strip():
+            i -= 1
+        while i > 0 and lines[i - 1].strip():
+            i -= 1
+        cut, how = i, "heading"
+
+    kept = lines[:cut]
+    while kept and (not kept[-1].strip() or SEPARATOR.match(kept[-1])):
+        kept.pop()
+    out = "\n".join(kept)
+
+    if "android" in out.lower():
+        raise SystemExit(f"{where}: the Android permissions section is still "
+                         f"there after cutting at the {how} - look at it by "
+                         f"hand rather than uploading this.")
+    if not out.strip():
+        raise SystemExit(f"{where}: cutting the Android section left nothing")
+    if len(out) < 0.5 * len(text):
+        raise SystemExit(
+            f"{where}: cutting at the {how} would drop "
+            f"{100 - 100 * len(out) // len(text)}% of the description "
+            f"({len(text)} -> {len(out)} characters). That is not a permissions "
+            f"section - check the translation.")
+    return out, how
 
 
 def description_for(mod, po_locale):
@@ -188,6 +253,9 @@ def description_for(mod, po_locale):
             text = entry.msgstr
     if text is None:
         return None, f"{po_locale}.po has no store_long_description"
+    # Before formatting, so the separator is still a separator: formatDescription
+    # turns a lone "- " into a bullet.
+    text, _how = strip_android_section(text, po_locale)
     text = ANCHOR.sub(r"\1", mod.formatDescription(text))
     left = sorted(set(TAG.findall(text)))
     if left:
@@ -408,8 +476,26 @@ def show_diff(live, ours, rows):
             elif before is None:
                 print(f"  {locale:8s} {field:11s} NEW ({len(after)} chars)")
             else:
+                # The listing on the store was written by hand from the same
+                # source and uses "- " where formatDescription produces "-".
+                # Reporting that on every line would bury the two or three
+                # that matter, so it is normalised away and mentioned once.
+                def norm(t):
+                    return [re.sub(r"^[\u2022-]\s+", "- ", l)
+                            for l in t.split("\n") if l.strip()]
+                a, b = norm(before), norm(after)
+                if a == b:
+                    print(f"  {locale:8s} {field:11s} same text, bullets restyled")
+                    continue
+                added = [l for l in b if l not in a]
+                removed = [l for l in a if l not in b]
                 print(f"  {locale:8s} {field:11s} CHANGED "
-                      f"({len(before)} -> {len(after)} chars)")
+                      f"({len(before)} -> {len(after)} chars, "
+                      f"+{len(added)} -{len(removed)} lines)")
+                for l in added[:3]:
+                    print(f"           + {l[:86]}")
+                for l in removed[:3]:
+                    print(f"           - {l[:86]}")
     print("\nleft exactly as it is (no file is written for these):")
     for field in LEFT_ALONE:
         have = sorted(loc for loc, _r in rows if read_field(live, loc, field))
