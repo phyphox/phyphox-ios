@@ -52,10 +52,28 @@ and F-Droid render and the App Store does not: there the description is plain
 text, and a tag would appear literally. So the anchors are unwrapped again
 afterwards, and anything else that still looks like a tag stops the run.
 
+THE API KEY
+-----------
+It is a private key that can rewrite this app's listing and submit builds for
+it, so it goes in the login keychain, not in a file - see KEYCHAIN_SERVICE
+below for why that one and not age, gpg or pass.
+
+    tools/appstore_upload.py --import-key <file>   # then delete the file
+
+`--upload` reads it back from there and writes it out as a 0600 file in a 0700
+directory only for as long as deliver runs, because fastlane takes a path
+rather than the key itself. `--api-key <file>` still works for a machine with
+some other arrangement - but keep that file out of the working root, which
+syncs.
+
 Dependencies: PyYAML and polib, plus fastlane for --upload. Same virtualenv as
 the capture script:
 
     ~/.venvs/phyphox-screenshots/bin/pip install pyyaml polib
+
+fastlane must be new enough to know the two screenshot sizes this listing uses;
+2.214.0 is not, 2.238.0 is. The check below reads that out of the installed
+copy rather than trusting a version number.
 """
 
 import argparse
@@ -63,12 +81,15 @@ import contextlib
 import glob
 import importlib.util
 import io
+import json
 import os
 import re
 import shutil
+import stat
 import struct
 import subprocess
 import sys
+import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
@@ -80,9 +101,27 @@ SHOTS = os.path.join(ROOT, "screenshots", "ios")
 # same way the capture script regenerates its scene files.
 METADATA = os.path.join(REPO, "build", "appstore", "metadata")
 BUNDLE_ID = "de.rwth-aachen.physics.phyphox"
+
+# WHERE THE API KEY LIVES
+#
 # An App Store Connect individual API key, in fastlane's own JSON shape
-# (key_id, issuer_id, key). Kept out of the working root, which syncs.
-DEFAULT_KEY = os.path.expanduser("~/.config/phyphox-store/asc_key.json")
+# (key_id, issuer_id, key). It is a private key that can rewrite this app's
+# listing and submit builds for it, so:
+#
+#   - never in the working root, which syncs to Nextcloud;
+#   - never in a repository, this one included;
+#   - not lying about as a plain file if that can be avoided.
+#
+# The login keychain is what this machine offers (no age, gpg or pass): it is
+# encrypted at rest under the login password, it does not sync anywhere, and it
+# reads back in one command. --import-key puts it there; the value is only ever
+# written out as a 0600 temporary file for as long as deliver runs, because
+# fastlane takes a path rather than the key itself.
+#
+# A plain file is still accepted, for a machine that has some other arrangement
+# or a one-off run - hence --api-key.
+KEYCHAIN_SERVICE = "phyphox-asc-key"
+KEYCHAIN_ACCOUNT = "phyphox"
 
 # App Store Connect's limits. Checked before anything is sent, so an over-long
 # string is reported by name instead of coming back as an API error at the end.
@@ -179,6 +218,92 @@ def known_sizes():
             for a, b in re.findall(r"\[\s*(\d+)\s*,\s*(\d+)\s*\]", body)}
 
 
+def key_json(text, where):
+    """Parse and sanity-check the API key blob without ever printing it."""
+    try:
+        blob = json.loads(text)
+    except ValueError:
+        raise SystemExit(f"{where} is not JSON. fastlane wants "
+                         '{"key_id": "...", "issuer_id": "...", "key": '
+                         '"-----BEGIN PRIVATE KEY-----\\n..."}')
+    missing = [k for k in ("key_id", "issuer_id", "key") if not blob.get(k)]
+    if missing:
+        raise SystemExit(f"{where} is missing {', '.join(missing)}")
+    if "PRIVATE KEY" not in blob["key"]:
+        raise SystemExit(f"{where}: \"key\" should be the .p8 file's contents, "
+                         f"beginning -----BEGIN PRIVATE KEY-----")
+    return blob
+
+
+def import_key(path):
+    """Put a key JSON into the login keychain, replacing any earlier one."""
+    with open(path) as f:
+        text = f.read()
+    blob = key_json(text, path)
+    subprocess.run(["security", "add-generic-password",
+                    "-a", KEYCHAIN_ACCOUNT, "-s", KEYCHAIN_SERVICE,
+                    "-w", text, "-U",
+                    "-D", "App Store Connect API key",
+                    "-j", "phyphox store release (tools/appstore_upload.py)"],
+                   check=True)
+    print(f"stored key {blob['key_id']} in the login keychain as "
+          f"{KEYCHAIN_SERVICE!r}")
+    print(f"Now delete the plain copy - it is the same secret lying about:\n"
+          f"  rm -P {path}\n"
+          f"and the .p8 Apple let you download once, if you kept it. Losing "
+          f"both is survivable: revoke the key in App Store Connect and "
+          f"generate another.")
+
+
+def key_from_keychain():
+    r = subprocess.run(["security", "find-generic-password",
+                        "-a", KEYCHAIN_ACCOUNT, "-s", KEYCHAIN_SERVICE, "-w"],
+                       capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 and r.stdout.strip() else None
+
+
+@contextlib.contextmanager
+def key_file(explicit):
+    """A path deliver can read, and no key left on disk afterwards.
+
+    fastlane takes a path rather than the key itself, so a key held in the
+    keychain has to be written out for the length of the run. It goes into a
+    0700 directory as a 0600 file and is removed in a finally, including when
+    deliver fails or the run is interrupted.
+    """
+    if explicit:
+        with open(explicit) as f:
+            key_json(f.read(), explicit)
+        yield explicit
+        return
+    text = key_from_keychain()
+    if not text:
+        raise SystemExit(
+            "no App Store Connect API key.\n"
+            "Create an INDIVIDUAL key (App Store Connect -> Users and Access -> "
+            "the phyphox user -> Edit Profile -> Generate an Individual API Key; "
+            "a team key cannot be restricted to one app), write fastlane's JSON "
+            "form of it to a file:\n"
+            '  {"key_id": "...", "issuer_id": "...", "key": '
+            '"-----BEGIN PRIVATE KEY-----\\n..."}\n'
+            f"then put it in the login keychain and delete the file:\n"
+            f"  tools/appstore_upload.py --import-key <file>\n"
+            f"A file is still accepted directly with --api-key, but keep it out "
+            f"of the working root - that syncs.")
+    key_json(text, "the keychain entry")
+    d = tempfile.mkdtemp(prefix="phyphox-asc-")
+    os.chmod(d, stat.S_IRWXU)
+    path = os.path.join(d, "asc_key.json")
+    try:
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                     stat.S_IRUSR | stat.S_IWUSR)
+        with os.fdopen(fd, "w") as f:
+            f.write(text)
+        yield path
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def build_tree(rows, out, mod):
     """Write the metadata tree, and return what went into it."""
     shutil.rmtree(out, ignore_errors=True)
@@ -237,15 +362,21 @@ def main():
     ap.add_argument("--screenshots", default=SHOTS)
     ap.add_argument("--languages", help="comma separated App Store locales; "
                                         "default: every one in locales.yml")
-    ap.add_argument("--api-key", default=DEFAULT_KEY,
-                    help="fastlane's App Store Connect API key JSON "
-                         f"(default: {DEFAULT_KEY})")
+    ap.add_argument("--api-key",
+                    help="a key JSON file to use instead of the login keychain")
+    ap.add_argument("--import-key", metavar="FILE",
+                    help="put a key JSON into the login keychain and exit; "
+                         "delete the file afterwards")
     ap.add_argument("--skip-screenshots", action="store_true",
                     help="upload only the text")
     ap.add_argument("--upload", action="store_true",
                     help="hand the result to deliver. Even then deliver shows "
                          "its HTML preview and waits for confirmation.")
     args = ap.parse_args()
+
+    if args.import_key:
+        import_key(args.import_key)
+        return
 
     sys.path.insert(0, os.path.join(DOCS, "tools", "screenshots"))
     import yaml
@@ -309,18 +440,16 @@ def main():
               f"to hand this to deliver.")
         return
 
-    if not os.path.isfile(args.api_key):
-        raise SystemExit(
-            f"no App Store Connect API key at {args.api_key}. Create an "
-            f"INDIVIDUAL key (App Store Connect -> Users and Access -> the "
-            f"phyphox user -> Edit Profile -> Generate an Individual API Key; "
-            f"a team key cannot be restricted to one app), then write "
-            f"fastlane's JSON form of it there:\n"
-            f'  {{"key_id": "...", "issuer_id": "...", "key": '
-            f'"-----BEGIN PRIVATE KEY-----\\n..."}}')
+    if args.api_key and not os.path.isfile(args.api_key):
+        raise SystemExit(f"no key file at {args.api_key}")
 
+    with key_file(args.api_key) as key_path:
+        raise SystemExit(deliver(key_path, args))
+
+
+def deliver(key_path, args):
     cmd = ["fastlane", "deliver",
-           "--api_key_path", args.api_key,
+           "--api_key_path", key_path,
            "--app_identifier", BUNDLE_ID,
            "--metadata_path", args.metadata,
            "--screenshots_path", args.screenshots,
@@ -340,8 +469,13 @@ def main():
     # No --force: deliver renders an HTML preview of exactly what it is about to
     # write and waits for a yes. That preview is the review step this whole
     # tool is arranged around, so it must not be skipped.
-    print("\n" + " ".join(cmd) + "\n")
-    raise SystemExit(subprocess.call(cmd, cwd=REPO))
+    # The key path is a throwaway temporary file, so printing the command is
+    # not printing a secret - but say where it came from, because a path under
+    # /var/folders looks like something went wrong otherwise.
+    print("\n" + " ".join(cmd))
+    print("  (the key was written out of the login keychain for this run and is "
+          "deleted after it)\n")
+    return subprocess.call(cmd, cwd=REPO)
 
 
 if __name__ == "__main__":
