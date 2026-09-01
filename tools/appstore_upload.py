@@ -343,6 +343,70 @@ def key_file(explicit):
         shutil.rmtree(d, ignore_errors=True)
 
 
+# What deliver would write if a file existed, beyond the two this tool
+# generates. Shown by --diff so it is visible that they are being left alone
+# rather than quietly blanked.
+LEFT_ALONE = ["subtitle", "keywords", "promotional_text", "release_notes",
+              "support_url", "marketing_url", "privacy_url"]
+
+
+def download_live(key_path, out):
+    """The listing as it is on the store right now. Read-only."""
+    os.makedirs(out, exist_ok=True)
+    cmd = ["fastlane", "deliver", "download_metadata",
+           "--api_key_path", key_path,
+           "--app_identifier", BUNDLE_ID,
+           "--platform", "ios",
+           "--metadata_path", out,
+           "--force", "true"]
+    print("  " + " ".join(cmd[:3]) + " ... (this only reads)")
+    if subprocess.call(cmd, cwd=REPO) != 0:
+        raise SystemExit("could not download the current listing")
+    # deliver also pulls down review_information/, which is the reviewer contact
+    # details and any demo account - a phone number, an email address and a
+    # password. Nothing here reads them, and this tree sits in a working root
+    # that syncs, so they go straight back out again.
+    shutil.rmtree(os.path.join(out, "review_information"), ignore_errors=True)
+    return out
+
+
+def read_field(root, locale, field):
+    path = os.path.join(root, locale, f"{field}.txt")
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        return f.read().strip()
+
+
+def show_diff(live, ours, rows):
+    """What --upload would change, field by field, and what it would not."""
+    print("\nwhat --upload would change:")
+    for row in rows:
+        locale = row["ios"]
+        if not os.path.isdir(os.path.join(live, locale)):
+            print(f"  {locale:8s} NOT ON THE STORE YET - deliver would create it")
+            continue
+        for field in ("name", "description"):
+            before, after = read_field(live, locale, field), read_field(ours, locale, field)
+            if after is None:
+                continue
+            if before == after:
+                print(f"  {locale:8s} {field:11s} unchanged")
+            elif before is None:
+                print(f"  {locale:8s} {field:11s} NEW ({len(after)} chars)")
+            else:
+                print(f"  {locale:8s} {field:11s} CHANGED "
+                      f"({len(before)} -> {len(after)} chars)")
+    print("\nleft exactly as it is (no file is written for these):")
+    for field in LEFT_ALONE:
+        have = sorted(r["ios"] for r in rows if read_field(live, r["ios"], field))
+        if have:
+            print(f"  {field:17s} set in {len(have)} locale(s): "
+                  + ", ".join(have[:8]) + (" ..." if len(have) > 8 else ""))
+        else:
+            print(f"  {field:17s} not set anywhere on the store either")
+
+
 def build_tree(rows, out, mod):
     """Write the metadata tree, and return what went into it."""
     shutil.rmtree(out, ignore_errors=True)
@@ -414,6 +478,9 @@ def main():
                                         "Integrations")
     ap.add_argument("--skip-screenshots", action="store_true",
                     help="upload only the text")
+    ap.add_argument("--diff", action="store_true",
+                    help="download the live listing and show what --upload "
+                         "would change. Reads the store, writes nothing.")
     ap.add_argument("--upload", action="store_true",
                     help="hand the result to deliver. Even then deliver shows "
                          "its HTML preview and waits for confirmation.")
@@ -479,6 +546,15 @@ def main():
         print("\n  (could not read deliver's screenshot size table - check by "
               "hand that this\n   fastlane knows "
               + " and ".join(f"{w}x{h}" for w, h in SIZES) + ")")
+
+    if args.diff:
+        if args.api_key and not os.path.isfile(args.api_key):
+            raise SystemExit(f"no key file at {args.api_key}")
+        with key_file(args.api_key) as key_path:
+            live = os.path.join(REPO, "build", "appstore", "live")
+            shutil.rmtree(live, ignore_errors=True)
+            download_live(key_path, live)
+        show_diff(live, args.metadata, rows)
 
     if not args.upload:
         print(f"\n{total} screenshot(s) ready. Nothing was sent - add --upload "
