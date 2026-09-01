@@ -325,6 +325,37 @@ def png_size(path):
     return struct.unpack(">II", data[16:24])
 
 
+def known_locales():
+    """The locale directory names App Store Connect accepts.
+
+    deliver validates these itself and refuses the whole run over one bad name,
+    which is how `gu` and `ta` were caught on 2026-09-01 - Play's spellings,
+    where the App Store wants `gu-IN` and `ta-IN`. Better to say so while
+    building the tree than after logging in, so the list is read out of the
+    installed fastlane (fastlane_core/languages.rb) the same way the screenshot
+    sizes are.
+    """
+    exe = shutil.which("fastlane")
+    if not exe:
+        return None
+    try:
+        out = subprocess.run(["fastlane", "--version"], capture_output=True,
+                             text=True, timeout=120).stdout
+    except (subprocess.SubprocessError, OSError):
+        return None
+    m = re.search(r"(\S+/fastlane-[^/]+)/bin/fastlane", out)
+    if not m:
+        return None
+    path = os.path.join(m.group(1), "fastlane_core", "lib", "fastlane_core",
+                        "languages.rb")
+    if not os.path.isfile(path):
+        return None
+    with open(path) as f:
+        body = f.read()
+    found = set(re.findall(r'"([a-zA-Z]{2,4}(?:-[A-Za-z]{2,4})?)"', body))
+    return found or None
+
+
 def known_sizes():
     """The screenshot dimensions the INSTALLED deliver recognises.
 
@@ -620,16 +651,36 @@ def build_tree(rows, out, mod, live=None, seed_from=None):
     return written
 
 
-def screenshots_for(locale):
-    d = os.path.join(SHOTS, locale)
+OURS = re.compile(r"^(iphone|ipad)-\d\d-[a-z-]+\.png$")
+
+
+def screenshots_for(locale, root):
+    """The plates for one locale - and nothing else that happens to be there.
+
+    deliver uploads every image it finds in a locale's folder, so a stray file
+    becomes a store screenshot. That is not hypothetical: running deliver from
+    the wrong directory sends it into its setup wizard, which DOWNLOADS the
+    listing's current screenshots into this very folder (2026-09-01, sixteen old
+    plates per locale). Anything not named the way tools/store_screenshots.py
+    names them stops the run.
+    """
+    d = os.path.join(root, locale)
     if not os.path.isdir(d):
-        return {}
-    found = {}
-    for p in sorted(glob.glob(os.path.join(d, "*.png"))):
+        return {}, []
+    found, strays = {}, []
+    for name in sorted(os.listdir(d)):
+        p = os.path.join(d, name)
+        if not os.path.isfile(p):
+            continue
+        if not OURS.match(name):
+            strays.append(name)
+            continue
         size = png_size(p)
         if size:
             found.setdefault(size, []).append(p)
-    return found
+        else:
+            strays.append(name)
+    return found, strays
 
 
 def main():
@@ -704,6 +755,17 @@ def main():
             raise SystemExit(f"--seed-new-from {args.seed_new_from}: that "
                              f"locale is not on the store either")
 
+    valid = known_locales()
+    if valid:
+        wrong = sorted({loc for loc, _ in rows} - valid)
+        if wrong:
+            sys.exit(
+                f"locales.yml names {', '.join(wrong)} in its ios column, and "
+                f"App Store Connect has no such localization - deliver refuses "
+                f"the whole run over one of these. Check the spelling against "
+                f"fastlane's list of App Store localizations; Play's codes are "
+                f"not always the same.")
+
     written = build_tree(rows, args.metadata, formatter(), live,
                          args.seed_new_from)
     print(f"metadata for {len(written)} locale(s) in {args.metadata}")
@@ -712,9 +774,10 @@ def main():
           "this file's docstring)")
 
     known = known_sizes()
-    total, missing = 0, []
+    total, missing, strays = 0, [], []
     for locale, _row in rows:
-        found = screenshots_for(locale)
+        found, extra = screenshots_for(locale, args.screenshots)
+        strays += [f"{locale}/{n}" for n in extra]
         counts = ", ".join(f"{SIZES.get(s, f'{s[0]}x{s[1]}')}: {len(v)}"
                            for s, v in sorted(found.items()))
         total += sum(len(v) for v in found.values())
@@ -727,6 +790,13 @@ def main():
         # and a locale with text but no screenshots is a normal state.
         print(f"  no screenshots for {', '.join(missing)} - the store will fall "
               f"back to the default listing's images")
+    if strays:
+        raise SystemExit(
+            "these are in the screenshot folders and are not plates this "
+            "system produced:\n  " + "\n  ".join(strays[:20])
+            + (f"\n  ... and {len(strays) - 20} more" if len(strays) > 20 else "")
+            + "\nDeliver would upload them as store screenshots. Remove them, "
+              "or re-run tools/store_screenshots.py to rebuild the folder.")
 
     if known is not None:
         unusable = [f"{w}x{h} ({SIZES[(w, h)]})" for (w, h) in SIZES
@@ -785,13 +855,32 @@ def deliver(key_path, args):
     # No --force: deliver renders an HTML preview of exactly what it is about to
     # write and waits for a yes. That preview is the review step this whole
     # tool is arranged around, so it must not be skipped.
+    # WHERE deliver is run from matters, and --metadata_path does not settle it.
+    # deliver decides whether it is configured with
+    #
+    #   loaded = true if File.exist?(File.join(FastlaneCore::FastlaneFolder.path
+    #                                          || ".", "metadata"))
+    #
+    # (commands_generator.rb) - a `metadata` directory beside the WORKING
+    # DIRECTORY, not the one just passed to it. Run from anywhere else it decides
+    # there is no configuration, offers to create one, asks whether you would
+    # like Swift or Ruby, and downloads the existing listing instead of
+    # uploading. So it runs from the directory that actually holds the metadata
+    # tree, where that test is true for the right reason.
+    where = os.path.dirname(os.path.abspath(args.metadata))
+    if os.path.basename(os.path.abspath(args.metadata)) != "metadata":
+        raise SystemExit(
+            f"--metadata must be a directory called 'metadata' - deliver looks "
+            f"for that name next to its working directory to decide whether it "
+            f"is configured, and would run its setup wizard instead of "
+            f"uploading. Got {args.metadata}")
     # The key path is a throwaway temporary file, so printing the command is
     # not printing a secret - but say where it came from, because a path under
     # /var/folders looks like something went wrong otherwise.
     print("\n" + " ".join(cmd))
-    print("  (the key was written out of the login keychain for this run and is "
-          "deleted after it)\n")
-    return subprocess.call(cmd, cwd=REPO)
+    print(f"  (run from {where}; the key was written out of the login keychain "
+          f"for this run and is deleted after it)\n")
+    return subprocess.call(cmd, cwd=where)
 
 
 if __name__ == "__main__":
