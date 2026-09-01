@@ -24,5 +24,4 @@ External/*
 !External/XMLDictionary
 External/XMLDictionary/*
 !External/XMLDictionary/XMLDictionary
-phyphox-iOS/fastlane/screenshots/*
 __pycache__/
