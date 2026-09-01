@@ -267,8 +267,13 @@ def description_for(mod, po_locale):
 
 BULLET = re.compile(r"^\s*-\s*\S")
 # The sensor list, in the order every translation keeps it: accelerometer,
-# magnetometer, gyroscope, LIGHT, pressure, microphone, proximity, GPS.
-SENSOR_LIST_LENGTH = 8
+# magnetometer, gyroscope, LIGHT, pressure, microphone, proximity, GPS - and,
+# since the 2026-09-02 source update, camera and LiDAR/ToF appended at the end.
+# Translations lag behind the source, so lists of 8 and of 10 items coexist in
+# the PO files; what identifies the block is that it is the only one anywhere
+# near that long (the features list has 4 entries, the export formats 3), and
+# what finds the light sensor is its position, which every length keeps.
+SENSOR_LIST_MIN_LENGTH = 8
 LIGHT_SENSOR_POSITION = 3
 
 
@@ -285,8 +290,10 @@ def drop_light_sensor(text, where):
     Found by position, not by word: the store text names the sensor differently
     from the app in eleven of the twenty languages, so matching a translation of
     "light" would quietly miss more than half of them. Every description has
-    exactly one bulleted block of eight items and the light sensor is the
-    fourth, which was checked in all twenty by reading them.
+    exactly one bulleted block of eight or more items and the light sensor is
+    the fourth, which was checked in all twenty by reading them - twice, since
+    the source list grew from eight to ten mid-release and the first version of
+    this required exactly eight, which its own guard then caught.
 
     The guards are the point. A description without exactly one eight-item
     block stops the run rather than losing some other line, and the line that
@@ -304,15 +311,15 @@ def drop_light_sensor(text, where):
             cur = []
     if cur:
         blocks.append(cur)
-    eight = [b for b in blocks if len(b) == SENSOR_LIST_LENGTH]
-    if len(eight) != 1:
+    candidates = [b for b in blocks if len(b) >= SENSOR_LIST_MIN_LENGTH]
+    if len(candidates) != 1:
         raise SystemExit(
-            f"{where}: expected exactly one bulleted block of "
-            f"{SENSOR_LIST_LENGTH} items - the list of supported sensors - but "
-            f"found {len(eight)} (block sizes: "
+            f"{where}: expected exactly one bulleted block of at least "
+            f"{SENSOR_LIST_MIN_LENGTH} items - the list of supported sensors - "
+            f"but found {len(candidates)} (block sizes: "
             f"{', '.join(str(len(b)) for b in blocks)}). The description was "
             f"restructured; check by hand which line names the light sensor.")
-    at = eight[0][LIGHT_SENSOR_POSITION]
+    at = candidates[0][LIGHT_SENSOR_POSITION]
     dropped = lines[at].strip()
     return "\n".join(lines[:at] + lines[at + 1:]), dropped
 
