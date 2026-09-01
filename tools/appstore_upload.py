@@ -332,6 +332,133 @@ def png_size(path):
     return struct.unpack(">II", data[16:24])
 
 
+RUBY_LISTING = """
+require "spaceship"
+Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.from_json_file(ARGV[0])
+app = Spaceship::ConnectAPI::App.find(ARGV[1])
+v = app.get_edit_app_store_version(platform: "IOS")
+abort("no editable version") if v.nil?
+v.get_app_store_version_localizations.each do |loc|
+  loc.get_app_screenshot_sets.each do |set|
+    prev = nil
+    set.app_screenshots.each do |sc|
+      key = [sc.file_name, sc.source_file_checksum]
+      if ARGV[2] == "dedupe" && key == prev
+        STDERR.puts "deleted duplicate #{loc.locale} #{set.screenshot_display_type} #{sc.file_name}"
+        sc.delete!
+      else
+        puts [loc.locale, set.screenshot_display_type, sc.file_name,
+              sc.source_file_checksum].join("\t")
+        prev = key
+      end
+    end
+  end
+end
+"""
+
+
+def fastlane_ruby_env():
+    """An environment in which `require "spaceship"` works.
+
+    Read out of the fastlane wrapper script itself - the homebrew wrapper is a
+    one-line bash file that sets PATH, GEM_HOME and GEM_PATH before handing over
+    to the real binary - rather than reconstructed, because the gem layout
+    differs between install methods and reconstructing it wrong fails with a
+    LoadError three calls deep. If the wrapper cannot be parsed, the caller says
+    it cannot verify instead of pretending it did.
+    """
+    exe = shutil.which("fastlane")
+    if not exe:
+        return None, None
+    try:
+        with open(exe) as f:
+            text = f.read()
+    except (OSError, UnicodeDecodeError):
+        return None, None
+    home = os.path.expanduser("~")
+    values = {}
+    for key in ("PATH", "GEM_HOME", "GEM_PATH"):
+        m = re.search(key + r'="([^"]+)"', text)
+        if not m:
+            return None, None
+        v = m.group(1).replace("${HOME}", home).replace("$HOME", home)
+        v = v.replace("$PATH", os.environ.get("PATH", ""))
+        v = re.sub(r"\$\{FASTLANE_GEM_HOME:-([^}]*)\}", r"\1", v)
+        values[key] = v
+    env = dict(os.environ, **values)
+    for d in values["PATH"].split(os.pathsep):
+        ruby = os.path.join(d, "ruby")
+        if os.path.isfile(ruby):
+            return env, ruby
+    return env, shutil.which("ruby")
+
+
+def store_screenshot_listing(key_path, dedupe=False):
+    """{locale: {display_type: [(file_name, checksum)]}} for the editable
+    version, straight from App Store Connect. With dedupe, adjacent entries
+    that are the same file with the same checksum are deleted first - the
+    shape a retried upload leaves behind."""
+    env, ruby = fastlane_ruby_env()
+    if not env or not ruby:
+        return None
+    r = subprocess.run(
+        [ruby, "-e", RUBY_LISTING, key_path, BUNDLE_ID,
+         "dedupe" if dedupe else "list"],
+        capture_output=True, text=True, env=env, timeout=600)
+    for line in r.stderr.splitlines():
+        if line.startswith("deleted duplicate"):
+            print("  " + line)
+    if r.returncode != 0:
+        print("  could not read the store's screenshots back:\n    "
+              + (r.stderr.strip().splitlines()[-1] if r.stderr.strip() else "?"))
+        return None
+    listing = {}
+    for line in r.stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) != 4:
+            continue
+        locale, display_type, name, checksum = parts
+        listing.setdefault(locale, {}).setdefault(display_type, []).append(
+            (name, checksum))
+    return listing
+
+
+def verify_screenshots(rows, shots_root, listing):
+    """Compare what the store holds against the local plates, name by name.
+
+    This exists because an upload can succeed and still be wrong: deliver's
+    upload worker retries on a timeout, and a retry whose first attempt did
+    land server-side leaves the same screenshot twice (zh-Hant, 2026-09-02,
+    four duplicates). deliver reports success either way, so the only place
+    the truth can be read is the store itself.
+    """
+    problems = []
+    for locale, _row in rows:
+        local = {"IPHONE": [], "IPAD": []}
+        d = os.path.join(shots_root, locale)
+        if os.path.isdir(d):
+            for name in sorted(os.listdir(d)):
+                if OURS.match(name):
+                    local["IPHONE" if name.startswith("iphone") else "IPAD"].append(name)
+        if not any(local.values()):
+            continue
+        remote = {"IPHONE": [], "IPAD": []}
+        for display_type, entries in (listing.get(locale) or {}).items():
+            kind = "IPAD" if "IPAD" in display_type else "IPHONE"
+            remote[kind] += [name for name, _checksum in entries]
+        for kind in ("IPHONE", "IPAD"):
+            if local[kind] != remote[kind]:
+                problems.append(f"{locale} {kind.lower()}: store has "
+                                f"[{', '.join(remote[kind]) or 'nothing'}], "
+                                f"local is [{', '.join(local[kind])}]")
+    dupes = [f"{locale} {display_type}: {name}"
+             for locale, sets in (listing or {}).items()
+             for display_type, entries in sets.items()
+             for (name, checksum), prev in zip(entries[1:], entries[:-1])
+             if (name, checksum) == prev]
+    return problems, dupes
+
+
 def known_locales():
     """The locale directory names App Store Connect accepts.
 
@@ -724,7 +851,16 @@ def main():
                          "would change. Reads the store, writes nothing.")
     ap.add_argument("--upload", action="store_true",
                     help="hand the result to deliver. Even then deliver shows "
-                         "its HTML preview and waits for confirmation.")
+                         "its HTML preview and waits for confirmation. The "
+                         "store is read back afterwards and compared plate by "
+                         "plate.")
+    ap.add_argument("--verify-screenshots", action="store_true",
+                    help="read the store's screenshots back and compare them "
+                         "against the local plates, without uploading anything")
+    ap.add_argument("--dedupe-screenshots", action="store_true",
+                    help="delete a screenshot that follows an identical one in "
+                         "the same set - what a retried upload leaves behind - "
+                         "then verify")
     args = ap.parse_args()
 
     if args.import_key:
@@ -828,6 +964,13 @@ def main():
     if args.diff:
         show_diff(live, args.metadata, rows)
 
+    if args.verify_screenshots or args.dedupe_screenshots:
+        if args.api_key and not os.path.isfile(args.api_key):
+            raise SystemExit(f"no key file at {args.api_key}")
+        with key_file(args.api_key) as key_path:
+            raise SystemExit(check_store(key_path, rows, args.screenshots,
+                                         dedupe=args.dedupe_screenshots))
+
     if not args.upload:
         print(f"\n{total} screenshot(s) ready. Nothing was sent - add --upload "
               f"to hand this to deliver.")
@@ -837,7 +980,35 @@ def main():
         raise SystemExit(f"no key file at {args.api_key}")
 
     with key_file(args.api_key) as key_path:
-        raise SystemExit(deliver(key_path, args))
+        rc = deliver(key_path, args)
+        if rc == 0 and not args.skip_screenshots:
+            rc = check_store(key_path, rows, args.screenshots, dedupe=False)
+        raise SystemExit(rc)
+
+
+def check_store(key_path, rows, shots_root, dedupe):
+    print("\nreading the store back to check what actually arrived:")
+    listing = store_screenshot_listing(key_path, dedupe=dedupe)
+    if listing is None:
+        print("  could not verify - check the screenshot counts in App Store "
+              "Connect by hand")
+        return 3
+    problems, dupes = verify_screenshots(rows, shots_root, listing)
+    if dupes:
+        print("  the same screenshot is on the store twice:")
+        for d in dupes:
+            print(f"    {d}")
+        print("  run --dedupe-screenshots to remove the extra copies.")
+    if problems:
+        print("  the store does not match the local plates:")
+        for p in problems:
+            print(f"    {p}")
+    if not problems and not dupes:
+        print(f"  every plate matches, none doubled, none missing "
+              f"({sum(len(v) for sets in listing.values() for v in sets.values())} "
+              f"screenshots across {len(listing)} locales)")
+        return 0
+    return 3
 
 
 def deliver(key_path, args):
