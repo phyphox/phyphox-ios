@@ -56,7 +56,10 @@ import UIKit
 //                             generated copy that carries its data as init values. Sensor types
 //                             iOS supports on no device at all (ambient light, temperature,
 //                             humidity) keep failing, because there the greyed-out entry is the
-//                             truth rather than a simulator artefact. Android mirrors this with
+//                             truth rather than a simulator artefact. It also suppresses the
+//                             camera loading error, which a simulator raises on every camera
+//                             experiment because AVFoundation offers it no capture device at
+//                             all; the preview simply stays empty. Android mirrors this with
 //                             the shell-only system property "debug.phyphox.assumeSensors".
 //  -phyphoxView <n>           the view (tab) index the experiment opens on, counting from 0 in
 //                             the order the views appear in the file. Absent, not a number or

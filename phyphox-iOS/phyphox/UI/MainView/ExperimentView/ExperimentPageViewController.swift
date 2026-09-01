@@ -1574,6 +1574,17 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 return
             }
 
+            //-phyphoxAssumeSensors says to treat every sensor the device could have as present,
+            //and on a simulator the camera is the one that cannot be faked at all: AVFoundation
+            //offers no capture device, so this alert comes up on every launch of a camera
+            //experiment and its OK button leaves the experiment. The store screenshot system
+            //composites a real preview into the empty rectangle afterwards, which it cannot do
+            //with a dialog on top. Nothing else changes - the preview stays empty and the
+            //experiment records nothing, exactly as it would without the flag.
+            if AutomationLaunchOptions.assumeSensors {
+                return
+            }
+
             let alert = UIAlertController(title: localize("cameraLoadingErrorTitle"),
                                           message: (notification.userInfo?["message"] as? String ?? localize("cameraLoadingErrorMessage6")) + localize("cameraLoadingErrorSecondMessage"),
                                           preferredStyle: .alert)
