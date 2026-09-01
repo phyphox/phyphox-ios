@@ -698,6 +698,25 @@ final class Experiment {
         for (defaultValue, buffer) in inputDefaults where buffer.last == nil {
             buffer.replaceValues([defaultValue])
         }
+
+        //The audio input's rate component is seeded here for the same reason and at the same
+        //moments: analysis chains use it for their time base before anything has been recorded.
+        //audio_spectrum computes the time of the NEXT map row as t + samples/rate, deliberately,
+        //so that the row the first analysis pass appends lands just after the existing history
+        //instead of at the current experiment time - with rate empty, that guard collapses to
+        //the timer's value, which on a never-started experiment is exactly 0, and a history
+        //loaded from init values (a saved state, a screenshot scene) gets a row at t=0 whose
+        //quad the map graph then stretches across the whole plot. Android writes the rate on
+        //every input pass for this reason ("Even if we do not use the first recording, we write
+        //the audio rate so it is available early", PhyphoxExperiment.handleDataInput). Only
+        //while the buffer is empty: once the engine runs it appends the rate actually achieved,
+        //which on iOS may differ from the request and must win.
+        for audioInput in audioInputs {
+            guard let rateBuffer = audioInput.sampleRateInfoBuffer, rateBuffer.last == nil else {
+                continue
+            }
+            rateBuffer.append(Double(audioInput.sampleRate))
+        }
     }
     
     ///Collected once in init rather than walked per analysis cycle, which is where the seeding
