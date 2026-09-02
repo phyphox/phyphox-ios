@@ -437,6 +437,31 @@ jobs:
             echo "::warning::the iPad simulator was lost while the app was installed - tablet layouts not covered"
             exit 0
           fi
+          # The same warm-up the preparation gives the phone (see t1-prepare): the first launch
+          # of a freshly installed app on a freshly booted device is the slow one, and on the
+          # tablet it comes right after a boot that has just starved the runner. Run 33595623632
+          # lost that first launch to XCUITest's timeout, the next test then attached to the
+          # late arrival of the previous one, and the third spent a minute failing to terminate
+          # it - four failures from one slow start. So the app is launched here once, with an
+          # experiment so that remote access can say when it is really up. Its own port: the
+          # simulators share the host's loopback, and a phone-side leftover on 8080 must not
+          # answer for the tablet.
+          WARMUP_PORT=8085
+          xcrun simctl launch "$IPAD" "$BUNDLE" \
+            -phyphoxUrl "phyphox://asset=tone_generator.phyphox" -phyphoxAutoConfirm \
+            -phyphoxRemote -phyphoxRemotePort "$WARMUP_PORT" >/dev/null 2>&1 || true
+          for i in $(seq 120); do
+            curl -fs -m 2 "http://127.0.0.1:$WARMUP_PORT/config" >/dev/null && break
+            sleep 1
+          done
+          if curl -fs -m 5 "http://127.0.0.1:$WARMUP_PORT/config" >/dev/null; then
+            echo "the app is up on the tablet after $i s"
+          else
+            # Not fatal: what matters is that the tests get a warm app, and a genuinely broken
+            # launch fails them loudly enough
+            echo "::warning::the tablet warm-up launch did not answer within 120 s"
+          fi
+          xcrun simctl terminate "$IPAD" "$BUNDLE" >/dev/null 2>&1 || true
           xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
             -destination "id=$IPAD" -only-testing:phyphoxUITests/AppChromeTests
 
