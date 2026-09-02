@@ -1694,19 +1694,27 @@ final class InputDefaultsTests: XCTestCase {
                        + "buffer, rather than writing the position it was showing back into it")
     }
 
-    ///The slider is deliberately left out of the seeding: the parser gives it its default when
-    ///the file is read, and Android never seeds a slider at all, so re-seeding it here would be a
-    ///new divergence in the other direction rather than the end of one
-    ///(slider-default-never-reaches-buffer, open).
-    func testTheSliderIsLeftAsItIs() throws {
+    ///The slider is seeded like the rest since the NaN rule (input-default-does-not-replace-nan,
+    ///2026-09-02): Android seeds it on every write pass like every other input element, and on
+    ///iOS its own module only runs while its page is on screen. In range mode the two buffers
+    ///start from the slider's min and max, the values the handles show.
+    func testTheSliderIsSeededLikeTheRest() throws {
         let experiment = try parse("""
         <phyphox version="1.7">
             <title>t</title><category>c</category>
-            <data-containers><container size="1" init="">sliderOut</container></data-containers>
+            <data-containers>
+                <container size="1" init="">sliderOut</container>
+                <container size="1" init="">lower</container>
+                <container size="1" init="">upper</container>
+            </data-containers>
             <views>
                 <view label="only">
                     <slider label="s" minValue="0" maxValue="10" default="7">
                         <output value="value">sliderOut</output>
+                    </slider>
+                    <slider label="r" type="range" minValue="2" maxValue="8">
+                        <output value="lowerValue">lower</output>
+                        <output value="upperValue">upper</output>
                     </slider>
                 </view>
             </views>
@@ -1715,9 +1723,12 @@ final class InputDefaultsTests: XCTestCase {
         XCTAssertEqual(experiment.buffers["sliderOut"]?.last, 7.0,
                        "the parser seeds it while reading the file")
         experiment.buffers["sliderOut"]?.clear(reset: true)
+        experiment.buffers["lower"]?.replaceValues([Double.nan])
+        experiment.buffers["upper"]?.clear(reset: true)
         experiment.seedInputDefaults()
-        XCTAssertNil(experiment.buffers["sliderOut"]?.last,
-                     "and nothing here puts it back, which is today's behaviour on both platforms")
+        XCTAssertEqual(experiment.buffers["sliderOut"]?.last, 7.0, "the seeding puts it back")
+        XCTAssertEqual(experiment.buffers["lower"]?.last, 2.0, "a range slider's lower buffer starts at its min")
+        XCTAssertEqual(experiment.buffers["upper"]?.last, 8.0, "and the upper one at its max")
     }
 }
 
@@ -5168,6 +5179,65 @@ final class DuplicateRootMetadataTests: XCTestCase {
 //conformance corpus and the analysis golden vectors). Nothing is copied into the test bundle,
 //where it would drift; without the sibling those tests skip with a notice (a plain clone must
 //still build and test) and CI checks it out explicitly.
+//The starting state of an input element's buffer, over the two fixtures in phyphox-docs
+//fixtures/views/ that exist for it. The UI half (ViewBehaviorTests) asserts the same through the
+//remote API on a running app; this is the rule at its source, Experiment.seedInputDefaults,
+//which runs when the experiment is built - before any page exists.
+final class InputDefaultSeedingTests: XCTestCase {
+    private func load(_ fixture: String) throws -> Experiment {
+        let directory = try DocsCorpus.docsDirectory("fixtures/views", notTestedNotice: "input defaults")
+        return try ExperimentSerialization.readExperimentFromURL(directory.appendingPathComponent("\(fixture).phyphox"))
+    }
+
+    private func assertBuffers(_ experiment: Experiment, _ expected: [(String, Double)],
+                               file: StaticString = #filePath, line: UInt = #line) throws {
+        for (name, value) in expected {
+            let values = try experiment.buffers[name].unwrap().toArray()
+            XCTAssertEqual(values, [value], name, file: file, line: line)
+        }
+    }
+
+    //A default fills an EMPTY buffer and never overwrites one that is not
+    func testContainerInitBeatsAControlsDefault() throws {
+        try assertBuffers(try load("init-vs-default"), [
+            ("toggle_init", 1), ("dropdown_init", 2), ("edit_init", 42), ("slider_init", 4),
+            ("toggle_default", 1), ("dropdown_default", 1), ("edit_default", 7), ("slider_default", 3),
+        ])
+    }
+
+    //A NaN is replaced by the default as written - the edit's default lies above its max on
+    //purpose - for every element, the slider included (input-default-does-not-replace-nan)
+    func testANaNIsReplacedByTheDefault() throws {
+        try assertBuffers(try load("nan-vs-default"), [
+            ("toggle_nan", 1), ("dropdown_nan", 2), ("edit_nan", 12), ("slider_nan", 3),
+        ])
+    }
+
+    //The replacement happens on every seeding, not only when the experiment is built: an
+    //analysis writing NaN into an input element's buffer gets the default back before the next
+    //cycle, and the buffer never reports the write as user input
+    func testANaNWrittenLaterIsReplacedAgain() throws {
+        let experiment = try load("nan-vs-default")
+        let buffer = try experiment.buffers["edit_nan"].unwrap()
+        let observer = UserInputCounter()
+        buffer.addObserver(observer)
+
+        buffer.replaceValues([Double.nan])
+        experiment.seedInputDefaults()
+        XCTAssertEqual(buffer.toArray(), [12])
+        //User input is reported asynchronously on the main queue, so give it the chance
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.2))
+        XCTAssertEqual(observer.userInputs, 0, "replacing a NaN must not read as user input")
+        withExtendedLifetime(observer) {}
+    }
+
+    private final class UserInputCounter: DataBufferObserver {
+        var userInputs = 0
+        func dataBufferUpdated(_ buffer: DataBuffer) {}
+        func userInputTriggered(_ buffer: DataBuffer) { userInputs += 1 }
+    }
+}
+
 enum DocsCorpus {
     //#filePath is resolvable at test time because the suite builds and runs on the same
     //machine, locally as well as on CI

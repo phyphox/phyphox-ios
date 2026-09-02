@@ -244,9 +244,12 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     func update(){
         //If a buffer was cleared, write the default back while the slider is not being
         //dragged, so the setting is not lost for subsequent analysis cycles (matching
-        //Android's re-init)
+        //Android's re-init). Experiment.seedInputDefaults() does the same for every page at
+        //the moments that matter; this is the on-screen slider catching a cleared buffer
+        //between two analysis cycles. A NaN counts as no value here as it does there - the
+        //slider cannot show it, and Float(nan) is nothing to hand a UISlider.
         if(SliderType.Normal == descriptor.type){
-            if let buffer = sliderBuffer, buffer.last == nil, !uiSlider.isTracking {
+            if let buffer = sliderBuffer, buffer.last?.isNaN ?? true, !uiSlider.isTracking {
                 buffer.replaceValues([descriptor.defaultValue])
             }
             uiSlider.value = Float(sliderBuffer?.last ?? descriptor.defaultValue)
@@ -255,10 +258,10 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
 
         if(SliderType.Range == descriptor.type){
             if !rangeSlider.isTracking {
-                if let buffer = rangeSliderLowerBuffer, buffer.last == nil {
+                if let buffer = rangeSliderLowerBuffer, buffer.last?.isNaN ?? true {
                     buffer.replaceValues([descriptor.minValue])
                 }
-                if let buffer = rangeSliderUpperBuffer, buffer.last == nil {
+                if let buffer = rangeSliderUpperBuffer, buffer.last?.isNaN ?? true {
                     buffer.replaceValues([descriptor.maxValue])
                 }
             }

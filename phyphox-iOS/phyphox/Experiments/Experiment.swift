@@ -693,9 +693,16 @@ final class Experiment {
     ///the page the edit field is on.
     ///
     ///Only empty buffers are touched, so a value the user set - or one restored with a saved
-    ///state - stays as it is.
+    ///state - stays as it is. The one other case is a NaN at the end of the buffer, which the
+    ///default replaces the same way (input-default-does-not-replace-nan, decided 2026-09-02):
+    ///a control cannot show NaN and the user could never enter it, so the buffer must not hold a
+    ///value the control does not. It got there from an analysis write, and the replacement is
+    ///not user input any more than the seeding of an empty buffer is - replaceValues() reports
+    ///none, so an analysis with onUserInput does not re-run on its own output. The default is
+    ///written as it stands, not clamped to the element's range: a default is deliberate. A saved
+    ///state needs no exception, a NaN in it would have been replaced in the run that saved it.
     func seedInputDefaults() {
-        for (defaultValue, buffer) in inputDefaults where buffer.last == nil {
+        for (defaultValue, buffer) in inputDefaults where buffer.last?.isNaN ?? true {
             buffer.replaceValues([defaultValue])
         }
 
@@ -720,9 +727,10 @@ final class Experiment {
     }
     
     ///Collected once in init rather than walked per analysis cycle, which is where the seeding
-    ///runs. Deliberately without the slider: the parser gives it its default when the file is
-    ///read and Android never seeds one at all, so putting it back here would be a new divergence
-    ///in the other direction rather than the end of one (slider-default-never-reaches-buffer).
+    ///runs. The slider is in the list since the NaN rule (see seedInputDefaults): Android seeds
+    ///it on every write pass like the other input elements, and its own module only runs while
+    ///its page is on screen. In range mode its two buffers start from the slider's min and max,
+    ///which is what the handles show - the same values the module writes.
     private static func collectInputDefaults(_ viewDescriptors: [ExperimentViewCollectionDescriptor]?) -> [(Double, DataBuffer)] {
         var found: [(Double, DataBuffer)] = []
         for collection in viewDescriptors ?? [] {
@@ -734,6 +742,17 @@ final class Experiment {
                     found.append((dropdown.defaultValue, dropdown.buffer))
                 case let toggle as SwitchViewDescriptor:
                     found.append((toggle.defaultValue, toggle.buffer))
+                case let slider as SliderViewDescriptor:
+                    if slider.type == .Range {
+                        if let lower = slider.outputBuffers[.LowerValue] {
+                            found.append((slider.minValue, lower))
+                        }
+                        if let upper = slider.outputBuffers[.UpperValue] {
+                            found.append((slider.maxValue, upper))
+                        }
+                    } else if let buffer = slider.outputBuffers[.Empty] {
+                        found.append((slider.defaultValue, buffer))
+                    }
                 default:
                     break
                 }

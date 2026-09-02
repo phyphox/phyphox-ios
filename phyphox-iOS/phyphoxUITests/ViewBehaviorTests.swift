@@ -262,6 +262,25 @@ final class ViewBehaviorTests: XCTestCase {
         }
     }
 
+    //A NaN in an input element's buffer is replaced by the element's default, as written and
+    //not clamped to the element's range (the edit's default lies above its max on purpose), for
+    //the slider like for the rest - and the replacement is not user input, so an experiment
+    //that has only been opened is still stopped afterwards (input-default-does-not-replace-nan,
+    //decided 2026-09-02). Mirrors ViewBehaviorTest.aNanIsReplacedByTheDefault.
+    // phyphox-test: view-behavior
+    func testANaNIsReplacedByTheDefault() throws {
+        _ = try launch(fixture: "nan-vs-default")
+
+        expectBuffer("toggle_nan", toEqual: [1], "the toggle's default replaces the NaN")
+        expectBuffer("dropdown_nan", toEqual: [2], "the dropdown's default replaces the NaN")
+        expectBuffer("edit_nan", toEqual: [12], "the edit's default replaces the NaN, unclamped")
+        expectBuffer("slider_nan", toEqual: [3], "the slider's default replaces the NaN")
+
+        let status = get("/get")?["status"] as? [String: Any]
+        XCTAssertNotNil(status, "the status is reported")
+        XCTAssertEqual(status?["measuring"] as? Bool, false, "replacing a NaN started the experiment")
+    }
+
     // MARK: - helpers
 
     ///Moves a slider and waits for the value the fixture should end up with, repeating the gesture
