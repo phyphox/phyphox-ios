@@ -215,6 +215,53 @@ final class ViewBehaviorTests: XCTestCase {
         expectBuffer("choice", toEqual: [2], "picking an entry writes its mapped value")
     }
 
+    // MARK: - the starting state
+
+    ///Switches to the view collection with this label, through the tab bar the experiment shows
+    ///when it has more than one page
+    private func page(to label: String, in app: XCUIApplication) {
+        let tab = app.segmentedControls.buttons[label]
+        XCTAssertTrue(tab.waitForExistence(timeout: 5), "the page \"\(label)\" is offered")
+        tab.tap()
+    }
+
+    //A control's own default must never overwrite a value the container already holds. The spec
+    //states it in the remark on the default attribute of edit, toggle, dropdown and slider: a
+    //default fills an EMPTY buffer, and never one that is not. Both halves are asserted here,
+    //because fixing the first by simply not seeding would break the second. Android had the
+    //first half wrong until 2026-09-02 (toggle-dropdown-default-overwrites-init); iOS has been
+    //right all along, which is exactly why this is pinned - nothing else would notice a
+    //regression.
+    // phyphox-test: view-behavior
+    func testContainerInitBeatsAControlsDefault() throws {
+        let app = try launch(fixture: "init-vs-default")
+
+        //Nothing is touched: these are the values a freshly loaded experiment starts with. The
+        //defaults are seeded when the experiment is built, for every page, so the second page's
+        //buffers are filled although it has never been on screen (Experiment.seedInputDefaults).
+        let expected: [(String, Double)] = [
+            ("toggle_init", 1), ("dropdown_init", 2), ("edit_init", 42), ("slider_init", 4),
+            //...and where the container is empty, the default is what fills it
+            ("toggle_default", 1), ("dropdown_default", 1), ("edit_default", 7), ("slider_default", 3),
+        ]
+        for (name, value) in expected {
+            expectBuffer(name, toEqual: [value], "\(name) starts from the right value")
+        }
+
+        //Again after paging away and back. On iOS the view modules of a page only read their
+        //buffers while that page is on screen - their display link turns over for the visible
+        //collection alone - so paging forces a read pass over every element of the page that
+        //comes up, and the return does the same for the first one. A read pass must not turn
+        //into a write (Android's toggle once fired its own change listener from its read hook);
+        //nothing here touches a control, so every buffer must be unchanged.
+        page(to: "default fills", in: app)
+        page(to: "init wins", in: app)
+
+        for (name, value) in expected {
+            expectBuffer(name, toEqual: [value], "\(name) is unchanged after paging")
+        }
+    }
+
     // MARK: - helpers
 
     ///Moves a slider and waits for the value the fixture should end up with, repeating the gesture
