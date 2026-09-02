@@ -8,6 +8,7 @@ both. The Android counterpart is phyphox-android/tools/play_upload.py.
 
     tools/appstore_upload.py                   # build and check, change nothing
     tools/appstore_upload.py --upload          # hand it to deliver
+    tools/appstore_upload.py --release-notes [--upload]   # the draft's release notes, nothing else
 
 **Nothing reaches Apple without --upload**, and even then deliver renders its
 own HTML preview and waits for a yes before writing anything; `--force` is
@@ -39,8 +40,9 @@ file:
   promotional_text          same reasoning: no source. Play's short description
                             is not it - Apple's `subtitle` is the field in that
                             position, and that one is manual.
-  release_notes             belongs to a version, and this tool is about the
-                            listing.
+  release_notes             belongs to a version, not to the listing, so the
+                            listing mode leaves it alone; `--release-notes` is
+                            the mode that sets it (below).
   support_url, marketing_url, privacy_url
                             no source in this repository, and the live values
                             are right.
@@ -51,6 +53,49 @@ unescaping rules - but it also wraps bare URLs in `<a href>`, which Google Play
 and F-Droid render and the App Store does not: there the description is plain
 text, and a tag would appear literally. So the anchors are unwrapped again
 afterwards, and anything else that still looks like a tag stops the run.
+
+RELEASE NOTES
+-------------
+A mode of its own, not an addition to the listing upload:
+
+    tools/appstore_upload.py --release-notes            # build and check
+    tools/appstore_upload.py --release-notes --upload   # into the draft
+
+**F-Droid's changelogs are the reference.** The release notes live in the
+Android repository, `fastlane/metadata/android/<lang>/changelogs/<versionCode>.txt`,
+because F-Droid reads them out of git there - which makes them the one copy
+that is version controlled, reviewable in a diff and readable without
+credentials, and both stores take their text from it. Only English and German
+are written by hand; every other App Store locale carries the English text
+(maintainer, 2026-09-02 - release notes change with every release, and a
+translation round would hold it up for weeks, unlike the description above).
+If the files for the current version are missing, the shared module asks for
+both texts in the terminal and writes them into the F-Droid tree before
+anything else happens, so the answer is on disk and in phyphox-android's next
+diff even if the upload afterwards fails. That is a change to the OTHER
+repository made from here; the commit is left to the maintainer.
+
+So this needs the `phyphox-android` checkout next to this repository, the same
+standing assumption made about phyphox-translation and phyphox-docs:
+`phyphox-android/tools/changelog.py` is imported rather than copied, so there
+is one definition of where the notes live, how the versionCode is resolved
+and which language gets which text.
+
+The tree handed to deliver holds nothing but `release_notes.txt` per locale.
+deliver sets a field only where it finds a file - the point made above - so
+the name, the description, the screenshots and everything else stay exactly
+as they are, however long ago the listing was last uploaded.
+
+`--upload --release-notes` writes to the DRAFT version in App Store Connect,
+the editable one, not to the listing. It has to exist first. deliver's own
+`--app_version` would otherwise CREATE a version of that number, or rename the
+editable one to it, before showing any preview (Deliver::Runner#verify_version,
+Spaceship's `ensure_version!`); so the editable version is read back through
+Spaceship first, the run stops if it is not the one being released, and
+deliver is told to skip its version update. Release notes also only go to the
+locales the draft already has a localization for - deliver would activate a
+missing one on the spot, and a locale with release notes and nothing else is
+not a listing.
 
 THE API KEY
 -----------
@@ -105,6 +150,11 @@ SHOTS = os.path.join(ROOT, "screenshots", "ios")
 # same way the capture script regenerates its scene files.
 METADATA = os.path.join(REPO, "build", "appstore", "metadata")
 BUNDLE_ID = "de.rwth-aachen.physics.phyphox"
+ANDROID = os.path.join(ROOT, "phyphox-android")
+IOS_PROJECT = os.path.join(REPO, "phyphox-iOS", "phyphox.xcodeproj", "project.pbxproj")
+# Its own tree, so it cannot be confused with the listing's. deliver insists the
+# directory be called `metadata` - see the check in deliver().
+NOTES_METADATA = os.path.join(REPO, "build", "appstore", "release-notes", "metadata")
 
 # WHERE THE API KEY LIVES
 #
@@ -129,7 +179,7 @@ KEYCHAIN_ACCOUNT = "phyphox"
 
 # App Store Connect's limits. Checked before anything is sent, so an over-long
 # string is reported by name instead of coming back as an API error at the end.
-LIMITS = {"name": 30, "description": 4000}
+LIMITS = {"name": 30, "description": 4000, "release_notes": 4000}
 
 # The screenshot sizes this listing uses, and which display type each belongs
 # to. deliver decides that from the image's dimensions alone, so a size its
@@ -391,6 +441,210 @@ def fastlane_ruby_env():
         if os.path.isfile(ruby):
             return env, ruby
     return env, shutil.which("ruby")
+
+
+# The editable ("draft") version and the locales it has a localization for.
+# Read-only, and the check that keeps the release-notes upload away from
+# deliver's own version handling - see RELEASE NOTES in the docstring.
+RUBY_EDITABLE = """
+require "spaceship"
+Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.from_json_file(ARGV[0])
+app = Spaceship::ConnectAPI::App.find(ARGV[1])
+v = app.get_edit_app_store_version(platform: "IOS")
+abort("no editable version") if v.nil?
+puts v.version_string
+v.get_app_store_version_localizations.each { |loc| puts loc.locale }
+"""
+
+
+def editable_version(key_path):
+    """(version string, [locales]) of the draft in App Store Connect.
+
+    (None, []) when there is no editable version, or when it cannot be read;
+    the caller decides what that means for its run.
+    """
+    env, ruby = fastlane_ruby_env()
+    if not env or not ruby:
+        return None, []
+    r = subprocess.run([ruby, "-e", RUBY_EDITABLE, key_path, BUNDLE_ID],
+                       capture_output=True, text=True, env=env, timeout=600)
+    if r.returncode != 0:
+        print("  could not read the editable version:\n    "
+              + (r.stderr.strip().splitlines()[-1] if r.stderr.strip() else "?"))
+        return None, []
+    lines = [l.strip() for l in r.stdout.splitlines() if l.strip()]
+    if not lines:
+        return None, []
+    return lines[0], lines[1:]
+
+
+def changelog_module(android=ANDROID):
+    """phyphox-android's tools/changelog.py, imported rather than copied.
+
+    The release notes live in the Android repository because F-Droid reads them
+    out of git there, and that makes them the one version-controlled copy for
+    both stores. So this needs the sibling checkout - the same standing
+    assumption this tool already makes about phyphox-translation and
+    phyphox-docs.
+    """
+    path = os.path.join(android, "tools", "changelog.py")
+    if not os.path.isfile(path):
+        raise SystemExit(
+            f"no {path}\nThe release notes are kept as F-Droid changelogs in "
+            f"phyphox-android, which has to be\nchecked out next to this "
+            f"repository.")
+    spec = importlib.util.spec_from_file_location("phyphox_changelog", path)
+    mod = importlib.util.module_from_spec(spec)
+    bytecode = sys.dont_write_bytecode
+    try:
+        sys.dont_write_bytecode = True     # no __pycache__ in the other repo
+        spec.loader.exec_module(mod)
+    finally:
+        sys.dont_write_bytecode = bytecode
+    return mod
+
+
+def marketing_version(path=IOS_PROJECT):
+    """MARKETING_VERSION of the app target, which is the version being released.
+
+    The test and UI-test targets carry a MARKETING_VERSION of their own (1.0),
+    so the value is taken from the build settings that also name the app's
+    bundle identifier rather than from the first match in the file.
+    """
+    with open(path, encoding="utf-8") as f:
+        src = f.read()
+    found = set()
+    # Each chunk runs from one buildSettings block to the start of the next; the
+    # lines in between (isa, name, baseConfigurationReference) carry neither of
+    # the two keys, so the split alone scopes this correctly.
+    for chunk in src.split("buildSettings = {")[1:]:
+        if f'PRODUCT_BUNDLE_IDENTIFIER = "{BUNDLE_ID}"' not in chunk:
+            continue
+        m = re.search(r"MARKETING_VERSION = ([^;]+);", chunk)
+        if m:
+            found.add(m.group(1).strip())
+    if len(found) != 1:
+        raise SystemExit(
+            f"could not read one MARKETING_VERSION for {BUNDLE_ID} from "
+            f"{path}\n  found: {', '.join(sorted(found)) or 'none'}\n"
+            f"Pass --version-code to say which changelog to use.")
+    return found.pop()
+
+
+def build_notes_tree(rows, out, notes, cl):
+    """A metadata tree with nothing in it but release_notes.txt."""
+    shutil.rmtree(out, ignore_errors=True)
+    written = {}
+    for locale, _row in rows:
+        text = cl.text_for(locale, notes)
+        assert text.strip(), f"{locale} release notes would be empty"
+        d = os.path.join(out, locale)
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, "release_notes.txt"), "w",
+                  encoding="utf-8") as f:
+            f.write(text)
+        written[locale] = text
+    return written
+
+
+def deliver_notes(key_path, args, version):
+    """Hand the release-notes-only tree to deliver, for one version.
+
+    The version is the caller's to have checked against the draft (see
+    release_notes_mode): deliver's own --app_version handling is switched off
+    with --skip_app_version_update, because with it on deliver would create a
+    version of that number, or rename the editable one, before its preview.
+    The number is still passed so the preview and the log name it. No --force,
+    for the same reason as in deliver(): the HTML preview is the review step.
+    """
+    if os.path.basename(os.path.abspath(args.notes_metadata)) != "metadata":
+        raise SystemExit("--notes-metadata must be a directory called "
+                         "'metadata' - see the note in deliver()")
+    cmd = ["fastlane", "deliver",
+           "--api_key_path", key_path,
+           "--app_identifier", BUNDLE_ID,
+           "--metadata_path", args.notes_metadata,
+           "--app_version", version,
+           "--skip_app_version_update", "true",
+           "--skip_binary_upload", "true",
+           "--skip_screenshots", "true",
+           "--submit_for_review", "false",
+           "--precheck_include_in_app_purchases", "false"]
+    where = os.path.dirname(os.path.abspath(args.notes_metadata))
+    print("\n" + " ".join(cmd))
+    print(f"  (run from {where}; the key was written out of the login keychain "
+          f"for this run and is deleted after it)\n")
+    return subprocess.call(cmd, cwd=where)
+
+
+def release_notes_mode(args, rows, live):
+    """--release-notes: the draft's release notes and nothing else."""
+    cl = changelog_module(args.android)
+    version = marketing_version()
+    code = args.version_code or cl.code_for(version, args.android)
+    notes = cl.ensure(code, version, args.android)
+    over = [f"{l} is {len(t)} characters, the App Store allows "
+            f"{LIMITS['release_notes']}"
+            for l, t in sorted(notes.items())
+            if len(t) > LIMITS["release_notes"]]
+    if over:
+        raise SystemExit("refusing to upload:\n  " + "\n  ".join(over))
+
+    # The draft is read before the tree is built, so that the tree only holds
+    # the locales it can go to - and so that a wrong version stops the run
+    # before anything is written anywhere.
+    skipped = []
+    if args.upload or args.diff:
+        if args.api_key and not os.path.isfile(args.api_key):
+            raise SystemExit(f"no key file at {args.api_key}")
+        with key_file(args.api_key) as key_path:
+            draft, draft_locales = editable_version(key_path)
+        if draft is None:
+            raise SystemExit(
+                f"there is no editable version in App Store Connect (or it "
+                f"could not be read).\nCreate version {version} there first - "
+                f"the release notes belong to a release that has to exist.")
+        if draft != version:
+            raise SystemExit(
+                f"the editable version in App Store Connect is {draft}, and "
+                f"this release is {version}.\nThese are the notes for "
+                f"{version}; create that version there first, or check "
+                f"MARKETING_VERSION.")
+        print(f"\nthe draft in App Store Connect is {draft}, with "
+              f"{len(draft_locales)} localization(s)")
+        skipped = [loc for loc, _r in rows if loc not in draft_locales]
+        rows = [(loc, r) for loc, r in rows if loc in draft_locales]
+        if not rows:
+            raise SystemExit("none of the locales in locales.yml has a "
+                             "localization on the draft - nothing to write to")
+
+    written = build_notes_tree(rows, args.notes_metadata, notes, cl)
+    german = [l for l in written if l.split("-")[0] == "de"]
+    print(f"\nrelease notes for {version} (versionCode {code}) in "
+          f"{len(written)} locale(s):")
+    print(f"  German for {', '.join(german) or 'none'}, English for the rest")
+    print(f"  {args.notes_metadata}")
+    if skipped:
+        print(f"  not for {', '.join(skipped)}: the draft has no localization "
+              f"for these, and release notes\n  alone would not make one - "
+              f"upload the listing for them first")
+    if args.diff:
+        print("\nwhat --upload would change:")
+        for locale, _row in rows:
+            # deliver downloads an empty release_notes.txt for a draft whose
+            # notes have not been written yet, so empty is "not set"
+            before = read_field(live, locale, "release_notes") or None
+            after = written[locale]
+            state = ("unchanged" if before == after
+                     else "NEW" if before is None else "CHANGED")
+            print(f"  {locale:8s} release notes {state}")
+        print("  (everything else on the listing is left exactly as it is - "
+              "no other file is written)")
+    if not args.upload:
+        print("\nNothing was sent - add --upload to hand this to deliver.")
+        return
+    with key_file(args.api_key) as key_path:
+        raise SystemExit(deliver_notes(key_path, args, version))
 
 
 def store_screenshot_listing(key_path, dedupe=False):
@@ -861,6 +1115,20 @@ def main():
                     help="delete a screenshot that follows an identical one in "
                          "the same set - what a retried upload leaves behind - "
                          "then verify")
+    ap.add_argument("--release-notes", action="store_true",
+                    help="upload only the release notes for the current "
+                         "version to its App Store draft, read from (or asked "
+                         "for and written into) phyphox-android's F-Droid "
+                         "changelogs. Touches nothing else in the listing.")
+    ap.add_argument("--version-code", type=int,
+                    help="with --release-notes: the Android versionCode the "
+                         "changelogs are named after, when it is not the one "
+                         "in phyphox-android/app/build.gradle")
+    ap.add_argument("--notes-metadata", default=NOTES_METADATA,
+                    help=argparse.SUPPRESS)
+    # Another checkout to read the changelogs from - for exercising this without
+    # writing into the real phyphox-android
+    ap.add_argument("--android", default=ANDROID, help=argparse.SUPPRESS)
     args = ap.parse_args()
 
     if args.import_key:
@@ -908,6 +1176,12 @@ def main():
                 f"the whole run over one of these. Check the spelling against "
                 f"fastlane's list of App Store localizations; Play's codes are "
                 f"not always the same.")
+
+    if args.release_notes:
+        # The listing tree, its screenshot scan and its size checks are all
+        # about the listing; this mode is about the draft's release notes only
+        release_notes_mode(args, rows, live)
+        return
 
     written = build_tree(rows, args.metadata, formatter(), live,
                          args.seed_new_from)
