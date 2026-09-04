@@ -49,6 +49,9 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
     
     var executeRequested = false
     var dataReady = false
+    //Parking a response (conversion.prepare on the network callback) and consuming it
+    //(pushDataToBuffers on the analysis thread) must not overlap - see requestFinished
+    private let parkingLock = NSLock()
     var requestCallbacks: [NetworkServiceRequestCallback] = []
     var timer: Timer? = nil
     
@@ -238,6 +241,12 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
             showError(msg: "Network error: The connection timed out.")
         case .success:
             if let data = service.getResults() {
+                //Parked for the analysis thread, which copies it into the buffers in
+                //pushDataToBuffers. A response that arrives before the parked one is consumed
+                //overwrites it - that is intended and identical on Android - but it must not
+                //overwrite it halfway through being consumed, hence the lock.
+                parkingLock.lock()
+                defer { parkingLock.unlock() }
                 do {
                     try conversion.prepare(data: data)
                     dataReady = true
@@ -256,6 +265,8 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
     }
     
     func pushDataToBuffers() {
+        parkingLock.lock()
+        defer { parkingLock.unlock() }
         if !dataReady {
             return
         }

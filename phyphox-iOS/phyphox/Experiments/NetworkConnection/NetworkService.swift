@@ -31,6 +31,16 @@ class HttpGetService: NetworkService {
     
     var address: String? = nil
     var data: Data?
+    //A callback does not receive the response: it reads it back through getResults(), from this
+    //one field shared by every request. The shared URLSession runs its completion handlers on a
+    //serial queue, so two responses cannot interleave here the way they did on Android (store A,
+    //store B, both callbacks read B - a poll parked twice and one lost, t1 network fixtures
+    //2026-09-04). But execute() on the analysis thread clears the field for the next request, and
+    //that can land between the store and the callback's read: the callback then parks an empty
+    //response and the receive buffers are emptied on the next cycle. So storing the response and
+    //running the callbacks is one step under this lock, and so is the clear. getResults() is
+    //called from inside the locked callbacks and must not take the lock itself.
+    private let resultLock = NSLock()
     
     func connect(address: String) {
         self.address = address
@@ -45,7 +55,9 @@ class HttpGetService: NetworkService {
             requestCallbacks.forEach{$0.requestFinished(result: .noConnection)}
             return
         }
+        resultLock.lock()
         data = nil
+        resultLock.unlock()
         
         guard var url = URLComponents(string: address) else {
             requestCallbacks.forEach{$0.requestFinished(result: .genericError(message: "No valid URL: \(address)"))}
@@ -91,8 +103,10 @@ class HttpGetService: NetworkService {
                 return
             }
                 
+            self.resultLock.lock()
             self.data = data
             requestCallbacks.forEach{$0.requestFinished(result: .success)}
+            self.resultLock.unlock()
         }
         task.resume()
     }
@@ -110,6 +124,16 @@ class HttpPostService: NetworkService {
     
     var address: String? = nil
     var data: Data?
+    //A callback does not receive the response: it reads it back through getResults(), from this
+    //one field shared by every request. The shared URLSession runs its completion handlers on a
+    //serial queue, so two responses cannot interleave here the way they did on Android (store A,
+    //store B, both callbacks read B - a poll parked twice and one lost, t1 network fixtures
+    //2026-09-04). But execute() on the analysis thread clears the field for the next request, and
+    //that can land between the store and the callback's read: the callback then parks an empty
+    //response and the receive buffers are emptied on the next cycle. So storing the response and
+    //running the callbacks is one step under this lock, and so is the clear. getResults() is
+    //called from inside the locked callbacks and must not take the lock itself.
+    private let resultLock = NSLock()
     
     func connect(address: String) {
         self.address = address
@@ -124,7 +148,9 @@ class HttpPostService: NetworkService {
             requestCallbacks.forEach{$0.requestFinished(result: .noConnection)}
             return
         }
+        resultLock.lock()
         data = nil
+        resultLock.unlock()
         
         guard let url = URL(string: address) else {
             requestCallbacks.forEach{$0.requestFinished(result: .genericError(message: "No valid URL: \(address)"))}
@@ -192,8 +218,10 @@ class HttpPostService: NetworkService {
                 return
             }
                 
+            self.resultLock.lock()
             self.data = data
             requestCallbacks.forEach{$0.requestFinished(result: .success)}
+            self.resultLock.unlock()
         }
         task.resume()
     }
