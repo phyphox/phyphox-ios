@@ -392,3 +392,7 @@
 "spectrum_analysis_setting" = "频谱分析设置";
 "warning_photosensitivity" = "光敏性警告";
 "warning_photosensitivity_message" = "这项实验可能会产生高频光脉冲，可能会引发光敏性癫痫患者的不适或癫痫发作。 \n \n请避免直视光源。";
+"spectrum_orientation" = "方向";
+"which_spectrum_orientation" = "您的设备针对频谱的方向是什么？";
+"remoteServerPortInUseTitle" = "无法启用远程访问";
+"remoteServerPortInUse" = "由于该端口已被设备上的其他应用占用，因此无法启用远程访问。请停止正在使用该端口的应用，或在 Phyphox 设置中设置其他端口。";
