@@ -247,11 +247,8 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     }
     
     static func verifySensorAvailibility(sensorType: SensorType, motionSession: MotionSession) throws {
-        //-phyphoxAssumeSensors (see AutomationLaunchOptions in AppDelegate) is what the store
-        //screenshot system uses: the simulator it captures on reports almost every sensor as
-        //missing, which would leave the collection screenshot a wall of greyed-out entries. Only
-        //the hardware tests below are skipped - the sensor types iOS supports on no device at all
-        //still fail, because there the greyed-out entry is the truth and not a simulator artefact.
+        //-phyphoxAssumeSensors (AutomationLaunchOptions) for store screenshots on the simulator: skips only the hardware
+        //tests below, sensor types iOS supports on no device still fail
         if AutomationLaunchOptions.assumeSensors {
             switch sensorType {
             case .light, .temperature, .humidity, .custom:
@@ -547,8 +544,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             buffer.append(value)
         }
 
-        //One sample's components are written as one atomic group so a remote /get read sees all of
-        //them or none, never a partial sample (see BufferLock)
+        //One atomic group so a remote /get never sees a partial sample (see BufferLock)
         synchronizedBufferWrite([xBuffer, yBuffer, zBuffer, accuracyBuffer, tBuffer, absBuffer]) {
             tryAppend(value: x, to: xBuffer)
             tryAppend(value: y, to: yBuffer)

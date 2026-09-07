@@ -11,10 +11,8 @@ import CoreBluetooth
 
 protocol ScanResultsDelegate {
     func reloadScanResults(updatedEntry: UUID)
-    //advertisedName is the name from the advertisement (remembered from an earlier packet of
-    //the same peripheral if this one carried none), which is NOT peripheral.name: that one is
-    //whatever CoreBluetooth cached for the device, typically from an earlier connection, and is
-    //stale as soon as the device is renamed. A receiver that needs the current name needs this.
+    //advertisedName is from the advertisement (remembered from an earlier packet if needed), NOT peripheral.name, which is
+    //CoreBluetooth's cached name and stale once the device is renamed
     func autoConnect(device: CBPeripheral, advertisedUUIDs: [CBUUID]?, advertisedName: String?)
 }
 

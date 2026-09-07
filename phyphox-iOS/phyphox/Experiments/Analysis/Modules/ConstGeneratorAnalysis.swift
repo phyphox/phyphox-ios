@@ -28,9 +28,7 @@ final class ConstGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
     }
     
     override func update() {
-        //An absent value input keeps the default 0; a present input with an empty buffer is an
-        //error yielding empty output. A present NaN value is permitted and fills the output
-        //with NaN as a deliberate initialization.
+        //An absent value keeps 0, a present empty buffer yields empty output, a NaN value deliberately fills with NaN
         let value: Double
         if let valueInput = valueInput {
             guard let v = valueInput.getSingleValue() else {
@@ -41,9 +39,7 @@ final class ConstGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
             value = 0
         }
 
-        //An explicit length of 0, an empty length buffer and a non-finite or negative length
-        //all yield an empty output; only an absent length input falls back to the output
-        //buffer's size.
+        //A length of 0, empty, non-finite or negative yields empty output; only an absent input falls back to the buffer size
         var length: Int = 0
         if let lengthInput = lengthInput {
             guard let l = lengthInput.getSingleValue(), l.isFinite, l >= 0, l < 9e18 else {

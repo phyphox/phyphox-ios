@@ -8,9 +8,7 @@
 
 // MARK: - Graph Toolbar
 
-//Toolbar of the fullscreen graph. A custom view rather than a UITabBar so its items can also be
-//stacked vertically along the right edge in landscape orientation, where the vertical space is
-//too precious for a bottom bar - like on Android.
+//Fullscreen graph toolbar; not a UITabBar so it can also stand vertically at the right edge in landscape, like on Android
 class GraphToolbar: UIView {
 
     class ItemView: UIControl {
@@ -152,7 +150,7 @@ class GraphToolbarManager: NSObject {
 
     var currentMode: GraphMode { return _currentMode }
 
-    //Custom title for the pick tool, set from the graph's pickLabel attribute.
+    //From the graph's pickLabel attribute
     var pickTitle: String? = nil
 
     func setMode(mode: GraphMode){

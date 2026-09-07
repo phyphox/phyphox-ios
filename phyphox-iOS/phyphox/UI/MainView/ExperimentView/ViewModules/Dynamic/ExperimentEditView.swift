@@ -28,9 +28,7 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
 
     private var edited = false
 
-    //Background colors indicating the edit state, like on Android: yellow while the value has
-    //been changed but not yet committed, a green flash fading out when the value is committed.
-    //The colors match Android's phyphox_yellow and phyphox_green.
+    //Edit-state backgrounds like Android's phyphox_yellow (changed, uncommitted) and phyphox_green (commit flash)
     private static let changedColor = UIColor(red: 0xed/255.0, green: 0xf6/255.0, blue: 0x68/255.0, alpha: 1.0)
     private static let committedColor = UIColor(red: 0x2b/255.0, green: 0xfb/255.0, blue: 0x4c/255.0, alpha: 1.0)
     private var normalBackgroundColor: UIColor? {
@@ -197,8 +195,7 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
 
             descriptor.buffer.triggerUserInput()
 
-            //Indicate the commit with a green flash fading back to the normal background,
-            //matching Android's 500 ms commit animation
+            //Green commit flash fading back, matching Android's 500 ms animation
             textField.layer.removeAllAnimations()
             textField.backgroundColor = ExperimentEditView.committedColor
             UIView.animate(withDuration: 0.5) {
@@ -217,9 +214,8 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
     }
 
     private func update() {
-        //The default is seeded by Experiment.seedInputDefaults(), not from here: this runs off
-        //a display link that only turns over while this view collection is the active one, so
-        //an element on any other page never got its value (input-defaults-on-hidden-view)
+        //Seeded by Experiment.seedInputDefaults(): this display link only turns over for the active view collection
+        //(input-defaults-on-hidden-view)
 
         let value = descriptor.value
         let rawValue = value * descriptor.factor

@@ -76,8 +76,7 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
         let y = io.input(Self.yInSlot)
         z = io.input(Self.zInSlot)
 
-        //A missing z input with zMode sum or average is a permanent configuration error and
-        //rejects the file at load - a zero grid would silently look like data
+        //Missing z with zMode sum/average rejects the file at load - a zero grid would look like data
         if zMode != .count && z == nil {
             throw SerializationError.genericError(message: "Error: Input z required for map module unless zMode is count.")
         }
@@ -148,8 +147,7 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
         guard let maxY = self.maxY.getSingleValue() else {
             return
         }
-        //A non-positive grid size is an error state yielding empty outputs (a negative size
-        //would trap in the array constructions and ranges below)
+        //A non-positive grid size yields empty outputs (a negative size would trap below)
         guard mapWidth > 0 && mapHeight > 0 else {
             return
         }
@@ -163,9 +161,8 @@ final class MapAnalysis: AutoClearingExperimentAnalysisModule {
             n = min(n, nz)
         }
 
-        //Degenerate ranges (such as minX equal to maxX) make the bin index non-finite; clamp
-        //like Android's (int) cast instead of trapping in Int(round(...)): NaN becomes bin 0
-        //and infinities fall outside the bounds check below
+        //Degenerate ranges make the bin index non-finite; clamp like Android's (int) cast instead of trapping:
+        //NaN becomes bin 0, infinities fall outside the bounds check below
         func binIndex(_ v: Double, count: Int) -> Int {
             if v.isNaN {
                 return 0

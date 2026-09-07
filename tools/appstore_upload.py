@@ -146,44 +146,23 @@ ROOT = os.path.normpath(os.path.join(REPO, ".."))
 DOCS = os.path.join(ROOT, "phyphox-docs")
 TRANSLATION = os.path.join(ROOT, "phyphox-translation")
 SHOTS = os.path.join(ROOT, "screenshots", "ios")
-# Build output, not a fixture: regenerated from the PO files on every run, the
-# same way the capture script regenerates its scene files.
+# Build output, regenerated from the PO files on every run.
 METADATA = os.path.join(REPO, "build", "appstore", "metadata")
 BUNDLE_ID = "de.rwth-aachen.physics.phyphox"
 ANDROID = os.path.join(ROOT, "phyphox-android")
 IOS_PROJECT = os.path.join(REPO, "phyphox-iOS", "phyphox.xcodeproj", "project.pbxproj")
-# Its own tree, so it cannot be confused with the listing's. deliver insists the
-# directory be called `metadata` - see the check in deliver().
+# A tree of its own, apart from the listing's; deliver insists on the name `metadata` (see deliver()).
 NOTES_METADATA = os.path.join(REPO, "build", "appstore", "release-notes", "metadata")
 
-# WHERE THE API KEY LIVES
-#
-# An App Store Connect individual API key, in fastlane's own JSON shape
-# (key_id, issuer_id, key). It is a private key that can rewrite this app's
-# listing and submit builds for it, so:
-#
-#   - never in the working root, which syncs to Nextcloud;
-#   - never in a repository, this one included;
-#   - not lying about as a plain file if that can be avoided.
-#
-# The login keychain is what this machine offers (no age, gpg or pass): it is
-# encrypted at rest under the login password, it does not sync anywhere, and it
-# reads back in one command. --import-key puts it there; the value is only ever
-# written out as a 0600 temporary file for as long as deliver runs, because
-# fastlane takes a path rather than the key itself.
-#
-# A plain file is still accepted, for a machine that has some other arrangement
-# or a one-off run - hence --api-key.
+# The App Store Connect API key (fastlane's JSON shape) lives in the login keychain, never in the synced
+# working root or a repository; --import-key stores it, and it is a 0600 temp file only while deliver runs.
 KEYCHAIN_SERVICE = "phyphox-asc-key"
 KEYCHAIN_ACCOUNT = "phyphox"
 
-# App Store Connect's limits. Checked before anything is sent, so an over-long
-# string is reported by name instead of coming back as an API error at the end.
+# App Store Connect's limits, checked before anything is sent so an over-long string is reported by name.
 LIMITS = {"name": 30, "description": 4000, "release_notes": 4000}
 
-# The screenshot sizes this listing uses, and which display type each belongs
-# to. deliver decides that from the image's dimensions alone, so a size its
-# table does not know is silently not uploaded - see known_sizes().
+# Screenshot sizes and their display types; deliver silently skips sizes its table lacks (see known_sizes()).
 SIZES = {(1320, 2868): '6.9" iPhone', (2064, 2752): '13" iPad'}
 
 
@@ -224,9 +203,7 @@ def formatter():
 
 ANCHOR = re.compile(r'<a href="[^"]*">([^<]*)</a>')
 TAG = re.compile(r"</?[a-zA-Z][^>]*>")
-# A separator line: nothing but dashes. "--" is what the source uses and what
-# updateMetadata.py's bullet rule deliberately leaves alone ("^-(?!-)"); three
-# translations have worn it down to "-" or "- ", which is the same intent.
+# A separator line, nothing but dashes: "--" in the source, worn down to "-" or "- " in three translations.
 SEPARATOR = re.compile(r"^\s*-{1,5}\s*$")
 
 
@@ -260,8 +237,7 @@ def strip_android_section(text, where):
     if seps:
         cut, how = seps[-1], "separator"
     else:
-        # start of the paragraph mentioning Android, then back over the blank
-        # line, then to the start of the paragraph before it - the heading
+        # no separator: cut at the start of the paragraph before the one mentioning Android - the heading
         i = first
         while i > 0 and lines[i - 1].strip():
             i -= 1
@@ -303,8 +279,7 @@ def description_for(mod, po_locale):
             text = entry.msgstr
     if text is None:
         return None, f"{po_locale}.po has no store_long_description"
-    # Before formatting, so the separator is still a separator: formatDescription
-    # turns a lone "- " into a bullet.
+    # Before formatting, which would turn a lone "- " separator into a bullet.
     text, _how = strip_android_section(text, po_locale)
     text, dropped = drop_light_sensor(text, po_locale)
     text = ANCHOR.sub(r"\1", mod.formatDescription(text))
@@ -316,13 +291,8 @@ def description_for(mod, po_locale):
 
 
 BULLET = re.compile(r"^\s*-\s*\S")
-# The sensor list, in the order every translation keeps it: accelerometer,
-# magnetometer, gyroscope, LIGHT, pressure, microphone, proximity, GPS - and,
-# since the 2026-09-02 source update, camera and LiDAR/ToF appended at the end.
-# Translations lag behind the source, so lists of 8 and of 10 items coexist in
-# the PO files; what identifies the block is that it is the only one anywhere
-# near that long (the features list has 4 entries, the export formats 3), and
-# what finds the light sensor is its position, which every length keeps.
+# The sensor list, which every translation keeps in the source's order (light sensor 4th). Translations
+# lag the source, so 8- and 10-item lists coexist; no other list comes anywhere near that length.
 SENSOR_LIST_MIN_LENGTH = 8
 LIGHT_SENSOR_POSITION = 3
 
@@ -374,10 +344,9 @@ def drop_light_sensor(text, where):
     return "\n".join(lines[:at] + lines[at + 1:]), dropped
 
 
-def png_size(path):
-    with open(path, "rb") as f:
-        data = f.read(24)
-    if data[:8] != b"\x89PNG\r\n\x1a\n":
+def png_size(data):
+    """(width, height) of a complete PNG, or None: a truncated capture (simulator died mid-shot) must not reach the store."""
+    if data[:8] != b"\x89PNG\r\n\x1a\n" or data[-8:-4] != b"IEND":
         return None
     return struct.unpack(">II", data[16:24])
 
@@ -443,9 +412,7 @@ def fastlane_ruby_env():
     return env, shutil.which("ruby")
 
 
-# The editable ("draft") version and the locales it has a localization for.
-# Read-only, and the check that keeps the release-notes upload away from
-# deliver's own version handling - see RELEASE NOTES in the docstring.
+# The draft (editable) version and its localized locales, read-only - see RELEASE NOTES in the docstring.
 RUBY_EDITABLE = """
 require "spaceship"
 Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.from_json_file(ARGV[0])
@@ -514,9 +481,7 @@ def marketing_version(path=IOS_PROJECT):
     with open(path, encoding="utf-8") as f:
         src = f.read()
     found = set()
-    # Each chunk runs from one buildSettings block to the start of the next; the
-    # lines in between (isa, name, baseConfigurationReference) carry neither of
-    # the two keys, so the split alone scopes this correctly.
+    # Each chunk runs from one buildSettings block to the next; nothing in between carries either key.
     for chunk in src.split("buildSettings = {")[1:]:
         if f'PRODUCT_BUNDLE_IDENTIFIER = "{BUNDLE_ID}"' not in chunk:
             continue
@@ -590,9 +555,7 @@ def release_notes_mode(args, rows, live):
     if over:
         raise SystemExit("refusing to upload:\n  " + "\n  ".join(over))
 
-    # The draft is read before the tree is built, so that the tree only holds
-    # the locales it can go to - and so that a wrong version stops the run
-    # before anything is written anywhere.
+    # Read the draft first: the tree only holds locales it can go to, and a wrong version stops the run early.
     skipped = []
     if args.upload or args.diff:
         if args.api_key and not os.path.isfile(args.api_key):
@@ -631,8 +594,7 @@ def release_notes_mode(args, rows, live):
     if args.diff:
         print("\nwhat --upload would change:")
         for locale, _row in rows:
-            # deliver downloads an empty release_notes.txt for a draft whose
-            # notes have not been written yet, so empty is "not set"
+            # deliver downloads an empty release_notes.txt for unwritten notes, so empty is "not set"
             before = read_field(live, locale, "release_notes") or None
             after = written[locale]
             state = ("unchanged" if before == after
@@ -894,9 +856,7 @@ def key_file(explicit):
         shutil.rmtree(d, ignore_errors=True)
 
 
-# What deliver would write if a file existed, beyond the two this tool
-# generates. Shown by --diff so it is visible that they are being left alone
-# rather than quietly blanked.
+# Fields deliver would write if a file existed; --diff shows them as left alone rather than blanked.
 LEFT_ALONE = ["subtitle", "keywords", "promotional_text", "release_notes",
               "support_url", "marketing_url", "privacy_url"]
 
@@ -913,10 +873,7 @@ def download_live(key_path, out):
     print("  " + " ".join(cmd[:3]) + " ... (this only reads)")
     if subprocess.call(cmd, cwd=REPO) != 0:
         raise SystemExit("could not download the current listing")
-    # deliver also pulls down review_information/, which is the reviewer contact
-    # details and any demo account - a phone number, an email address and a
-    # password. Nothing here reads them, and this tree sits in a working root
-    # that syncs, so they go straight back out again.
+    # review_information/ holds reviewer contact details and a demo password; unused here, and this tree syncs.
     shutil.rmtree(os.path.join(out, "review_information"), ignore_errors=True)
     return out
 
@@ -948,10 +905,8 @@ def show_diff(live, ours, rows):
             elif before is None:
                 print(f"  {locale:8s} {field:11s} NEW ({len(after)} chars)")
             else:
-                # The listing on the store was written by hand from the same
-                # source and uses "- " where formatDescription produces "-".
-                # Reporting that on every line would bury the two or three
-                # that matter, so it is normalised away and mentioned once.
+                # The store's hand-written text uses "- " where formatDescription gives "-": normalised
+                # away and mentioned once, not on every line.
                 def norm(t):
                     return [re.sub(r"^[\u2022-]\s+", "- ", l)
                             for l in t.split("\n") if l.strip()]
@@ -962,8 +917,7 @@ def show_diff(live, ours, rows):
                 added = [l for l in b if l not in a]
                 removed = [l for l in a if l not in b]
                 if not added and not removed:
-                    # same lines, different order - worth saying so, because
-                    # "+0 -0 lines" on its own reads like a bug
+                    # say so: "+0 -0 lines" on its own reads like a bug
                     print(f"  {locale:8s} {field:11s} same lines, reordered")
                     continue
                 print(f"  {locale:8s} {field:11s} CHANGED "
@@ -983,9 +937,8 @@ def show_diff(live, ours, rows):
             print(f"  {field:17s} not set anywhere on the store either")
 
 
-# Copied into a locale that does not exist on the store yet, from the source
-# locale, because there is nothing there to leave alone (maintainer,
-# 2026-09-01). Everywhere else these are the store's to keep - see D4 above.
+# Copied from the source locale into a locale new to the store only (D4, maintainer 2026-09-01);
+# everywhere else these are the store's to keep.
 SEEDED = ["subtitle", "keywords", "support_url", "privacy_url"]
 
 
@@ -1011,8 +964,7 @@ def build_tree(rows, out, mod, live=None, seed_from=None):
             continue
         d = os.path.join(out, locale)
         os.makedirs(d, exist_ok=True)
-        # Never an empty file: deliver would take that as "blank this field",
-        # and for name that is not even a legal listing.
+        # Never an empty file: deliver takes that as "blank this field".
         for fn, value in (("name.txt", name), ("description.txt", text)):
             assert value.strip(), f"{locale}/{fn} would be empty"
             with open(os.path.join(d, fn), "w", encoding="utf-8") as f:
@@ -1063,7 +1015,8 @@ def screenshots_for(locale, root):
         if not OURS.match(name):
             strays.append(name)
             continue
-        size = png_size(p)
+        with open(p, "rb") as f:
+            size = png_size(f.read())
         if size:
             found.setdefault(size, []).append(p)
         else:
@@ -1126,8 +1079,7 @@ def main():
                          "in phyphox-android/app/build.gradle")
     ap.add_argument("--notes-metadata", default=NOTES_METADATA,
                     help=argparse.SUPPRESS)
-    # Another checkout to read the changelogs from - for exercising this without
-    # writing into the real phyphox-android
+    # Another checkout to read the changelogs from, for exercising this without the real phyphox-android
     ap.add_argument("--android", default=ANDROID, help=argparse.SUPPRESS)
     args = ap.parse_args()
 
@@ -1139,8 +1091,7 @@ def main():
     import yaml
     with open(os.path.join(DOCS, "screenshots", "locales.yml")) as f:
         locales = yaml.safe_load(f)
-    # One entry per App Store LISTING, not per app language: Portuguese is one
-    # language and two listings.
+    # One entry per App Store LISTING, not per app language: Portuguese is one language and two listings.
     rows = [(locale, r) for r in locales["locales"] if r.get("ios")
             for locale in store_locales(r)]
     if args.languages:
@@ -1151,8 +1102,7 @@ def main():
                      f"{', '.join(unknown)}")
         rows = [(loc, r) for loc, r in rows if loc in wanted]
 
-    # The live listing is needed before the tree is built when new locales are
-    # to be seeded from it, so the download happens first either way.
+    # Downloaded first either way: seeding new locales needs the live listing before the tree is built.
     live = None
     if args.diff or args.seed_new_from:
         if args.api_key and not os.path.isfile(args.api_key):
@@ -1178,8 +1128,7 @@ def main():
                 f"not always the same.")
 
     if args.release_notes:
-        # The listing tree, its screenshot scan and its size checks are all
-        # about the listing; this mode is about the draft's release notes only
+        # The listing checks below do not apply; this mode is about the draft's release notes only
         release_notes_mode(args, rows, live)
         return
 
@@ -1203,8 +1152,7 @@ def main():
         print(f"  {locale:8s} description {written[locale]:5d} chars"
               + (f"   {counts}" if counts else "   no screenshots"))
     if missing:
-        # Not an error: the store falls back to the default listing's images,
-        # and a locale with text but no screenshots is a normal state.
+        # Not an error: the store falls back to the default listing's images.
         print(f"  no screenshots for {', '.join(missing)} - the store will fall "
               f"back to the default listing's images")
     if strays:
@@ -1293,32 +1241,16 @@ def deliver(key_path, args):
            "--screenshots_path", args.screenshots,
            # This tool is about the listing; the binary goes up through Xcode.
            "--skip_binary_upload", "true",
-           # deliver ADDS screenshots otherwise, so a second run would leave the
-           # store with two of everything. Checked before trusting it: the
-           # deletion is scoped to the locales being uploaded
-           # ("next unless screenshots_per_language.keys.include?", deliver's
-           # upload_screenshots.rb), so a locale this run does not cover keeps
-           # the images it has.
+           # Otherwise deliver ADDS screenshots and a second run doubles everything. The deletion is scoped to
+           # the uploaded locales (upload_screenshots.rb: "next unless screenshots_per_language.keys.include?").
            "--overwrite_screenshots", "true",
            "--submit_for_review", "false",
            "--precheck_include_in_app_purchases", "false"]
     if args.skip_screenshots:
         cmd += ["--skip_screenshots", "true"]
-    # No --force: deliver renders an HTML preview of exactly what it is about to
-    # write and waits for a yes. That preview is the review step this whole
-    # tool is arranged around, so it must not be skipped.
-    # WHERE deliver is run from matters, and --metadata_path does not settle it.
-    # deliver decides whether it is configured with
-    #
-    #   loaded = true if File.exist?(File.join(FastlaneCore::FastlaneFolder.path
-    #                                          || ".", "metadata"))
-    #
-    # (commands_generator.rb) - a `metadata` directory beside the WORKING
-    # DIRECTORY, not the one just passed to it. Run from anywhere else it decides
-    # there is no configuration, offers to create one, asks whether you would
-    # like Swift or Ruby, and downloads the existing listing instead of
-    # uploading. So it runs from the directory that actually holds the metadata
-    # tree, where that test is true for the right reason.
+    # No --force: deliver's HTML preview and its yes/no is the review step this tool is arranged around.
+    # deliver counts itself configured only if a `metadata` directory sits beside its WORKING DIRECTORY
+    # (commands_generator.rb), whatever --metadata_path says; anywhere else it runs its setup wizard instead.
     where = os.path.dirname(os.path.abspath(args.metadata))
     if os.path.basename(os.path.abspath(args.metadata)) != "metadata":
         raise SystemExit(
@@ -1326,9 +1258,7 @@ def deliver(key_path, args):
             f"for that name next to its working directory to decide whether it "
             f"is configured, and would run its setup wizard instead of "
             f"uploading. Got {args.metadata}")
-    # The key path is a throwaway temporary file, so printing the command is
-    # not printing a secret - but say where it came from, because a path under
-    # /var/folders looks like something went wrong otherwise.
+    # The key path is a throwaway temp file, so no secret is printed - but say so, a /var/folders path looks wrong.
     print("\n" + " ".join(cmd))
     print(f"  (run from {where}; the key was written out of the login keychain "
           f"for this run and is deleted after it)\n")

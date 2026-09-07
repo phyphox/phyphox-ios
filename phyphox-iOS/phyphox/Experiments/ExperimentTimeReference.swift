@@ -8,15 +8,8 @@
 
 import Foundation
 
-//The time reference maps experiment time to system time across start/pause/stop events. It is
-//touched from many threads at once - the sensor and analysis threads timestamp data through it,
-//the graph views read it to place data on a time axis, and the experiment lifecycle appends events
-//on start/pause/stop. The mapping array was previously an unsynchronised `var`, so an append during
-//teardown racing a read on the graph queue corrupted the array's storage and crashed in a Swift
-//release (observed leaving a long-running experiment with the remote interface active). All access
-//now goes through a serial queue: public methods lock once and delegate to private unlocked helpers
-//(so cross-calls between them do not deadlock), and the public timeMappings accessor returns a
-//consistent snapshot copy for external readers.
+//Maps experiment time to system time across start/pause/stop. Accessed from many threads, so all access goes through a
+//serial queue: public methods lock once and delegate to private unlocked helpers (no deadlock on cross-calls).
 final class ExperimentTimeReference: Equatable {
     static func == (lhs: ExperimentTimeReference, rhs: ExperimentTimeReference) -> Bool {
         return lhs.timeMappings == rhs.timeMappings
@@ -39,9 +32,7 @@ final class ExperimentTimeReference: Equatable {
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.timereference")
     private var _timeMappings: [TimeMapping] = []
 
-    //A consistent snapshot for external readers. Callers that iterate by index must bind this once
-    //(let mappings = timeReference.timeMappings) rather than re-reading it inside the loop, as each
-    //access returns a fresh copy.
+    //Snapshot copy; bind it once before iterating by index, each access returns a fresh copy
     public var timeMappings: [TimeMapping] {
         return queue.sync { _timeMappings }
     }
@@ -54,7 +45,7 @@ final class ExperimentTimeReference: Equatable {
         queue.sync { _timeMappings = [] }
     }
 
-    //Appends a pre-built mapping, used when loading a saved experiment state's recorded events.
+    //Used when loading a saved state's recorded events
     public func appendMapping(_ mapping: TimeMapping) {
         queue.sync { _timeMappings.append(mapping) }
     }

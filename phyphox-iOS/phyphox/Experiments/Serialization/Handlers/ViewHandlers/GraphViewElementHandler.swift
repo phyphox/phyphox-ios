@@ -54,8 +54,7 @@ private final class GraphInputElementHandler: ResultElementHandler, ChildlessEle
 
         let axis: GraphAxis = try attributes.value(for: .axis)
         let lineWidth: CGFloat? = try attributes.optionalValue(for: .lineWidth)
-        //A present but unparseable per-set colour is an error (color-invalid-value in
-        //phyphox-docs); Android's message for the input tag differs from the attribute one
+        //An unparseable colour is an error (color-invalid-value in phyphox-docs); Android words it differently for the input tag
         let color: UIColor?
         if let colorString = attributes.optionalString(for: .color) {
             guard let parsedColor = mapColorString(colorString) else {
@@ -65,8 +64,7 @@ private final class GraphInputElementHandler: ResultElementHandler, ChildlessEle
         } else {
             color = nil
         }
-        //An invalid style is an error rather than being silently ignored (enum-invalid-value
-        //in phyphox-docs; Android throws "Unknown value for style of input tag." here)
+        //An invalid style is an error (enum-invalid-value in phyphox-docs; Android: "Unknown value for style of input tag.")
         let style: GraphViewDescriptor.GraphStyle? = try attributes.optionalValue(for: .style)
 
         results.append(GraphInputDescriptor(axis: axis, color: color, lineWidth: lineWidth, style: style, bufferName: text))
@@ -81,8 +79,7 @@ enum GraphPickAxis: String, CaseInsensitiveAttributeDecodable, CaseIterable {
     case z
     case zcal
 
-    //Offset within a block of six slots (x, xcal, y, ycal, z, zcal). A repeated
-    //axis starts the next block, matching the layout used by the Android app.
+    //Offset within a block of six slots (x, xcal, y, ycal, z, zcal); a repeated axis starts the next block, like Android
     var slotOffset: Int {
         switch self {
         case .x: return 0
@@ -287,18 +284,15 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         let hideTimeMarkers = try attributes.optionalValue(for: .hideTimeMarkers) ?? false
 
         let aspectRatio: CGFloat = try attributes.optionalValue(for: .aspectRatio) ?? 2.5
-        //An invalid style is an error, only an absent attribute selects the default
-        //(enum-invalid-value in phyphox-docs)
+        //An invalid style is an error, only an absent attribute selects the default (enum-invalid-value in phyphox-docs)
         let style: GraphViewDescriptor.GraphStyle = try attributes.optionalValue(for: .style) ?? .lines
         var partialUpdate = try attributes.optionalValue(for: .partialUpdate) ?? false
         let history: UInt = try attributes.optionalValue(for: .history) ?? 1
         let lineWidth: CGFloat = try attributes.optionalValue(for: .lineWidth) ?? 1.0
         let color = try attributes.optionalColor(for: .color)
 
-        //The colour scale has as many stops as the file provides, numbered from 1 and ending at
-        //the first ABSENT stop - without the former cap of nine (views-map-color-limit in
-        //phyphox-docs). A stop that is present but unparseable is an error, not the end of the
-        //scale (color-invalid-value in phyphox-docs).
+        //Stops are numbered from 1 up to the first absent one, without a cap (views-map-color-limit in phyphox-docs);
+        //an unparseable stop is an error, not the end of the scale (color-invalid-value)
         var colorMap: [UIColor] = []
         var mapColorIndex = 1
         while let mapColor = try numberedAttributes.optionalColor(for: "mapColor\(mapColorIndex)") {
@@ -345,15 +339,9 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
             throw ElementHandlerError.missingElement("input")
         }
         
-        //Dataset pairing follows the decided model ("How the input tags form datasets" on the
-        //graph page of phyphox-docs, docs/file-format/views/graph.md): every y input is one
-        //dataset. With exactly as many x inputs as y inputs (z inputs do not count), they are
-        //matched 1-on-1 in order of appearance regardless of interleaving. With fewer x than y
-        //inputs, each y is plotted against the most recent preceding x input, or against its
-        //element index if none preceded it. Any x input that no y input uses - trailing, or
-        //shadowed by a later x before any y consumed it - is a load error; that can only arise
-        //with unequal counts. Styling attributes on an x input apply to its matched dataset; a
-        //shared x styles only the first dataset that uses it.
+        //Dataset pairing per "How the input tags form datasets" (phyphox-docs, docs/file-format/views/graph.md): each y is
+        //a dataset; equal x/y counts pair 1-on-1 in order, else each y takes the latest preceding x (or its index); an
+        //x no y uses is an error. Styling on an x applies to its dataset, a shared x only to the first one using it.
         let xInputs = inputBuffers.filter { $0.axis == .x }
         let yInputs = inputBuffers.filter { $0.axis == .y }
         guard !yInputs.isEmpty else {
@@ -416,8 +404,7 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
             styles.append(yInput.style ?? xStyling?.style ?? style)
         }
 
-        //z inputs attach to the dataset of the most recent preceding y input, or to the first
-        //dataset if none preceded
+        //z inputs attach to the dataset of the most recent preceding y input, or to the first dataset if none preceded
         var yCount = 0
         for inputBuffer in inputBuffers {
             switch inputBuffer.axis {
@@ -442,8 +429,7 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         
         let pickLabel = attributes.optionalString(for: .pickLabel) ?? ""
 
-        //Data picker outputs are kept in slots of six (x, xcal, y, ycal, z, zcal).
-        //The n-th occurrence of an axis goes into block n, like on Android.
+        //Picker outputs in slots of six (x, xcal, y, ycal, z, zcal); the n-th occurrence of an axis fills block n, like Android
         var pickOutputs: [GraphPickOutput?] = []
         var axisOccurrences: [GraphPickAxis: Int] = [:]
         for output in outputHandler.results {

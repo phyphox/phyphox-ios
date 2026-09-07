@@ -49,9 +49,7 @@ final class BinningAnalysis: AutoClearingExperimentAnalysisModule {
         let x0 = x0Input?.getSingleValue() ?? 0.0
         let dx = dxInput?.getSingleValue() ?? 1.0
 
-        //Any invalid dx - zero, negative or non-finite - and a non-finite x0 are error states
-        //yielding empty outputs; there is no silent dx = 1 substitution. Only absent inputs (or
-        //empty parameter buffers) keep the documented defaults x0 = 0 and dx = 1.
+        //Invalid dx or non-finite x0 yields empty outputs, no silent dx = 1; only absent inputs keep the defaults 0 and 1
         guard x0.isFinite && dx.isFinite && dx > 0 else {
             return
         }
@@ -64,8 +62,7 @@ final class BinningAnalysis: AutoClearingExperimentAnalysisModule {
                 continue
             }
 
-            //Bins are lower-edge inclusive: floor semantics. Truncation toward zero would give
-            //bin 0 double width, collecting everything in (x0-dx, x0+dx).
+            //Bins are lower-edge inclusive (floor); truncation toward zero would give bin 0 double width
             let ratio = ((v-x0)/dx).rounded(.down)
             //A finite ratio can still exceed Int - skip the value instead of trapping
             guard ratio > -9e18 && ratio < 9e18 else {

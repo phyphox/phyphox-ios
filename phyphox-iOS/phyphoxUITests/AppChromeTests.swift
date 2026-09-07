@@ -7,12 +7,7 @@
 
 import XCTest
 
-//The screens around an experiment (test-matrix row app-chrome): the collection with its
-//categories, the info menu and the settings it leads to, the experiment menu and every dialog it
-//opens, rotation on both screens, and the path a user hits when a sensor is missing.
-//
-//These run against the shipped collection, in English with a pinned locale, so what they assert
-//is the app's own chrome rather than any fixture.
+//The screens around an experiment (test-matrix row app-chrome), against the shipped collection in English
 final class AppChromeTests: XCTestCase {
     private func launch(_ arguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
@@ -41,11 +36,9 @@ final class AppChromeTests: XCTestCase {
         XCTAssertLessThan(app.staticTexts["Raw Sensors"].frame.minY, app.staticTexts["Acoustics"].frame.minY,
                           "Raw Sensors comes before Acoustics")
 
-        //Every category holds experiments, each with a title and a description
         XCTAssertGreaterThan(app.cells.count, 10, "the shipped collection is listed")
         XCTAssertTrue(app.staticTexts["Acceleration with g"].exists, "a known experiment is there")
 
-        //The bar carries the two entry points into the chrome
         XCTAssertTrue(app.buttons["More Info"].exists)
         XCTAssertTrue(app.buttons["Add"].exists)
     }
@@ -62,7 +55,6 @@ final class AppChromeTests: XCTestCase {
             XCTAssertTrue(app.buttons[entry].exists, "the info menu offers \(entry)")
         }
 
-        //Settings is a screen of its own and comes back
         app.buttons["Settings"].tap()
         XCTAssertTrue(app.navigationBars.firstMatch.waitForExistence(timeout: 10), "settings opens")
         let back = app.navigationBars.buttons.element(boundBy: 0)
@@ -95,7 +87,6 @@ final class AppChromeTests: XCTestCase {
 
         let dialog = app.alerts.firstMatch
         XCTAssertTrue(dialog.waitForExistence(timeout: 5), "the timed run dialog opens")
-        //It configures a delay and a duration before starting
         XCTAssertGreaterThanOrEqual(dialog.textFields.count, 2, "it asks for delay and duration")
         tapCancel(in: dialog, app: app)
         XCTAssertTrue(app.buttons["Actions"].waitForExistence(timeout: 5), "cancelling returns to the experiment")
@@ -123,8 +114,7 @@ final class AppChromeTests: XCTestCase {
         XCTAssertTrue(app.buttons["Experiment info"].waitForExistence(timeout: 5))
         app.buttons["Experiment info"].tap()
 
-        //The info screen carries the experiment's description and links to the wiki, and closes
-        //with its own button rather than a navigation back - it is presented over the experiment
+        //Presented over the experiment, so it closes with its own button rather than a navigation back
         XCTAssertTrue(app.buttons["Close"].waitForExistence(timeout: 10), "the info screen opens")
         XCTAssertTrue(app.buttons["Wiki"].exists, "and offers the link to the documentation")
         XCTAssertTrue(app.staticTexts.element(matching: NSPredicate(format: "label CONTAINS[c] 'tone'"))
@@ -159,8 +149,7 @@ final class AppChromeTests: XCTestCase {
 
     // phyphox-test: app-chrome
     func testSensorNotAvailableIsExplained() throws {
-        //A simulator has no accelerometer: opening that experiment must explain itself rather
-        //than open an experiment that cannot measure
+        //A simulator has no accelerometer: the experiment must explain itself instead of opening
         let app = launch(["-phyphoxUrl", "phyphox://asset=accelerometer.phyphox", "-phyphoxAutoConfirm"])
 
         let dialog = app.alerts.firstMatch

@@ -39,9 +39,8 @@ final class RoundAnalysis: UpdateValueAnalysis {
                 vvceil(&results, results, [Int32(results.count)])
             }
             else {
-                //Ties round half away from zero (C rounding, like the formula language's
-                //round; -0.5 becomes -1) and non-finite values pass through unchanged.
-                //vvnint is not usable here: it rounds ties to even (2.5 -> 2).
+                //Ties round half away from zero like the formula language's round (-0.5 -> -1); non-finite values
+                //pass through. vvnint is not usable: it rounds ties to even (2.5 -> 2).
                 results = results.map { $0.rounded(.toNearestOrAwayFromZero) }
             }
             

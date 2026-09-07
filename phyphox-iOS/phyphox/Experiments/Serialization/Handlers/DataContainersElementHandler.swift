@@ -30,19 +30,15 @@ private final class DataContainerElementHandler: ResultElementHandler, Childless
 
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        //Only "buffer" exists; the attribute is reserved for future container types, so an
-        //unknown value must not silently load as an ordinary buffer
-        //(container-type-unvalidated in phyphox-docs, matching Android)
+        //Only "buffer" exists; an unknown value must not silently load as a buffer (container-type-unvalidated in phyphox-docs)
         if let type = attributes.optionalString(for: .type), type.lowercased() != "buffer" {
             throw ElementHandlerError.message("Unknown container type \"\(type)\".")
         }
 
         let size = try attributes.optionalValue(for: .size) ?? 1
 
-        //A malformed init entry rejects the file instead of being silently dropped, which would
-        //also shift every later entry one position forward (number-invalid-value rule in
-        //phyphox-docs). An empty attribute still just starts the buffer empty, but an empty
-        //entry ("1,,2", a trailing comma) is an error.
+        //A malformed init entry rejects the file rather than shifting later entries (number-invalid-value in phyphox-docs);
+        //an empty attribute starts the buffer empty, but an empty entry ("1,,2", trailing comma) is an error
         let baseContents: [Double]
         if let initValues = attributes.optionalString(for: .initKey), !initValues.isEmpty {
             baseContents = try initValues.components(separatedBy: ",").map {

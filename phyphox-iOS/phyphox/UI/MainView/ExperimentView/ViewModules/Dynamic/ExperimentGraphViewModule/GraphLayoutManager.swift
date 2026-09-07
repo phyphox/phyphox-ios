@@ -25,8 +25,7 @@ class GraphLayoutManager {
     private var markerLabelFrame: UIView?
     var buttonView: UIView?
 
-    //Data picker: one button per configured pick output, shown with the marker
-    //label while a point is selected in pick mode. Set by the graph view.
+    //Data picker: one button per pick output, shown with the marker label while a point is selected; set by the graph view
     var pickButtons: [(slot: Int, title: String)] = []
     var onPickButtonTapped: ((Int) -> Void)?
     
@@ -198,8 +197,7 @@ class GraphLayoutManager {
         if let buttonView = buttonView {
             buttonView.setNeedsLayout()
             buttonView.layoutIfNeeded()
-            //Fitting-size on both axes, so the box hugs its content instead of
-            //stretching to the available width
+            //Fitting size on both axes, so the box hugs its content
             buttonViewSize = buttonView.systemLayoutSizeFitting(
                 CGSize(width: contentWidth, height: UIView.layoutFittingCompressedSize.height),
                 withHorizontalFittingPriority: .fittingSizeLevel,
@@ -317,8 +315,7 @@ class GraphLayoutManager {
 
         // Layout toolbar if in exclusive mode
         if resizableState == .exclusive, let toolbar = toolbar {
-            //In landscape the toolbar becomes a vertical strip at the right edge so the graph
-            //keeps the full (scarce) height, like on Android
+            //Landscape: vertical toolbar strip at the right edge so the graph keeps the full height, like on Android
             let isLandscape = bounds.width > bounds.height
             toolbar.vertical = isLandscape
             let toolbarSize = toolbar.sizeThatFits(bounds.size)

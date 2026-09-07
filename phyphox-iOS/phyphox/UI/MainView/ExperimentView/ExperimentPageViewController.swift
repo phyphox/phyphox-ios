@@ -29,9 +29,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     var hintTooltip: HintTooltipView? = nil
 
-    //Floating countdown display for timed runs, shown at the top right of the content area. It used
-    //to be a UIBarButtonItem label, but the iOS 26 glass bar buttons left the already tight
-    //navigation bar without any room for the experiment title once the timer appeared.
+    //Floating countdown for timed runs; not a bar button item, the iOS 26 glass bar leaves no room for the title then
     private var timerDisplay: UIView? = nil
     private var timerDisplayBackdrop: UIVisualEffectView? = nil
     private var timerLabel: UILabel? = nil
@@ -134,8 +132,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         var modules: [[ExperimentModule]] = []
         
-        //Nil for a link experiment and for the placeholder of a file that failed to load; see
-        //viewCollections, which the rest of the class uses (self is not available yet here)
+        //Nil for a link experiment or a failed-load placeholder (see viewCollections; self is not available yet here)
         if let descriptors = experiment.viewDescriptors {
             for collection in descriptors {
                 let m = ExperimentViewModuleFactory.createViews(collection, resourceFolder: experiment.resourceFolder)
@@ -148,10 +145,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         viewModules = modules
         
-        //Usually the first view. The store screenshot system can name another one through a
-        //launch argument (-phyphoxView, see AutomationLaunchOptions in AppDelegate) because one of
-        //its scenes shows the second view. An index this experiment does not have means the first
-        //view, i.e. the normal behaviour.
+        //Usually the first view; -phyphoxView (AutomationLaunchOptions) can pick another, an index out of range means the first
         let requestedViewCollection = AutomationLaunchOptions.startView
         selectedViewCollection = requestedViewCollection < experimentViewControllers.count ? requestedViewCollection : 0
         
@@ -178,10 +172,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         self.navigationItem.title = experiment.displayTitle //Keeps the accessibility name and back label
 
-        //With the iOS 26 glass bar buttons there is little width left for the title, and the
-        //default bar title only truncates. This label shrinks the font to fit and, for very long
-        //titles, wraps onto a second line — the title is what identifies an experiment on student
-        //screenshots, so it should stay readable.
+        //Shrinks or wraps the title into the width the iOS 26 glass bar buttons leave; the default bar title only truncates
         installFittingTitle()
 
         let backButton =  UIBarButtonItem(title: "‹", style: .plain, target: self, action: #selector(leaveExperiment))
@@ -237,10 +228,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             return
         }
         if #available(iOS 13, *) {
-            //Per-item appearance: UIKit cross-fades between the collection's transparent
-            //large-title bar and this opaque branded bar during the push/pop transition. Mutating
-            //the shared bar's appearance here instead paints the orange background onto the bar
-            //while it still has the collection's large-title height — a tall orange flash on push.
+            //Per-item appearance: mutating the shared bar's appearance paints the orange onto the still-tall large-title bar on push
             let appearance = UINavigationBarAppearance()
             appearance.configureWithOpaqueBackground()
             appearance.backgroundColor = kHighlightColor
@@ -258,10 +246,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func updateSegControlDesign() {
-        //Native segmented control (rendered by iOS 26 as liquid glass). The custom background and
-        //divider images that used to fake Android-style underline tabs are no longer applied cleanly
-        //by iOS 26 and left hard white lines between the items, so let the system draw the control
-        //and only brand the selected segment with the phyphox highlight color.
+        //Native segmented control; the custom underline-tab images left hard white lines on iOS 26, so only brand the selection
         let font: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : SettingBundleHelper.getTextColorWhenDarkModeNotSupported() , NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
         let selectedFont: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : kTextColor, NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
         segControl!.setTitleTextAttributes(font, for: .normal)
@@ -273,13 +258,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     func updateLayout() {
         let offsetTop : CGFloat = self.topLayoutGuide.length
-        //The tab strip floats over the content (iOS 26 style, content scrolling behind the glass
-        //control), so the pages start right below the navigation bar and get a top content inset
-        //instead, keeping their initial content below the tabs. The floating countdown display
-        //shares that band; without tabs it needs the inset itself.
+        //The tab strip floats over the content (iOS 26 style), so pages get a top inset instead; the countdown shares that band
         layoutTimerDisplay()
-        //Keep the floating tab strip below the bar — the top offset differs per orientation, so the
-        //frame set at creation goes stale (in landscape the tabs ended up slightly under the bar)
+        //The top offset differs per orientation, so the frame set at creation goes stale
         tabBar?.frame = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: tabBarHeight)
         let timerInset: CGFloat = timerDisplay.map { $0.frame.height + 8 } ?? 0
         let tabInset: CGFloat = (viewCollections.count > 1) ? tabBarHeight : timerInset
@@ -289,9 +270,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
                 let wasAtTop = vc.tableView.contentOffset.y <= -oldInset + 0.5
                 vc.tableView.contentInset.top = tabInset
                 vc.tableView.verticalScrollIndicatorInsets.top = tabInset
-                //Changing the inset does not move the content: a table resting at the old top would
-                //keep its top rows behind the tabs (seen on the iPhone 8), so scroll it to the new
-                //natural top — but only if the user has not scrolled away
+                //Changing the inset does not move the content, so scroll a table resting at the old top to the new one
                 if wasAtTop {
                     vc.tableView.contentOffset.y = -tabInset
                 }
@@ -342,17 +321,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         super.viewDidLoad()
 
         self.automaticallyAdjustsScrollViewInsets = false
-        //Extend under the (opaque) navigation bar and lay out from the top guide instead — with a
-        //view that does not underlap the bar, UIKit cannot animate the large-title collapse when
-        //this page is pushed from the collection: the still-expanded bar was painted with this
-        //page's opaque background for the whole transition and snapped at the end. All own layout
-        //already offsets by topLayoutGuide.length on every pass (updateLayout), so the content
-        //keeps its position below the bar.
+        //Extend under the opaque bar (own layout offsets by topLayoutGuide.length anyway), else UIKit cannot animate the
+        //large-title collapse on push
         self.edgesForExtendedLayout = .top
         self.extendedLayoutIncludesOpaqueBars = true
-        //The region under the bar is covered by the opaque bar at rest, but shows through during
-        //the pop transition while the bar crossfades to the collection's transparent appearance —
-        //without a background it appeared black instead of the app background.
+        //Shows through during the pop crossfade; without a background it appeared black
         self.view.backgroundColor = UIColor(named: "mainBackground")
 
         refreshAppTheme()
@@ -404,9 +377,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             //No strip background: the glass control floats directly over the content
             tabBar!.backgroundColor = .clear
 
-            //The segmented control's own track is translucent but applies no blur, so its labels mix
-            //illegibly with content scrolling behind it. Back it with a capsule of real material —
-            //liquid glass on iOS 26, a blur material on earlier versions — like the bar buttons have.
+            //The control's translucent track has no blur, so back it with real material (liquid glass on iOS 26, blur before)
             let backdrop: UIVisualEffectView
             if #available(iOS 26.0, *) {
                 backdrop = UIVisualEffectView(effect: UIGlassEffect())
@@ -439,8 +410,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
         pageViewControler.didMove(toParent: self)
 
-        //The pages now extend under the floating tab strip and countdown display, so both have to
-        //stay above them
+        //The pages extend under the floating tab strip and countdown display
         if let tabBar = tabBar {
             self.view.bringSubviewToFront(tabBar)
         }
@@ -517,9 +487,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return .none
     }
     
-    //Alerts that are not part of a sequenced dialog flow are presented from the top-most view
-    //controller, so they stack on an already presented alert (like the denial notice of a
-    //permission a custom experiment combines with the flashlight) instead of failing silently.
+    //Alerts outside the dialog sequence are presented from the top-most controller, so they stack on an already presented alert
     private var topMostViewController: UIViewController {
         var top: UIViewController = navigationController ?? self
         while let presented = top.presentedViewController {
@@ -530,9 +498,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
     //MARK: - Dialog sequence
 
-    //The dialogs shown when an experiment opens, in order. Each step either presents its dialog
-    //and continues with the next step when it is dismissed, or passes through directly, so no
-    //dialog collides with (and silently cancels) another one.
+    //The dialogs shown when an experiment opens, in order; each step presents and continues on dismissal, or passes through
     private enum DialogSequence {
         case systemPermissions
         case dataPolicy
@@ -562,9 +528,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             )
 
         case .dataPolicy:
-            //-phyphoxAutoConfirm (see AutomationLaunchOptions) confirms the notice for an
-            //unattended run - it gates the connection setup, so a headless network test could
-            //not run otherwise
+            //-phyphoxAutoConfirm (AutomationLaunchOptions) confirms the notice for an unattended run; it gates the connection setup
             if AutomationLaunchOptions.autoConfirm {
                 dataPolicyInfoDismissed()
             } else if let networkConnection = experiment.networkConnections.first {
@@ -589,9 +553,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
 
         case .photosensitivity:
-            //Like on Android, the photosensitivity warning is deliberately shown on every open
-            //of an experiment that can strobe the flashlight, rather than offering a permanent
-            //dismissal that would silence it forever.
+            //Like Android: shown on every open of an experiment that can strobe, no permanent dismissal
             if !photosensitivityWarningShown, experiment.flashlightOutput?.usesStrobe == true,
                !AutomationLaunchOptions.autoConfirm {
                 photosensitivityWarningShown = true
@@ -670,10 +632,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         let maxWidth = min(CGFloat(280), view.bounds.width - 24)
         let size = tooltip.fittingSize(maxWidth: maxWidth)
 
-        //Aim the pointer at the real on-screen button. UIBarButtonItem does not expose its view
-        //publicly; reading the "view" key via KVC works (and is not flagged as private-API use, as
-        //"view" is a common public key). Button positions differ per device, so an estimate can't be
-        //right on every phone — fall back to one only if the actual view is unavailable.
+        //Aim at the real button via KVC "view" on the UIBarButtonItem (a public key, not flagged as private API); estimate as fallback
         let targetX: CGFloat
         if let itemView = item.value(forKey: "view") as? UIView, itemView.window != nil {
             targetX = view.convert(itemView.bounds, from: itemView).midX
@@ -683,10 +642,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             targetX = view.bounds.maxX - (view.safeAreaInsets.right + 8) - (indexFromRight + 0.5) * 44
         }
 
-        //self.view starts right below the navigation bar (edgesForExtendedLayout is empty), so place
-        //the bubble just under the bar pointing up at the buttons. The buttons never move — a tab
-        //strip or the countdown label appear below/beside them — so this stays fixed either way, even
-        //if the bubble briefly overlays the top of the tab strip.
+        //Just under the bar, pointing up at the buttons, which never move (tab strip and countdown appear below/beside them)
         var originX = targetX - size.width / 2
         originX = max(12, min(originX, view.bounds.width - 12 - size.width))
         let originY: CGFloat = 8
@@ -729,20 +685,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             //First appearance: resolve permissions, then run the full dialog sequence
             executeSequence(from: .systemPermissions)
         } else {
-            //Re-appearing, for example after returning from the experiment info: reconnect what
-            //viewDidDisappear tore down and let the sequence pass through the remaining steps
+            //Re-appearing (e.g. from the experiment info): reconnect what viewDidDisappear tore down
             executeSequence(from: .dataPolicy)
         }
 
-        //Launch-argument seam for unattended automation (see AutomationLaunchOptions in
-        //AppDelegate): -phyphoxRemote brings the remote server up for this session, exactly as
-        //the menu toggle's confirmed action does, so a host script can drive the REST API.
-        //Only once - a later manual toggle stays the user's decision.
-        //
-        //It does not matter where the experiment came from: this runs for every experiment page,
-        //so an experiment transferred from a Bluetooth device (-phyphoxBleConnect) serves the
-        //remote API exactly as a launched one does. The Bluetooth compatibility suite depends on
-        //that, and it is why the switch needs no counterpart there.
+        //-phyphoxRemote (AutomationLaunchOptions) brings the remote server up once, like the confirmed menu toggle. Runs for every
+        //experiment page, so an experiment transferred from a Bluetooth device (-phyphoxBleConnect) serves the API as well
         if AutomationLaunchOptions.remoteEnabled && !didLaunchWebServerForAutomation {
             didLaunchWebServerForAutomation = true
             launchWebServer()
@@ -765,9 +713,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         titleLabel.font = UIFont.preferredFont(forTextStyle: .headline)
         titleLabel.lineBreakMode = .byTruncatingTail
         titleLabel.numberOfLines = 2 //Second line always available, see intrinsicContentSize
-        //Sizing via Auto Layout with an explicit height: with the default autoresizing-mask
-        //constraints the bar assigns the title view a single-line-high frame after rotation
-        //(regardless of the intrinsic size), which truncates the wrapped two-line case.
+        //Explicit height constraint: with autoresizing-mask constraints the bar gives the title view a single-line frame after rotation
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.heightAnchor.constraint(equalToConstant: FittingTitleLabel.twoLineHeight).isActive = true
         self.navigationItem.titleView = titleLabel
@@ -845,10 +791,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
-    ///The experiment's view collections. Nil descriptors are possible - a link experiment has no
-    ///views, and neither does the placeholder built for a file that failed to load - so this is
-    ///never force-unwrapped: the collection view controller keeps such experiments away from
-    ///this screen, and if one ever arrives here it must not trap.
+    ///Nil descriptors (link experiment, failed-load placeholder) must not trap here
     private var viewCollections: [ExperimentViewCollectionDescriptor] {
         return experiment.viewDescriptors ?? []
     }
@@ -860,8 +803,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     private func launchWebServer() {
         experiment.setKeepScreenOn(true)
         if !webServer.start() {
-            //The translated message must not contain a format placeholder (non-professional
-            //translators tend to break template strings), so the port is appended in code.
+            //Port appended in code: translated strings must not carry format placeholders
             UIAlertController.PhyphoxUIAlertBuilder()
                 .title(title: localize("remoteServerPortInUseTitle"))
                 .message(message: localize("remoteServerPortInUse") + " (Port \(webServer.port))")
@@ -1240,8 +1182,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         timerDisplayBackdrop?.layer.cornerRadius = h / 2
         label.frame = container.bounds
 
-        //Pad the tab strip's scrollable range by the capsule overlap, so the last tabs can be
-        //scrolled out from under the countdown display and remain reachable
+        //Pad the tab strip's scrollable range so the last tabs can be scrolled out from under the countdown display
         tabBar?.contentInset.right = view.bounds.width - container.frame.minX + 8
     }
 
@@ -1407,10 +1348,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         ExperimentManager.shared.reloadUserExperiments()
     }
     
-    //Returns whether the measurement is running afterwards - with a timed run, whether its
-    //countdown was started. A start can be refused (a Bluetooth device that is not connected,
-    //an audio engine that will not start), and the remote interface reports that to its client
-    //instead of claiming success (control-start-refused).
+    //Returns whether the measurement (or its countdown) is running afterwards; a refused start is reported to the remote
+    //client instead of claiming success (control-start-refused)
     @discardableResult
     func startExperiment() -> Bool {
         let defaults = UserDefaults.standard
@@ -1500,9 +1439,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             return false
         }
         
-        //Experiment.start() also refuses silently when one of its Bluetooth devices is not
-        //connected - it shows its own dialog and leaves the experiment stopped, so neither the
-        //toolbar item nor the remote interface may pretend that a measurement is running.
+        //Experiment.start() refuses silently when a Bluetooth device is not connected (it shows its own dialog)
         guard experiment.running else {
             return false
         }
@@ -1567,20 +1504,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     @objc func handleCameraError(notification: Notification) {
         DispatchQueue.main.async {
 
-            //If the camera could not be set up because its permission is missing, the
-            //permission flow already informs the user with the accurate explanation - the
-            //generic loading error would only replace it with a less helpful message.
+            //Missing camera permission: the permission flow already explains it
             guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else {
                 return
             }
 
-            //-phyphoxAssumeSensors says to treat every sensor the device could have as present,
-            //and on a simulator the camera is the one that cannot be faked at all: AVFoundation
-            //offers no capture device, so this alert comes up on every launch of a camera
-            //experiment and its OK button leaves the experiment. The store screenshot system
-            //composites a real preview into the empty rectangle afterwards, which it cannot do
-            //with a dialog on top. Nothing else changes - the preview stays empty and the
-            //experiment records nothing, exactly as it would without the flag.
+            //-phyphoxAssumeSensors: the simulator has no capture device, so this alert would leave every camera experiment on launch;
+            //the store screenshot system composites a preview into the empty rectangle instead
             if AutomationLaunchOptions.assumeSensors {
                 return
             }
@@ -1598,9 +1528,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
 
             alert.addAction(okAction)
-            //Present on top of whatever is currently shown instead of dismissing it: the
-            //presented dialog may carry information of its own, like the photosensitivity
-            //warning
+            //Present on top of what is shown: the presented dialog may carry information of its own
             self.topMostViewController.present(alert, animated: true, completion: nil)
         }
     }
@@ -1620,8 +1548,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
             self.navigationController!.present(al, animated: true, completion: nil)
         } else {
-            //Like on Android, buffers assigned to a clear group are only cleared if the user
-            //explicitly selects that group.
+            //Like Android: clear-group buffers are only cleared when the user selects the group
             let selectionView = ClearGroupSelectionView(groups: clearGroups)
 
             let al = UIAlertController(title: localize("clear_data"), message: localize("clear_data_question_select"), preferredStyle: .alert)
@@ -1765,8 +1692,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
 
     func bluetoothScanDialogDismissed() {
-        //Re-enter the bluetooth step: the device picked in the scan dialog still has to be
-        //connected before the sequence moves on
+        //Re-enter the bluetooth step: the picked device still has to be connected
         executeSequence(from: .bluetoothConnections)
     }
     
@@ -1863,8 +1789,7 @@ extension ExperimentPageViewController: ExperimentAnalysisDelegate {
     }
 }
 
-//Accessory view for the clear-data dialog of an experiment with clear groups: one switch per
-//group, all off by default, so protected buffers are only cleared on explicit selection.
+//Accessory view for the clear-data dialog: one switch per clear group, all off by default
 final class ClearGroupSelectionView: UIView {
     private let groups: [String]
     private var switches: [UISwitch] = []
@@ -1922,16 +1847,9 @@ final class ClearGroupSelectionView: UIView {
     }
 }
 
-///Navigation bar title label that adapts to the space the bar items leave: full headline size when
-///the title fits, shrunk down to 70% to stay on one line, and wrapped onto a second line for
-///titles too long even at that size.
+///Bar title label: full headline size when it fits, shrunk to 70% to stay on one line, else wrapped onto a second line
 class FittingTitleLabel: UILabel {
-    ///Room for two lines at the minimum size — the label's height at all times: a height that
-    ///changes with the fitting result does not work, since the bar re-queries the intrinsic size
-    ///only unreliably after rotation (verified by logging), leaving a wrapped title in a
-    ///single-line-high frame, shown truncated. With the constant height a single-line title is
-    ///simply centered vertically — visually identical — and the wrapped case has its second line
-    ///available from the start.
+    ///Constant two-line height: the bar re-queries the intrinsic size unreliably after rotation, so a variable height truncates
     static var twoLineHeight: CGFloat {
         let base = UIFont.preferredFont(forTextStyle: .headline)
         return ceil(2 * base.withSize(base.pointSize * 0.7).lineHeight) + 2
@@ -1947,8 +1865,7 @@ class FittingTitleLabel: UILabel {
         fitText()
     }
 
-    //Inputs of the last fitting run: layoutSubviews fires on every bar layout pass (per frame
-    //during interactive transitions), so skip the measuring when nothing changed
+    //Inputs of the last fitting run; layoutSubviews fires per frame during transitions
     private var lastFittedText: String? = nil
     private var lastFittedWidth: CGFloat = 0
     private var lastFittedBaseSize: CGFloat = 0
@@ -1965,10 +1882,7 @@ class FittingTitleLabel: UILabel {
         let minSize = base.pointSize * 0.7
         let ns = text as NSString
 
-        //Find the largest size (in 0.5pt steps) at which the whole title measures within a single
-        //line. Measured per candidate size rather than scaled linearly: glyph advances do not scale
-        //exactly linearly with the point size, and a size estimated slightly too large leaves the
-        //title truncated with an ellipsis instead of shown in full.
+        //Largest size (0.5pt steps) that fits one line; measured per size, as glyph advances do not scale linearly
         var singleLineSize: CGFloat? = nil
         var size = base.pointSize
         while size >= minSize {
@@ -1979,8 +1893,7 @@ class FittingTitleLabel: UILabel {
             size -= 0.5
         }
 
-        //If no size fits a single line, stay at the minimum size — the text then wraps into the
-        //second line, which the constant intrinsic height keeps available at all times
+        //No single-line fit: minimum size, the text wraps into the second line
         let targetFont = base.withSize(singleLineSize ?? minSize)
         //Only touch the label when something actually changes to avoid a layout feedback loop
         if font.pointSize != targetFont.pointSize {

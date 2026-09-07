@@ -1,15 +1,7 @@
 #!/bin/bash
-# Wait for a simulator to finish booting, but not forever.
-#
-# "xcrun simctl bootstatus <udid> -b" waits with no timeout of its own, and a device that never
-# finishes booting then holds the job until GitHub kills it - which is what a second simulator did
-# on a runner: 30 minutes in the preparation step and nothing to show for it. Here the wait is
-# bounded, so a device that does not come up costs a warning and the test that needed it, not the
-# whole job.
-#
-#   wait_for_boot.sh <udid> [seconds]
-#
-# Exits 0 once the device is booted, 1 if it is not booted within the budget.
+# Wait for a simulator to finish booting, but not forever: "xcrun simctl bootstatus -b" has no timeout,
+# and a device that never boots would hold the job until GitHub kills it.
+#   wait_for_boot.sh <udid> [seconds]     exits 0 once booted, 1 if not booted within the budget
 set -uo pipefail
 
 UDID="${1:?usage: wait_for_boot.sh <udid> [seconds]}"
@@ -32,10 +24,7 @@ done
 
 wait "$WAITER" || exit 1
 
-# bootstatus exiting 0 is not the same as a usable device: it reports "Finished" with a terminal
-# status of 4294967295 either way, so what the caller gets told has to come from the device list
-# rather than from an exit code. A caller that is allowed to skip its tests can only skip them if
-# it hears about this.
+# bootstatus exits 0 either way ("Finished", status 4294967295), so the verdict has to come from the device list.
 if ! xcrun simctl list devices | grep -q "$UDID.*Booted"; then
   echo "$UDID is not booted although bootstatus finished"
   exit 1

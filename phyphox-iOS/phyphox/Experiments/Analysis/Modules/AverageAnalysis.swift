@@ -23,9 +23,7 @@ final class AverageAnalysis: AutoClearingExperimentAnalysisModule {
     
     required init(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput], additionalAttributes: AttributeContainer) throws {
         let io = try Self.mapIO(inputs: inputs, outputs: outputs)
-        //Outputs map by the documented slot names "average" and "stddev"; an unnamed output
-        //fills "average". The as attribute decides the slot, never document order - assigning
-        //by position would silently swap the two values when they are written in reverse order.
+        //Outputs map by slot name, never document order (an unnamed output fills "average") - by position they would swap
         avgOutput = io.output(Self.averageOutSlot)
         stdOutput = io.output(Self.stddevOutSlot)
 
@@ -50,9 +48,7 @@ final class AverageAnalysis: AutoClearingExperimentAnalysisModule {
                 count += 1
             }
         }
-        //An empty or all-non-finite input is an intermediate error state: average delivers
-        //single values, so each connected output receives NaN instead of nothing (the stddev
-        //branch below yields NaN through its count < 2 case).
+        //An empty or all-non-finite input: average delivers single values, so each connected output receives NaN
         let avg = count == 0 ? Double.nan : sum/Double(count)
         
         if let avgOutput = avgOutput {

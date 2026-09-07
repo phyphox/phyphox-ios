@@ -81,8 +81,7 @@ extension LookupElementHandler {
     }
 
     func childHandler(for elementName: String) throws -> ElementHandler {
-        //Element names are matched case-insensitively, like the enumerated values
-        //(enum-case-insensitive in phyphox-docs; the Android block parsers lowercase their tags).
+        //Element names fold case like enumerated values (enum-case-insensitive in phyphox-docs; Android lowercases its tags).
         //All registered handler names are lowercase.
         guard let handler = childHandlers[elementName.lowercased()] else {
             throw ElementHandlerError.unexpectedChildElement(elementName)
@@ -107,12 +106,8 @@ extension ResultElementHandler {
         return results.first
     }
 
-    /// Returns the last result, tolerating a repeated element instead of rejecting the file.
-    /// Only for the root element's metadata children (title, state-title, category, icon,
-    /// color, description), where the last occurrence wins (duplicate-metadata-last-wins in
-    /// phyphox-docs, matching Android): files with such duplicates exist in the wild - old
-    /// Android versions appended a fresh state-title on every re-save of a saved state.
-    /// Everywhere else a duplicate element stays an error via `expectOptionalResult`.
+    /// Last result, tolerating a repeated element: only for the root's metadata children (title, state-title, category, icon,
+    /// color, description), where the last one wins like on Android (duplicate-metadata-last-wins in phyphox-docs).
     func lastResult() -> Result? {
         return results.last
     }
@@ -154,19 +149,9 @@ extension AttributelessElementHandler {
     func startElement(attributes: AttributeContainer) throws {}
 }
 
-/// An enumerated value decoded from an experiment file attribute. Decoding folds case: an exact
-/// match of the raw value is tried first, then the cases are scanned with case folded on both
-/// sides, so camelCase raw values like prioritizeFramerate are found too (enum-case-insensitive
-/// rule in phyphox-docs, matching the Android parser). Folding happens before rejection - a value
-/// that matches no case at all fails the init, which the attribute readers report as an error.
-///
-/// This is deliberately its own protocol rather than a `LosslessStringConvertible` conformance:
-/// the folding init accepts several spellings of the same value, which would stretch that
-/// protocol's contract. The description (used wherever such an enum is printed or written out) is
-/// the canonical raw value.
-///
-/// A String enum conforms by declaring this protocol together with `CaseIterable`. No allowed set
-/// may contain two values differing only in case - the folding scan would silently pick the first.
+/// An enumerated attribute value, decoded with case folding: exact match first, then a folded scan (enum-case-insensitive
+/// in phyphox-docs, like Android); description is the canonical raw value. Deliberately not LosslessStringConvertible,
+/// whose contract a many-spellings init would stretch. Conform with CaseIterable; cases must not differ only in case.
 protocol CaseInsensitiveAttributeDecodable: CustomStringConvertible {
     init?(attributeValue: String)
 }

@@ -8,9 +8,8 @@
 
 import Foundation
 
-//Applies the magnitude of a Butterworth filter's transfer function to data in the frequency
-//domain (the FFT itself is done separately with the fft module). With only "cutoff" set this is
-//a lowpass; with a non-zero "cutoffLow" it becomes a bandpass with -3dB at both cutoffs.
+//Applies the magnitude of a Butterworth transfer function to frequency-domain data (FFT done separately);
+//"cutoff" alone is a lowpass, a non-zero "cutoffLow" makes it a bandpass with -3dB at both cutoffs.
 final class ButterworthAnalysis: AutoClearingExperimentAnalysisModule {
     private static let yInSlot = AnalysisIOSlot(name: "y", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
     private static let xInSlot = AnalysisIOSlot(name: "x", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
@@ -74,8 +73,7 @@ final class ButterworthAnalysis: AutoClearingExperimentAnalysisModule {
             let f = abs(x[i])
             let gain: Double
             if cutoffLow > 0.0 {
-                //Bandpass from the standard lowpass-to-bandpass transformation:
-                //|H|^2 = 1 / (1 + ((f^2 - fl*fh) / (f*(fh - fl)))^2n), unity at sqrt(fl*fh), -3dB at fl and fh
+                //Bandpass via lowpass-to-bandpass transformation: |H|^2 = 1 / (1 + ((f^2 - fl*fh) / (f*(fh - fl)))^2n)
                 if f == 0.0 {
                     gain = 0.0
                 } else {

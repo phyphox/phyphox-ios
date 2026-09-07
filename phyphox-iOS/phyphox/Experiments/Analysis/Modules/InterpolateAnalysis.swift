@@ -39,8 +39,7 @@ final class InterpolateAnalysis: AutoClearingExperimentAnalysisModule {
         let io = try Self.mapIO(inputs: inputs, outputs: outputs)
         xIn = io.data(Self.xInSlot)
         yIn = io.data(Self.yInSlot)
-        //io.input, not io.data: xi allows a value-type input, which acts as a one-element
-        //buffer like on Android
+        //io.input, not io.data: xi allows a value-type input (a one-element buffer, like on Android)
         xLocIn = io.input(Self.xiInSlot)
 
         if (xIn == nil) {

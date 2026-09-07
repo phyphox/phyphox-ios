@@ -145,8 +145,7 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
     }
     
     func update(){
-        //Seeded by Experiment.seedInputDefaults() - see the note there; this path only runs
-        //for the view collection that is on screen
+        //Seeded by Experiment.seedInputDefaults() (see the note there); this path only runs for the on-screen view collection
 
         if(setDropdownTitleAsDefaultValue){
             let firstElement = descriptor.localizedMappings.first

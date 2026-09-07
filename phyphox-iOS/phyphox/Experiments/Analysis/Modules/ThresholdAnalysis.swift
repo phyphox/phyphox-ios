@@ -40,9 +40,7 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
         var threshold = 0.0
 
         if let v = thresholdIn?.getSingleValue() {
-            //A NaN threshold value participates like any number: no comparison with it is ever
-            //true, so no crossing is found and NaN is output. Only an absent threshold input or
-            //an empty threshold buffer (getSingleValue() == nil) selects the default of 0.
+            //A NaN threshold participates like any number: no crossing, NaN output. Only an absent or empty input selects 0
             threshold = v
         }
 
@@ -67,7 +65,7 @@ final class ThresholdAnalysis: AutoClearingExperimentAnalysisModule {
             }
         }
 
-        //No crossing found is an intermediate error state: output NaN, not the last sample's x
+        //No crossing found: output NaN, not the last sample's x
         if !found {
             x = Double.nan
         }

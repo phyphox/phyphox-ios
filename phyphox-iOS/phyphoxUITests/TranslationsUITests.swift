@@ -7,23 +7,11 @@
 
 import XCTest
 
-//The screens in every language the release ships (test-matrix row translations-ui): the
-//collection, an experiment and its menu, checked for the regressions a translation causes -
-//a screen that no longer comes up, text that lands outside the screen, or a menu that lost
-//entries because a long translation pushed them out.
-//
-//Layout assertions rather than goldens, which the row leaves to the platform: 22 languages times
-//the golden matrix would be thousands of images, and what matters here is not the pixels but
-//that nothing breaks. A screenshot per language is attached to the result for a human to look
-//at when something does.
-//
-//The language list comes from the canonical languages.yml; whether this build enables exactly
-//that set is what the T0 row (translations-build) reports on.
+//The main screens in every language the release ships (test-matrix row translations-ui), checked with
+//layout assertions rather than goldens: a screen that fails to come up, text outside the screen, a menu
+//that lost entries. A screenshot per language is attached for a human.
 final class TranslationsUITests: XCTestCase {
-    ///Every language of the canonical list, sorted - the order the shards are cut from, so a
-    ///shard means the same set on both platforms. (The sweep cannot read the app's own bundle
-    ///from here, so it shards the canonical list; that this list is what the build enables is
-    ///what the T0 row translations-build asserts.)
+    ///The canonical list (languages.yml), sorted - the order the shards are cut from on both platforms
     private static let allLanguages: [String] = {
         guard let fixtures = ViewBehaviorTests.fixturesDirectory else { return [] }
         let docs = fixtures.deletingLastPathComponent().deletingLastPathComponent()
@@ -46,19 +34,13 @@ final class TranslationsUITests: XCTestCase {
         return languages.sorted()
     }()
 
-    ///What the environment asked for and could not have - reported by the test rather than
-    ///silently narrowing the sweep
+    ///What the environment asked for and could not have, reported rather than silently narrowing the sweep
     private static var selectionProblem: String?
 
-    ///The languages this run covers. The whole list unless the environment narrows it, in the
-    ///convention shared with Android so a shard covers the same languages on both platforms
-    ///(test-matrix row translations-ui):
-    ///
+    ///The languages this run covers, in the convention shared with Android (row translations-ui):
     ///  PHYPHOX_TEST_LANGUAGE_SHARD=i/n  every n-th language of the sorted list, starting at i
-    ///  PHYPHOX_TEST_LANGUAGES=de,fr     exactly these, for reproducing one language
-    ///
-    ///A code the build does not have is an ERROR, not a skip: a typo must not quietly remove
-    ///coverage while the run stays green.
+    ///  PHYPHOX_TEST_LANGUAGES=de,fr     exactly these
+    ///A code the build does not have is an ERROR, not a skip
     private static let languages: [String] = {
         let all = allLanguages
         let environment = ProcessInfo.processInfo.environment
@@ -85,8 +67,7 @@ final class TranslationsUITests: XCTestCase {
                 selectionProblem = "PHYPHOX_TEST_LANGUAGE_SHARD must be i/n with 1 <= i <= n, got \(spec)"
                 return []
             }
-            //Round robin over the sorted list: consecutive languages land in different shards,
-            //so the shards are of equal size and equal cost whatever the list looks like
+            //Round robin over the sorted list, so the shards are of equal size
             return all.enumerated().filter { $0.offset % count == index - 1 }.map { $0.element }
         }
 
@@ -95,16 +76,13 @@ final class TranslationsUITests: XCTestCase {
 
     private func launch(language: String, arguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
-        //The region stays en_US so only the language changes: number formats are the golden
-        //suite's business, not this one's
+        //The region stays en_US so only the language changes
         app.launchArguments = arguments + ["-AppleLanguages", "(\(language))", "-AppleLocale", "en_US"]
         app.launch()
         return app
     }
 
-    ///The last button of the screen - the actions menu - resolved against a fresh hierarchy and
-    ///checked immediately before it is handed back, so a hierarchy that changed between reading
-    ///the count and tapping costs a retry instead of the run
+    ///The last button of the screen (the actions menu), resolved against a fresh hierarchy right before use
     private func lastButton(of app: XCUIApplication) -> XCUIElement? {
         for _ in 0..<5 {
             let count = app.buttons.count
@@ -156,8 +134,7 @@ final class TranslationsUITests: XCTestCase {
               + languages.joined(separator: ", "))
 
         for language in languages {
-            //One launch per language, straight into an experiment, then back out to the
-            //collection - the same three screens with half the launches
+            //One launch per language, straight into an experiment, then back out to the collection
             let app = launch(language: language,
                              arguments: ["-phyphoxUrl", "phyphox://asset=tone_generator.phyphox",
                                          "-phyphoxAutoConfirm"])
@@ -168,11 +145,8 @@ final class TranslationsUITests: XCTestCase {
                           "text outside the screen on the experiment screen in \(language): \(offenders.prefix(3))")
             attachScreenshot(app, name: "experiment-\(language)")
 
-            //The actions menu keeps all six entries whatever their translation is - it is where
-            //a long translation shows first. The button carries a translated label, so it is
-            //addressed by position - resolved right before the tap, because the count read a
-            //moment earlier can be stale by the time the tap lands (one sweep failed on the
-            //22nd language that way).
+            //The actions menu keeps all six entries whatever their translation. Its label is translated,
+            //so it is addressed by position, resolved right before the tap (the count can go stale)
             if let actions = lastButton(of: app) {
                 actions.tap()
             } else {
@@ -187,7 +161,6 @@ final class TranslationsUITests: XCTestCase {
                 app.sheets.buttons.element(boundBy: entries - 1).tap()
             }
 
-            //And out to the collection
             app.buttons.element(boundBy: 0).tap()
             XCTAssertTrue(app.cells.firstMatch.waitForExistence(timeout: 20),
                           "the collection does not come up in \(language)")

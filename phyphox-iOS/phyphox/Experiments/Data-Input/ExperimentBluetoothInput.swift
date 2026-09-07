@@ -163,8 +163,7 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
             buffer.markSet()
         }
 
-        //Coordinate with remote reads so a /get read snapshot is taken either fully before or fully
-        //after this write, not partway through (see BufferLock)
+        //A /get snapshot is taken fully before or after this write (see BufferLock)
         synchronizedBufferWrite([dataBufferIn]) {
             tryAppend(myValues: values, to: dataBufferIn)
         }
@@ -188,8 +187,7 @@ class ExperimentBluetoothInput: BluetoothDeviceDelegate {
 
 extension ExperimentBluetoothInput: Equatable {
     static func ==(lhs: ExperimentBluetoothInput, rhs: ExperimentBluetoothInput) -> Bool {
-        //The device is compared by its configuration - NSObject's identity == made two parses of
-        //the same file unequal. Also fixes mode being compared against itself.
+        //By configuration: NSObject's identity == made two parses of the same file unequal
         return lhs.configList == rhs.configList &&
                 ExperimentBluetoothDevice.valueEqual(lhs: lhs.device, rhs: rhs.device) &&
                 lhs.mode == rhs.mode &&

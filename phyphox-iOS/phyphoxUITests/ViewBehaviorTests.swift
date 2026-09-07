@@ -8,19 +8,12 @@
 import XCTest
 
 //Interaction tests over the view fixtures in phyphox-docs fixtures/views/ (test-matrix row
-//view-behavior): type into the edits, press the buttons, flip the toggles, move both slider
-//types, pick a dropdown entry - and assert what each interaction did to its output buffer
-//through the remote API, which the fixtures wire up for exactly that purpose.
-//
-//The fixture is handed to the app by the launch-argument seam (-phyphoxUrl with the file URL of
-//the fixture, -phyphoxRemote for the API, -phyphoxAutoConfirm for the open-time notices), so the
-//app takes it through its real loading path.
+//view-behavior): drive every control and assert the effect on its output buffer via the remote API.
 final class ViewBehaviorTests: XCTestCase {
     private let port = 8081
     private var base: String { "http://127.0.0.1:\(port)" }
 
-    //The fixtures live in the phyphox-docs checkout next to this repository; #filePath resolves
-    //because the tests build and run on the same machine, and a simulator reads the host's files
+    //The phyphox-docs checkout next to this repository; #filePath resolves since tests run on the same machine
     static let fixturesDirectory: URL? = {
         let repository = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()  // phyphoxUITests
@@ -62,10 +55,7 @@ final class ViewBehaviorTests: XCTestCase {
             done.fulfill()
         }
         task.resume()
-        //XCTWaiter, not wait(for:): the reply not arriving is an ANSWER here, not a test
-        //failure. XCTestCase.wait(for:) records one, so a request that simply found no server -
-        //which is exactly what several of these checks are looking for - failed the test on a
-        //runner where the connection attempt took longer than the wait
+        //XCTWaiter, not wait(for:): no reply is an answer here, and wait(for:) would record a failure
         _ = XCTWaiter().wait(for: [done], timeout: timeout)
         return result
     }
@@ -78,7 +68,6 @@ final class ViewBehaviorTests: XCTestCase {
         return false
     }
 
-    ///The contents of one buffer, as the app reports them
     private func buffer(_ name: String) -> [Double] {
         guard let json = get("/get?\(name)=full"),
               let buffers = json["buffer"] as? [String: Any],
@@ -87,8 +76,7 @@ final class ViewBehaviorTests: XCTestCase {
         return values.compactMap { ($0 as? NSNumber)?.doubleValue }
     }
 
-    ///Waits for a buffer to hold what the interaction should have written - the write travels
-    ///through the analysis cycle, so it is not there the instant the control is released
+    ///Waits for the buffer: the write travels through the analysis cycle, so it is not there instantly
     private func expectBuffer(_ name: String, toEqual expected: [Double], accuracy: Double = 1e-6,
                               timeout: TimeInterval = 5, _ message: String,
                               file: StaticString = #filePath, line: UInt = #line) {
@@ -113,23 +101,19 @@ final class ViewBehaviorTests: XCTestCase {
         let fields = app.textFields
         XCTAssertEqual(fields.count, 5, "the edits fixture has five fields")
 
-        //A plain field takes what it is given
         type(2.25, into: fields.element(boundBy: 0), in: app)
         expectBuffer("plain", toEqual: [2.25], "a plain edit writes the typed value")
 
-        //Bounds clamp on commit rather than refusing the input
         type(42, into: fields.element(boundBy: 1), in: app)
         expectBuffer("bounded", toEqual: [10], "a value above max is clamped to max")
         type(-42, into: fields.element(boundBy: 1), in: app)
         expectBuffer("bounded", toEqual: [0], "a value below min is clamped to min")
 
-        //signed="false" and decimal="false" restrict what the field accepts at all
         type(-5, into: fields.element(boundBy: 2), in: app)
         expectBuffer("unsigned", toEqual: [5], "an unsigned field drops the sign")
         type(2.75, into: fields.element(boundBy: 3), in: app)
         expectBuffer("integer", toEqual: [2], "an integer-only field drops the decimals")
 
-        //The factor converts the displayed unit into the buffer's unit: 3 cm is 0.03
         type(3, into: fields.element(boundBy: 4), in: app)
         expectBuffer("scaled", toEqual: [0.03], "the factor converts the entered value")
     }
@@ -141,16 +125,13 @@ final class ViewBehaviorTests: XCTestCase {
         app.buttons["write 7"].tap()
         expectBuffer("target", toEqual: [7], "a button writes its value")
 
-        //Every input/output pair is applied on its own and clears its output first (iOS
-        //replaceValues, Android clear+append), so two pairs pointing at the same buffer leave
-        //only the second value - the agreed semantics on both platforms, now stated in the spec
+        //Each pair clears its output first (iOS replaceValues, Android clear+append), so the last one wins
         app.buttons["two writes, last wins"].tap()
         expectBuffer("log", toEqual: [2], "the second pair replaces what the first wrote")
 
         app.buttons["clear"].tap()
         expectBuffer("log", toEqual: [], "an empty input clears the buffer")
 
-        //The toggles start from their default and write on every flip
         let toggles = app.switches
         XCTAssertEqual(toggles.count, 2, "the fixture has two toggles")
         expectBuffer("switch1", toEqual: [1], "the toggle defaulting to on starts at 1")
@@ -166,9 +147,7 @@ final class ViewBehaviorTests: XCTestCase {
     func testSlidersAndDropdown() throws {
         let app = try launch(fixture: "sliders-dropdowns")
 
-        //Two of the three are UISliders; the range slider is a custom control whose two thumbs
-        //are accessibility elements of their own (see RangeSlider), which is how they are
-        //addressed further down
+        //The range slider is a custom control whose two thumbs are accessibility elements (RangeSlider)
         let sliders = app.sliders
         XCTAssertEqual(sliders.count, 2, "the plain and the coarse slider are UISliders")
 
@@ -186,8 +165,6 @@ final class ViewBehaviorTests: XCTestCase {
         XCTAssertEqual(coarse.first?.truncatingRemainder(dividingBy: 10), 0,
                        "the step size quantises the value, got \(coarse)")
 
-        //The range slider's two thumbs are accessibility elements of their own, so they can be
-        //found and read rather than guessed at by coordinate
         let lower = app.otherElements["Lower value"]
         let upper = app.otherElements["Upper value"]
         XCTAssertTrue(lower.waitForExistence(timeout: 5), "the lower thumb is reachable")
@@ -195,9 +172,7 @@ final class ViewBehaviorTests: XCTestCase {
         XCTAssertEqual(lower.value as? String, "20", "the thumb reports the value it stands for")
         XCTAssertEqual(upper.value as? String, "60")
 
-        //Dragging still happens by touch - XCUITest offers no accessibility adjustment - but it
-        //starts from the thumb's own frame and simply overshoots the left end, which the slider
-        //clamps
+        //Dragged by touch (XCUITest has no accessibility adjustment); the overshoot past the left end is clamped
         lower.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
             .press(forDuration: 0.1,
                    thenDragTo: lower.coordinate(withNormalizedOffset: CGVector(dx: -2, dy: 0.5)))
@@ -217,28 +192,20 @@ final class ViewBehaviorTests: XCTestCase {
 
     // MARK: - the starting state
 
-    ///Switches to the view collection with this label, through the tab bar the experiment shows
-    ///when it has more than one page
+    ///Switches to the page with this label through the tab bar
     private func page(to label: String, in app: XCUIApplication) {
         let tab = app.segmentedControls.buttons[label]
         XCTAssertTrue(tab.waitForExistence(timeout: 5), "the page \"\(label)\" is offered")
         tab.tap()
     }
 
-    //A control's own default must never overwrite a value the container already holds. The spec
-    //states it in the remark on the default attribute of edit, toggle, dropdown and slider: a
-    //default fills an EMPTY buffer, and never one that is not. Both halves are asserted here,
-    //because fixing the first by simply not seeding would break the second. Android had the
-    //first half wrong until 2026-09-02 (toggle-dropdown-default-overwrites-init); iOS has been
-    //right all along, which is exactly why this is pinned - nothing else would notice a
-    //regression.
+    //A control's default fills an EMPTY buffer and never overwrites a container's init (spec remark on
+    //the default attribute); both halves are asserted, since not seeding at all would break the second
     // phyphox-test: view-behavior
     func testContainerInitBeatsAControlsDefault() throws {
         let app = try launch(fixture: "init-vs-default")
 
-        //Nothing is touched: these are the values a freshly loaded experiment starts with. The
-        //defaults are seeded when the experiment is built, for every page, so the second page's
-        //buffers are filled although it has never been on screen (Experiment.seedInputDefaults).
+        //Freshly loaded: defaults are seeded for every page at build time (Experiment.seedInputDefaults)
         let expected: [(String, Double)] = [
             ("toggle_init", 1), ("dropdown_init", 2), ("edit_init", 42), ("slider_init", 4),
             //...and where the container is empty, the default is what fills it
@@ -248,12 +215,8 @@ final class ViewBehaviorTests: XCTestCase {
             expectBuffer(name, toEqual: [value], "\(name) starts from the right value")
         }
 
-        //Again after paging away and back. On iOS the view modules of a page only read their
-        //buffers while that page is on screen - their display link turns over for the visible
-        //collection alone - so paging forces a read pass over every element of the page that
-        //comes up, and the return does the same for the first one. A read pass must not turn
-        //into a write (Android's toggle once fired its own change listener from its read hook);
-        //nothing here touches a control, so every buffer must be unchanged.
+        //Paging forces a read pass over every element of the page coming up (iOS modules only read
+        //while on screen); a read pass must not turn into a write, so every buffer stays unchanged
         page(to: "default fills", in: app)
         page(to: "init wins", in: app)
 
@@ -262,11 +225,8 @@ final class ViewBehaviorTests: XCTestCase {
         }
     }
 
-    //A NaN in an input element's buffer is replaced by the element's default, as written and
-    //not clamped to the element's range (the edit's default lies above its max on purpose), for
-    //the slider like for the rest - and the replacement is not user input, so an experiment
-    //that has only been opened is still stopped afterwards (input-default-does-not-replace-nan,
-    //decided 2026-09-02). Mirrors ViewBehaviorTest.aNanIsReplacedByTheDefault.
+    //A NaN in an input element's buffer is replaced by the default as written (not clamped), and that is
+    //not user input, so the experiment stays stopped (input-default-does-not-replace-nan; mirrors Android)
     // phyphox-test: view-behavior
     func testANaNIsReplacedByTheDefault() throws {
         _ = try launch(fixture: "nan-vs-default")
@@ -283,11 +243,8 @@ final class ViewBehaviorTests: XCTestCase {
 
     // MARK: - helpers
 
-    ///Moves a slider and waits for the value the fixture should end up with, repeating the gesture
-    ///if it did not. XCUITest turns a normalized position into a coordinate, and that mapping is
-    ///not exact - a CI run asking for the minimum of a 0...5 slider landed on 0.1, which is a
-    ///gesture that fell short rather than a slider that misbehaved. A value that never arrives
-    ///still fails, with what the buffer holds.
+    ///Moves a slider and waits for the expected value, repeating the gesture if XCUITest's inexact
+    ///coordinate mapping fell short; a value that never arrives still fails
     private func adjust(_ slider: XCUIElement, to position: CGFloat, until expected: [Double],
                         in name: String, _ message: String,
                         file: StaticString = #filePath, line: UInt = #line) {
@@ -310,7 +267,6 @@ final class ViewBehaviorTests: XCTestCase {
     private func type(_ value: Double, into field: XCUIElement, in app: XCUIApplication) {
         XCTAssertTrue(field.waitForExistence(timeout: 5), "the field is on screen")
         field.tap()
-        //Clear whatever the field holds: select all, then type over it
         field.press(forDuration: 1.0)
         if app.menuItems["Select All"].waitForExistence(timeout: 2) {
             app.menuItems["Select All"].tap()

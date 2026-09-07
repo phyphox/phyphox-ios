@@ -87,10 +87,7 @@ final class AudioEngine {
         }
         
         let avSession = AVAudioSession.sharedInstance()
-        //mixWithOthers so phyphox coexists with audio from other apps rather than interrupting it -
-        //in particular so a playback experiment (a tone generator, say) works while music is
-        //playing. This matches Android, which uses an AudioTrack without requesting audio focus and
-        //therefore never takes exclusive audio in any mode.
+        //mixWithOthers: a tone generator works while music plays, as Android's AudioTrack never takes audio focus
         if playbackOut != nil && recordIn != nil {
             try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: [.defaultToSpeaker, .mixWithOthers])
         } else if playbackOut != nil {
@@ -111,8 +108,7 @@ final class AudioEngine {
         
         try avSession.setActive(true)
         
-        //Stereo output since the introduction of the pan parameter with file format 1.20,
-        //matching the Android implementation
+        //Stereo since the pan parameter (file format 1.20), as on Android
         format = AVAudioFormat(standardFormatWithSampleRate: Double(sampleRate), channels: 2)
         
         self.engine = AVAudioEngine()
@@ -148,9 +144,7 @@ final class AudioEngine {
         try self.engine!.start()
     }
     
-    //Audio parameters are handled like on Android, which processes them as float and replaces
-    //non-finite values (including doubles beyond float range) with zero, so an invalid buffer
-    //value cannot permanently disable the tone generator.
+    //As on Android: non-finite values (including doubles beyond float range) become zero
     private func sanitizedParameter(_ value: Double?) -> Double {
         guard let value = value else {
             return 0.0
@@ -159,8 +153,7 @@ final class AudioEngine {
         return f.isFinite ? Double(f) : 0.0
     }
 
-    //Double to Int like a Java (int) cast: NaN becomes 0, out-of-range values saturate instead
-    //of trapping.
+    //Like a Java (int) cast: NaN becomes 0, out-of-range values saturate
     private func javaInt(_ value: Double) -> Int {
         if value.isNaN {
             return 0
@@ -220,9 +213,7 @@ final class AudioEngine {
 
         var totalAmplitude: Float = 0.0
 
-        //Stereo factors for a pan parameter, matching the Android implementation: a centred
-        //signal plays at full amplitude on both channels and panning attenuates the opposite
-        //channel rather than boosting the near one.
+        //As on Android: centred plays at full amplitude on both channels, panning attenuates the opposite one
         func panFactors(_ parameter: AudioParameter) -> (left: Float, right: Float) {
             var p = Float(parameter.getValue() ?? 0.0)
             if !p.isFinite {

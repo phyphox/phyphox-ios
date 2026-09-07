@@ -9,26 +9,14 @@ import XCTest
 import SnapshotTesting
 @testable import phyphox
 
-//Golden images of the graph elements, over the graphs-* fixtures in phyphox-docs fixtures/views/
-//(test-matrix row graph-snapshots). Separate from the other view elements because these are
-//drawn by OpenGL: the plot lives in a GLKView, which renders through a real context and does not
-//appear in a layer-based capture at all - the view has to be in a key window and captured from
-//the rendered hierarchy, which is why the row is T1 rather than T0.
-//
-//Same fixtures, naming and configuration matrix as the non-graph goldens, under
-//phyphoxTests/Snapshots/graphs/<fixture>/<element>.<configuration>.png. The follow-system theme
-//spot checks are not repeated here; the contract puts them on one fixture, and that is values.
+//Golden images of the graph elements over the graphs-* fixtures (test-matrix row graph-snapshots).
+//Separate from the other views because the plot is a GLKView, which only renders in a key window (hence
+//T1). Same naming and matrix, under phyphoxTests/Snapshots/graphs/<fixture>/<element>.<configuration>.png.
 final class GraphSnapshotTests: XCTestCase {
     private static let fixtures = ["graphs-styles", "graphs-axes", "graphs-special"]
 
-    //The GPU is not bit-identical across machines: antialiased lines and the colour-map
-    //interpolation differ in the last bits between a development Mac and a CI runner. What the
-    //comparison allows is a small per-pixel difference, not a share of pixels free to differ
-    //arbitrarily, so a changed curve, scale, colour or label still fails.
-    //
-    //The colour maps need more of that per-pixel room than the line plots: they are a large area
-    //of continuous gradient, and the two GPUs dither it differently, which put a whole tablet-
-    //sized map over the limit on the first CI run while every line plot matched exactly.
+    //GPUs are not bit-identical across machines, so a small per-pixel difference is allowed (not a share
+    //of freely differing pixels); the dithered colour-map gradients need more room than the line plots
     private static let precision: Float = 0.99
     private static func perceptualPrecision(forMap isMap: Bool) -> Float {
         return isMap ? 0.95 : 0.98
@@ -49,10 +37,7 @@ final class GraphSnapshotTests: XCTestCase {
                 UITraitCollection(preferredContentSizeCategory: contentSize),
                 UITraitCollection(layoutDirection: rightToLeft ? .rightToLeft : .leftToRight),
                 UITraitCollection(horizontalSizeClass: width > 500 ? .regular : .compact),
-                //1x rather than the 2x of the other goldens: what these pin is the curve, the
-                //scale and the labels, not hairline antialiasing - and at 2x the colour maps
-                //alone are two megabytes of gradient each, in a repository that keeps its
-                //goldens in plain git
+                //1x, not 2x: what is pinned is curve, scale and labels, and 2x colour maps are megabytes each in git
                 UITraitCollection(displayScale: 1)
             ])
         }
@@ -135,8 +120,7 @@ final class GraphSnapshotTests: XCTestCase {
             }
 
             for configuration in GraphSnapshotTests.configurations {
-                //Set before the graphs are built: the grid and the plot read the colours of the
-                //app's own theme setting in their initialisers
+                //Set before the graphs are built: grid and plot read the theme colours in their initialisers
                 UserDefaults.standard.set(configuration.appMode,
                                           forKey: SettingBundleHelper.UserDefaultKeys.APP_MODE.rawValue)
 
@@ -160,8 +144,7 @@ final class GraphSnapshotTests: XCTestCase {
                     view.frame = host.bounds
                     host.addSubview(view)
 
-                    //In the window, laid out and given a turn of the run loop: the GL views draw
-                    //on a display-link tick, and nothing of the plot exists before they have
+                    //The GL views draw on a display-link tick, so nothing exists before a turn of the run loop
                     window.addSubview(host)
                     host.setNeedsLayout()
                     host.layoutIfNeeded()
@@ -185,13 +168,8 @@ final class GraphSnapshotTests: XCTestCase {
 
                     var failure = compare()
 
-                    //The plots draw on the GPU on their own schedule, so a capture can land on a
-                    //frame that is not settled - which showed as a single colour-map
-                    //configuration failing on one CI run and passing on the next, with nothing
-                    //about the graphs changed in between. One more tick and one more attempt
-                    //tells that apart from a real difference, which fails both times. Only for a
-                    //golden that already exists: a missing one is recorded by the first attempt
-                    //and must still be reported rather than confirmed against itself.
+                    //A capture can land on an unsettled GPU frame (a colour map flaked on CI once), so an
+                    //existing golden gets one more tick and attempt; a missing one is still reported from the first
                     let reference = (snapshotDirectory(fixture: fixture) as NSString)
                         .appendingPathComponent("\(key).\(configuration.name).png")
                     if failure != nil, FileManager.default.fileExists(atPath: reference) {

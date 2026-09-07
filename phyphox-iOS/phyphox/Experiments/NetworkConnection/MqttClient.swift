@@ -15,20 +15,8 @@ protocol MqttClientDelegate: AnyObject {
     func mqttConnectionLost(reason: String)
 }
 
-/**
- A minimal, dependency-free MQTT 3.1.1 client covering exactly what phyphox needs: connect (plain
- or TLS, with optional username/password), publish (QoS 0 and 1), subscribe to a single topic,
- keep the connection alive, and reconnect if it drops. It replaces CocoaMQTT and matches the
- equivalent from-scratch client on Android (NetworkConnection/Mqtt/MqttClient.java).
-
- QoS 2 is intentionally not implemented: phyphox does not need exactly-once delivery. The former
- "persistence" mode used QoS 2, but at-least-once (QoS 1) together with phyphox's own message
- buffer covers the reliability case. See network-mqtts-unofficial in phyphox-docs.
-
- Threading: all work happens on a single serial dispatch queue, which is also the queue the
- NWConnection delivers its events on, so socket writes never interleave. The connected/subscribed
- flags are additionally lock-protected as they are polled from the analysis thread.
- */
+//Minimal MQTT 3.1.1 client (plain/TLS, QoS 0/1, one subscription, keep-alive, reconnect; no QoS 2), matching Android's
+//NetworkConnection/Mqtt/MqttClient.java. One serial queue shared with NWConnection; connected/subscribed are lock-protected.
 final class MqttClient {
 
     // MQTT control packet types (high nibble of the fixed-header byte)
@@ -38,9 +26,8 @@ final class MqttClient {
     private static let connectTimeout = 8.0
     private static let reconnectMin = 2.0, reconnectMax = 30.0
 
-    //TLS ("mqtts") configuration: no customCACertificate means the system trust store. A custom
-    //CA is used as the only trust anchor for the broker's chain, without host name verification,
-    //which suits a pinned self-hosted broker (see network-mqtts-unofficial in phyphox-docs).
+    //nil customCACertificate = system trust store; a custom CA is the sole anchor, without host name
+    //verification (pinned self-hosted broker, see network-mqtts-unofficial in phyphox-docs)
     struct TLSConfig {
         let customCACertificate: SecCertificate?
     }
@@ -92,7 +79,7 @@ final class MqttClient {
         self.delegate = delegate
     }
 
-    /// Connects asynchronously. Returns immediately; success/failure is reported via the delegate.
+    /// Asynchronous; the outcome is reported via the delegate.
     func connect() {
         queue.async {
             self.closing = false
@@ -100,7 +87,6 @@ final class MqttClient {
         }
     }
 
-    /// Publishes asynchronously; QoS may be 0 or 1.
     func publish(topic: String, payload: Data, qos: Int) {
         queue.async {
             guard self.connected else {
@@ -110,7 +96,7 @@ final class MqttClient {
         }
     }
 
-    /// Closes the connection and does not reconnect.
+    /// No reconnect afterwards.
     func disconnect() {
         queue.async {
             self.closing = true
@@ -139,8 +125,7 @@ final class MqttClient {
                     let trust = sec_trust_copy_ref(sec_trust).takeRetainedValue()
                     SecTrustSetAnchorCertificates(trust, [ca] as CFArray)
                     SecTrustSetAnchorCertificatesOnly(trust, true)
-                    //The pinned custom CA authenticates the broker by itself: use a basic X.509
-                    //policy without host name verification, like Android
+                    //Basic X.509 policy without host name verification, like Android
                     SecTrustSetPolicies(trust, SecPolicyCreateBasicX509())
                     var error: CFError? = nil
                     complete(SecTrustEvaluateWithError(trust, &error))
@@ -254,18 +239,15 @@ final class MqttClient {
     }
 
     //Remaining Length is a Variable Byte Integer (1-4 bytes, 7 bits each, high bit = continuation)
-    private func receiveRemainingLength(from connection: NWConnection, value: Int = 0, multiplier: Int = 1, count: Int = 0, completion: @escaping (Int) -> Void) {
-        guard count <= 4 else {
-            connectionLost(reason: "malformed remaining length")
-            return
-        }
+    private func receiveRemainingLength(from connection: NWConnection, received: Data = Data(), completion: @escaping (Int) -> Void) {
         receiveExactly(1, from: connection) { data in
-            let digit = Int(data[data.startIndex])
-            let newValue = value + (digit & 0x7f) * multiplier
-            if digit & 0x80 != 0 {
-                self.receiveRemainingLength(from: connection, value: newValue, multiplier: multiplier * 128, count: count + 1, completion: completion)
+            let bytes = received + data
+            if let (value, _) = MqttClient.decodeRemainingLength(bytes) {
+                completion(value)
+            } else if bytes.count >= 4 {
+                self.connectionLost(reason: "malformed remaining length")
             } else {
-                completion(newValue)
+                self.receiveRemainingLength(from: connection, received: bytes, completion: completion)
             }
         }
     }
@@ -287,7 +269,6 @@ final class MqttClient {
 
     private func handlePacket(type: Int, flags: Int, body: Data) {
         if awaitingConnack {
-            //The first packet from the broker must be the CONNACK answering our CONNECT
             guard type == MqttClient.CONNACK, body.count >= 2 else {
                 connectionLost(reason: "malformed CONNACK")
                 return
@@ -447,7 +428,7 @@ final class MqttClient {
         return data
     }
 
-    ///Decodes a variable-length Remaining Length from the start of data. Returns the value and the number of bytes consumed, or nil if incomplete or malformed.
+    ///Returns (value, bytes consumed), or nil if incomplete or malformed
     static func decodeRemainingLength(_ data: Data) -> (value: Int, bytesUsed: Int)? {
         var multiplier = 1, value = 0, count = 0
         for byte in data {

@@ -44,9 +44,8 @@ func gcd(_ u: UInt, _ v: UInt) -> UInt {
     return gcd((v - u) >> 1, u)
 }
 
-//The domain of gcd is non-negative integers: fractional values are rounded half away from zero
-//like the formula language's round, while negative inputs, non-finite inputs and values beyond
-//UInt.max yield NaN instead of trapping in the UInt conversion.
+//gcd over non-negative integers: fractions round half away from zero (like the formula language's round);
+//negative, non-finite or > UInt.max inputs yield NaN instead of trapping in the UInt conversion.
 func gcdOfDoubles(_ a: Double, _ b: Double) -> Double {
     guard a.isFinite && b.isFinite && a >= 0 && b >= 0 else { return Double.nan }
     let ra = a.rounded(.toNearestOrAwayFromZero)

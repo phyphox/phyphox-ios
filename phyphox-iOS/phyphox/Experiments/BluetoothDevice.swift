@@ -91,9 +91,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     var deviceAddress: UUID? = nil
     let advertiseUUID: CBUUID?
 
-    ///Compares the configuration from the experiment file. NSObject's == stays identity-based,
-    ///which runtime code may rely on; this is for comparing two parses of the same file (used by
-    ///Experiment's Equatable, like ExperimentSensorInput.valueEqual).
+    ///Compares the parsed configuration (for Experiment's Equatable); NSObject's == stays identity-based
     static func valueEqual(lhs: ExperimentBluetoothDevice, rhs: ExperimentBluetoothDevice) -> Bool {
         return lhs.id == rhs.id &&
             lhs.deviceName == rhs.deviceName &&
@@ -123,9 +121,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     var connectedDevices: [ConnectedDevicesDataModel] = [ConnectedDevicesDataModel]()
     
     var pendingWrites = 0
-    //Newest value per characteristic waiting for the transmit queue to accept writes without
-    //response. Coalescing: a newer value replaces an unsent one, so the device always receives
-    //the latest data and a triggered write cannot get lost to a busy radio.
+    //Newest unsent value per characteristic for writes without response; a newer value replaces an unsent one
     var pendingWithoutResponseWrites: [String: Data] = [:]
 
     init(delegate: UpdateConnectedDeviceDelegate) {
@@ -284,12 +280,8 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         
     }
     
-    //A refused connection is retried before it becomes an error, as on Android
-    //(Bluetooth.openConnection, CONNECT_ATTEMPTS/CONNECT_RETRY_DELAY_MS/CONNECT_TIMEOUT_MS).
-    //A first attempt fails often enough to matter, and the pause also covers a device that has
-    //not finished releasing the previous connection - which is exactly this moment: the
-    //experiment connects to the same device the transfer of its own configuration just let go
-    //of, and a peripheral serving one central at a time needs that moment.
+    //Retried before it becomes an error, as on Android (Bluetooth.openConnection, CONNECT_*); the pause covers a device
+    //still releasing the connection that just transferred the configuration
     static let deviceConnectAttempts = 3
     static let deviceConnectRetryDelay = 0.5
     static let deviceConnectTimeout = 10.0
@@ -317,8 +309,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     }
     
     private func retryOrFailConnect(peripheral: CBPeripheral, message: String, reason: String) {
-        //The attempt is cancelled either way: a connection request left pending would come up
-        //later, behind the retry, with nothing expecting it
+        //Cancelled either way: a pending request would otherwise come up later, behind the retry
         centralManager?.cancelPeripheralConnection(peripheral)
         guard deviceConnectAttempt < ExperimentBluetoothDevice.deviceConnectAttempts else {
             BluetoothScan.reportBLERetries("event=connect attempts=\(deviceConnectAttempt) "
@@ -448,10 +439,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     public func writeCharacteristic(uuid: CBUUID, data: Data) throws {
         if let char = characteristics_map[uuid.uuid128String] {
             if char.properties.contains(.writeWithoutResponse) {
-                //didWriteValueFor is never called for writes without response, so the
-                //pendingWrites accounting must not be used here (it would fill up and block all
-                //further writes). Instead the newest value per characteristic is kept until the
-                //transmit queue accepts it (flushed again from peripheralIsReady).
+                //No didWriteValueFor for writes without response, so pendingWrites would fill up and block
                 pendingWithoutResponseWrites[uuid.uuid128String] = data
                 flushWithoutResponseWrites()
             } else if pendingWrites < 10 {

@@ -34,8 +34,7 @@ class ExperimentBluetoothOutput: BluetoothDeviceDelegate {
 
     private var inputList: [BluetoothInput] = []
 
-    //Trigger ids requested by button presses since the last send. Inputs carrying a triggerId are
-    // only sent when their id has been requested; all others are sent on every analysis cycle.
+    //Trigger ids requested since the last send; inputs with a triggerId are only sent when requested
     private var requestedTriggers = Set<String>()
 
     func requestSend(triggerId: String) {
@@ -114,8 +113,7 @@ class ExperimentBluetoothOutput: BluetoothDeviceDelegate {
 
 extension ExperimentBluetoothOutput: Equatable {
     static func ==(lhs: ExperimentBluetoothOutput, rhs: ExperimentBluetoothOutput) -> Bool {
-        //The device is compared by its configuration - NSObject's identity == made two parses of
-        //the same file unequal
+        //By configuration: NSObject's identity == made two parses of the same file unequal
         return lhs.configList == rhs.configList &&
             ExperimentBluetoothDevice.valueEqual(lhs: lhs.device, rhs: rhs.device) &&
             lhs.inputList == rhs.inputList

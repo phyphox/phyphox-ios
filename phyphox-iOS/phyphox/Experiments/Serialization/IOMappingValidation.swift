@@ -8,19 +8,9 @@
 
 import Foundation
 
-//Validation of the input/output mapping mechanism of the file format, mirroring Android's
-//ioBlockParser (PhyphoxFile.java): each input and output of an analysis module - and each output
-//of an input element - is checked against a slot table stating whether the mapping attribute
-//(as/component) is required for that slot, how many tags may fill it, and whether a literal value
-//or the empty type is permitted. A file breaking any of these is refused with the same messages
-//Android uses, instead of silently assigning positionally (see output-component-validation in
-//spec/rules.yml of phyphox-docs).
-//
-//This file holds only the algorithm. The slot tables live where their names are consumed, so the
-//vocabulary is not defined in two places: each analysis module declares its table by overriding
-//ExperimentAnalysisModule.ioMapping in its own file (initially generated from the machine-readable
-//specification, phyphox-docs/spec/analysis.yml), and the component tables of the input elements
-//sit next to their handlers in InputElementHandler.swift.
+//Validates as/component mappings against slot tables, mirroring Android's ioBlockParser and its exact messages
+//(output-component-validation in phyphox-docs). Tables live with their consumers: ExperimentAnalysisModule.ioMapping
+//per module and the input elements' component tables in InputElementHandler.swift.
 
 struct AnalysisIOSlot {
     let name: String
@@ -46,9 +36,7 @@ enum IOMappingValidation {
         let isEmpty: Bool
     }
 
-    ///Validates one list of inputs or outputs against its slot table and returns, per item, the
-    ///index of the slot it maps to (repeating groups report the slot inside the table). Throws
-    ///with Android's exact wording when the file breaks the mapping rules.
+    ///Validates one list against its slot table and returns each item's slot index, throwing with Android's exact wording
     @discardableResult static func validate(kind: String, slots: [AnalysisIOSlot], items: [Item]) throws -> [Int] {
         var filled = [Bool]()
         var counts = [Int](repeating: 0, count: slots.count)
@@ -66,7 +54,7 @@ enum IOMappingValidation {
             var mappingIndex = -1
 
             if !item.usedAs.isEmpty {
-                //An explicit mapping has been given: find it, folding case
+                //Explicit mapping: find its slot, folding case
                 let folded = item.usedAs.lowercased()
                 for (i, slot) in slots.enumerated() where slot.name.lowercased() == folded {
                     targetIndex = i
@@ -79,9 +67,7 @@ enum IOMappingValidation {
                 ensureSize(targetIndex)
                 if filled[targetIndex] || slots[mappingIndex].repeatOffset >= 0 {
                     if slots[mappingIndex].repeatOffset >= 0 {
-                        //Part of a repeating group: place it in the last group, opening a new one
-                        //if that slot is taken (the input and output paths step differently on
-                        //Android - both are mirrored here)
+                        //Repeating group: last group, or a new one if taken (Android steps input and output differently)
                         if kind == "input" {
                             while targetIndex - slots[mappingIndex].repeatOffset + repeatPeriod < filled.count {
                                 targetIndex += repeatPeriod
@@ -161,8 +147,7 @@ enum IOMappingValidation {
         return mappingIndices
     }
 
-    ///Validates the inputs and outputs of an analysis module against the slot table the module
-    ///itself declares (ExperimentAnalysisModule.ioMapping).
+    ///Validates a module's inputs and outputs against the slot table it declares (ExperimentAnalysisModule.ioMapping)
     static func validate(mapping: AnalysisIOMapping, inputs: [ExperimentAnalysisDataInputDescriptor], outputs: [ExperimentAnalysisDataOutputDescriptor]) throws {
         try validate(kind: "input", slots: mapping.inputs, items: inputs.map { descriptor in
             switch descriptor {
@@ -182,9 +167,7 @@ enum IOMappingValidation {
         })
     }
 
-    ///Validates the outputs of an input element (sensor, location, audio, depth, camera) against
-    ///the components allowed for it and returns the outputs with their component names normalized
-    ///to the canonical slot name, so an unnamed output carries the slot it filled.
+    ///Validates an input element's outputs against its component table, normalizing component names to the slot filled
     static func validateComponents(element: String, slots: [AnalysisIOSlot], outputs: [SensorOutputDescriptor]) throws -> [SensorOutputDescriptor] {
         let mappingIndices = try validate(kind: "output", slots: slots, items: outputs.map {
             Item(usedAs: $0.component ?? "", text: $0.bufferName, isValue: false, isEmpty: false)

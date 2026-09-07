@@ -50,7 +50,6 @@ import json
 import os
 import plistlib
 import shutil
-import struct
 import subprocess
 import sys
 import threading
@@ -59,22 +58,19 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+from appstore_upload import png_size, store_locales  # noqa: E402  (shared with the upload)
 REPO = os.path.dirname(HERE)
 DOCS = os.path.normpath(os.path.join(REPO, "..", "phyphox-docs"))
 COLLECTION = os.path.join(REPO, "phyphox-experiments")
 PROJECT = os.path.join(REPO, "phyphox-iOS", "phyphox.xcodeproj")
 BUILD = os.path.join(REPO, "build", "screenshots")
-# The working root's screenshots/ios/<app-store-locale>/, which is not a
-# repository: the App Store is API-only, so unlike Android's F-Droid half
-# nothing of this is committed anywhere.
+# The working root's screenshots/ios/<app-store-locale>/, not a repository: the App Store is API-only.
 METADATA = os.path.normpath(os.path.join(REPO, "..", "screenshots", "ios"))
 BUNDLE_ID = "de.rwth-aachen.physics.phyphox"
 PORT = 8099
 
-# Apple requires exactly two sizes; App Store Connect scales everything else
-# down from them. The resolutions are checked against a real capture before the
-# run starts, because a device type that renders at another size would produce
-# an upload the store rejects at the very end of a two-hour run.
+# Apple's exactly two required sizes; checked against a real capture before the run, not at upload time.
 FORM_FACTORS = {
     "iphone": {
         "device_type": "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max",
@@ -92,40 +88,21 @@ FORM_FACTORS = {
     },
 }
 
-# The app's own layout constants, in points (CameraUIView: spacing, sideMargins).
-# The composite reproduces the box the preview is laid out in, so `scale` above
-# has to be the device's point scale - the two form factors are 3x and 2x.
+# The app's layout constants in points (CameraUIView: spacing, sideMargins); `scale` above is the point scale.
 CAMERA_SPACING = 10.0
 
-# UserDefaults keys the app reads, set per launch through NSArgumentDomain so a
-# capture never depends on what an earlier one stored. Values that do not
-# change between scenes; the theme is added per scene.
-#
-#   donotshowagain                     the "do not damage your phone" alert on
-#                                      the collection (ExperimentsCollection-
-#                                      ViewController, viewDidLoad)
-#   supportHintVersion                 the tooltip pointing at the support
-#                                      entries. It shows while the app's
-#                                      version equals the hardcoded
-#                                      phyphoxCatHintRelease AND this key does
-#                                      not, so passing the BUILT BUNDLE's
-#                                      CFBundleShortVersionString settles it
-#                                      either way: equal to the constant, and
-#                                      the hint is marked seen; not equal, and
-#                                      there was no hint to begin with.
+# UserDefaults keys set per launch through NSArgumentDomain (the theme is added per scene):
+#   donotshowagain                       the damage alert on the collection (ExperimentsCollectionViewController)
+#   supportHintVersion                   the support tooltip; passing the BUILT bundle's version settles it
 #   experiment_start_hint_dismiss_count,
-#   experiment_info_hint_dismiss_count the two bubbles on the experiment
-#                                      screen, shown until dismissed three
-#                                      times (ExperimentPageViewController,
-#                                      presentNextHint)
+#   experiment_info_hint_dismiss_count   the two bubbles on the experiment screen (ExperimentPageViewController)
 LAUNCH_DEFAULTS = {
     "donotshowagain": "YES",
     "experiment_start_hint_dismiss_count": "3",
     "experiment_info_hint_dismiss_count": "3",
 }
 
-# appModeKey, the app's own dark/light setting - "1" dark (the default),
-# "2" light, "3" follow the system (Utility.swift, SettingsBundleHelper).
+# appModeKey: "1" dark (the default), "2" light, "3" system (Utility.swift, SettingsBundleHelper).
 APP_MODE = {"dark": "1", "light": "2"}
 
 
@@ -138,19 +115,6 @@ def sh(*args, check=True):
 
 def simctl(*args, **kw):
     return sh("xcrun", "simctl", *args, **kw)
-
-
-def png_size(data):
-    """(width, height) of a complete PNG, or None if these bytes are not one.
-
-    Both halves matter. `simctl io screenshot` writes what it managed to
-    produce, and a simulator that died mid-capture leaves a truncated file that
-    only fails much later - when something opens it, or worse, when the store
-    does.
-    """
-    if data[:8] != b"\x89PNG\r\n\x1a\n" or data[-8:-4] != b"IEND":
-        return None
-    return struct.unpack(">II", data[16:24])
 
 
 class Simulator:
@@ -324,11 +288,8 @@ def prepare(sim, app):
     """Everything that has to be true before the first capture."""
     print(f"  installing {os.path.basename(app)}")
     sim.simctl("install", app)
-    # The camera is granted even though the simulator has no camera: with the
-    # permission denied the app puts up its own "camera required" alert, which
-    # nothing here can dismiss. Granted, AVFoundation still finds no device and
-    # -phyphoxAssumeSensors keeps the resulting loading error off the screen,
-    # leaving the empty preview rectangle the composite fills in.
+    # Camera too, although the simulator has none: denied, the app shows an undismissable "camera required"
+    # alert; granted, -phyphoxAssumeSensors hides the loading error and leaves the empty preview rectangle.
     for service in ("camera", "microphone", "motion", "location"):
         sim.simctl("privacy", "grant", service, BUNDLE_ID, check=False)
     status_bar(sim)
@@ -344,9 +305,7 @@ def status_bar(sim, on=True):
                "--time", "9:41",
                "--dataNetwork", "wifi", "--wifiMode", "active", "--wifiBars", "3",
                "--cellularMode", "active", "--cellularBars", "4",
-               # "charged" draws a bolt through the battery; a full battery that
-               # is simply not charging is the cleaner picture and is what the
-               # Android side shows.
+               # not "charged": that draws a bolt through the battery; Android shows a full, non-charging one
                "--batteryState", "discharging", "--batteryLevel", "100",
                check=False)
 
@@ -362,13 +321,9 @@ def check_still_ours(sim, stamp):
 
 
 def launch(sim, scene, language, theme, view, version, url=None):
-    # --terminate-running-process has to come before the udid, and it is not
-    # optional: launching onto an already running app delivers no new arguments
-    # at all, so the previous scene would stay on screen.
+    # --terminate-running-process must precede the udid and is required: a running app gets no new arguments.
     args = ["launch", "--terminate-running-process", sim.udid, BUNDLE_ID,
-            # Every capture states its own state instead of inheriting the last
-            # one's: these all land in NSArgumentDomain, which outranks anything
-            # the app has stored, and only for this launch.
+            # NSArgumentDomain outranks stored values for this launch only, so each capture states its own state
             "-AppleLanguages", f"({language})",
             "-AppleLocale", language.replace("-", "_"),
             "-appModeKey", APP_MODE[theme],
@@ -380,17 +335,6 @@ def launch(sim, scene, language, theme, view, version, url=None):
     if url:
         args += ["-phyphoxUrl", url]
     simctl(*args)
-
-
-def store_locales(row):
-    """The App Store listings one app language feeds. Usually one.
-
-    Portuguese is one language in the app and two listings on both stores,
-    knowingly given the same translation - so it gets the same screenshots,
-    captured once and written to each.
-    """
-    ios = row["ios"]
-    return ios if isinstance(ios, list) else [ios]
 
 
 ORANGE = (255, 126, 34)
@@ -509,8 +453,7 @@ def composite_camera(path, asset, point_scale):
 
 
 def main():
-    # A full run is 120 captures over an hour or two; with stdout redirected to
-    # a log, block buffering would show nothing until it ended.
+    # A full run is an hour or two; with stdout in a log, block buffering would show nothing until the end.
     try:
         sys.stdout.reconfigure(line_buffering=True)
     except AttributeError:
@@ -541,10 +484,8 @@ def main():
     scenes = composer.load_scenes()
     with open(os.path.join(DOCS, "screenshots", "locales.yml")) as f:
         locales = yaml.safe_load(f)
-    # `order` stays the FULL scene list: it is what numbers the files, and the
-    # store shows them in that order. --scenes narrows what gets captured, not
-    # what things are called - otherwise a one-scene re-run writes
-    # 01-tone-generator.png beside a stale 06-tone-generator.png.
+    # `order` stays the FULL scene list, which numbers the files; --scenes narrows what is captured, not
+    # what it is called - otherwise a one-scene re-run writes 01-x.png beside a stale 06-x.png.
     with open(os.path.join(DOCS, "screenshots", "scenes.yml")) as f:
         order = [s["id"] for s in yaml.safe_load(f)["scenes"]]
     capture = order
@@ -555,9 +496,7 @@ def main():
             sys.exit(f"unknown scene(s): {', '.join(unknown)}")
         capture = [s for s in order if s in asked]
     wanted = args.languages.split(",") if args.languages else None
-    # An app language with no App Store localization is skipped rather than
-    # captured: Georgian and Serbian have none, so those listings fall back to
-    # English images. A limit of the store, not a decision (locales.yml).
+    # An app language with no App Store localization (Georgian, Serbian) is skipped; the store shows English images.
     rows = [l for l in locales["locales"]
             if l.get("ios") and (not wanted or l["app"] in wanted)]
     if wanted:
@@ -627,11 +566,8 @@ def main():
                         f"{sid}: the app never fetched the scene file, so it is "
                         f"not showing the scene. The launch arguments did not "
                         f"reach a new process.")
-                # The form factor is part of the NAME, not of the directory:
-                # deliver wants one folder per locale and works out the device
-                # from the image size, but two sizes under one name means the
-                # second run silently overwrites the first - which is exactly
-                # what the iPad run did to the phone set on 2026-09-01.
+                # Form factor in the NAME, not the directory: deliver wants one folder per locale, and a
+                # shared name would let the iPad run overwrite the phone set.
                 shot = os.path.join(target, f"{args.form_factor}-{n:02d}-{sid}.png")
                 sim.screenshot(shot, expect=factor["size"])
                 check_screen(shot, scene.get("kind"))

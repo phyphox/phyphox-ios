@@ -59,18 +59,15 @@ final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
         let x: [Double] = xInput.data
         let y: [Double] = yInput.data
 
-        //An x buffer shorter than y must not trap in the x lookups below - process the common
-        //length
+        //Process the common length: an x buffer shorter than y must not trap in the x lookups
         let n = min(x.count, y.count)
 
-        //An invalid dx - non-positive, non-finite or an empty buffer - yields empty outputs
-        //instead of silently running at dx = 1
+        //An invalid dx (non-positive, non-finite, empty buffer) yields empty outputs, no silent dx = 1
         guard let dx = dxInput.getSingleValueAsInt(), dx > 0 else {
             return
         }
 
-        //A present but non-finite overlap is an error state yielding empty outputs; an absent
-        //input or an empty buffer keeps the default 0
+        //A present non-finite overlap yields empty outputs; an absent input or empty buffer keeps the default 0
         var overlap = 0
 
         if let o = overlapInput?.getSingleValue() {
@@ -80,8 +77,7 @@ final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
             overlap = Int(o)
         }
 
-        //min is floored and max is ceiled - conservative, including the boundary. An infinite
-        //bound participates as "no bound"; a NaN bound is an error yielding empty outputs.
+        //min floored, max ceiled (conservative); an infinite bound means "no bound", a NaN bound yields empty outputs
         var minPeriod = 0
         var userSelectedRange = false
 
@@ -107,8 +103,7 @@ final class PeriodicityAnalysis: AutoClearingExperimentAnalysisModule {
         var periodOut = [Double]()
 
         for stepX in stride(from: 0, through: n-dx, by: dx) {
-            //Calculate actual autocorrelation range as it might be cut off at the edges.
-            //The upper clamp keeps a negative overlap from pushing x1 past the end.
+            //Actual autocorrelation range, cut off at the edges; the upper clamp keeps a negative overlap from passing the end
             let x1 = min(max(stepX-overlap, 0), n-1)
 
             let x2 = min(stepX+dx+overlap, n)

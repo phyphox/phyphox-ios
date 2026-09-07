@@ -63,10 +63,8 @@ final class MinAnalysis: AutoClearingExperimentAnalysisModule {
         
         let inArray = yIn.data
 
-        //One comparison loop for both modes, matching Android: NaN never wins a comparison, so
-        //non-finite values cannot leak into the result (vDSP_minvD would propagate them). An x
-        //buffer shorter than y truncates processing to the common length; only an omitted x
-        //input auto-generates indices.
+        //One loop for both modes, matching Android: NaN never wins a comparison (vDSP_minvD would propagate it). A shorter
+        //x truncates to the common length; only an omitted x auto-generates indices.
         let count = xIn.map { Swift.min($0.data.count, inArray.count) } ?? inArray.count
         let threshold = thresholdIn?.getSingleValue() ?? 0.0
 
@@ -94,15 +92,13 @@ final class MinAnalysis: AutoClearingExperimentAnalysisModule {
             }
         }
 
-        //Flush the final open set: the minimum is emitted even when the data ends inside a set
-        //(matching Android). In single mode this emits the one global minimum.
+        //Flush the final open set: emitted even when data ends inside a set (matching Android)
         if found {
             minValues.append(thisMin)
             xValues.append(thisX)
         }
 
-        //An empty or all-invalid input is an intermediate error state: NaN on each connected
-        //output in single mode (min delivers single values there), empty outputs in multiple mode
+        //Empty or all-invalid input: NaN on each output in single mode, empty outputs in multiple mode
         if !multiple && minValues.isEmpty {
             minValues = [Double.nan]
             xValues = [Double.nan]

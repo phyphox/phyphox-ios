@@ -76,8 +76,7 @@ private final class AudioToneElementHandler: ResultElementHandler, LookupElement
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
         
-        //An invalid waveform is an error, only an absent attribute selects the default
-        //(enum-invalid-value in phyphox-docs)
+        //An invalid waveform is an error, only an absent attribute selects the default (enum-invalid-value in phyphox-docs)
         let waveform: AudioWaveform = try attributes.optionalValue(for: .waveform) ?? .sine
         
         let inputs = inputsHandler.results
@@ -275,8 +274,7 @@ struct FlashlightOutputDescriptor {
 private final class FlashlightElementHandler: ResultElementHandler, LookupElementHandler {
     var results = [FlashlightOutputDescriptor]()
 
-    //The input element of the flashlight is identical to the parameter inputs of the audio
-    //output plugins, so their handler is reused
+    //The flashlight's input element is identical to the audio output's parameter inputs, so their handler is reused
     private let inputHandler = AudioOutputSubInputElementHandler()
 
     var childHandlers: [String : ElementHandler]

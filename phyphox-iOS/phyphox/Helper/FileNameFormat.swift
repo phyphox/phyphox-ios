@@ -8,9 +8,7 @@
 
 import Foundation
 
-//Generates default file names for data exports, screenshots and saved states from a user-defined
-// template (see settings). The template may contain placeholders like {title} or {date}, which
-// are replaced by the corresponding values of the current experiment.
+//Default file names for exports, screenshots and saved states from the user's template with placeholders like {title}
 class FileNameFormat {
 
     static let prefKey = "fileNameFormat"
@@ -25,8 +23,7 @@ class FileNameFormat {
         return format
     }
 
-    //Replaces all placeholders in the user's template. The result is not sanitized and may be
-    // used as a title. Use sanitize() or formatFilename() if the result is used as a file name.
+    //Replaces all placeholders; not sanitized, use sanitize() or formatFilename() for file names
     static func format(title: String, timeReference: ExperimentTimeReference?) -> String {
         let dateFormatter = DateFormatter()
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")

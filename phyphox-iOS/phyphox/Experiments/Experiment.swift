@@ -26,13 +26,8 @@ struct ExperimentLink: Equatable {
     let url: URL
     let highlighted: Bool
 
-    /// Applies the link elements of the selected translation block to the base links, per the
-    /// canonical behaviour (translation-link-matching in phyphox-docs): a translated link
-    /// matching a base label replaces it in its original position (inheriting URL and highlight
-    /// where not given), a label-only link with no URL removes the base link, and an unmatched
-    /// label is an additional link appended after the base links in declaration order. The
-    /// displayed text is the translation attribute if present, otherwise the label as written -
-    /// labels never pass through the string-translation mechanism.
+    /// Applies a translation block's link elements to the base links (phyphox-docs translation-link-matching):
+    /// a matching label replaces the base link in place, a label without URL removes it, an unmatched one is appended.
     static func localizedLinks(base links: [ExperimentLink], translatedLinks: [ExperimentTranslatedLink]) -> [ExperimentLink] {
         var localized = [ExperimentLink]()
         for link in links {
@@ -140,8 +135,7 @@ final class Experiment {
                 }
             }
         }
-        //An mqtts service may name a custom CA certificate, which is an experiment resource
-        //like the images named by view elements
+        //An mqtts service's custom CA certificate is an experiment resource like the images named by view elements
         for networkConnection in networkConnections {
             if let mqttService = networkConnection.service as? MqttService {
                 for resource in mqttService.resources {
@@ -152,15 +146,13 @@ final class Experiment {
         return Array(res)
     }
 
-    //Resolves a resource named by a view element: externally loaded experiments deliver their
-    //resources in a res folder alongside the XML file, so this one is tried first, with a
-    //fallback to the internal images bundled with phyphox (at the moment only hue.png). The
-    //fallback allows external experiment files to reuse the bundled images.
+    //Resolves a resource name: the experiment's res folder first, falling back to the images bundled with phyphox (hue.png)
     func resolveResource(_ src: String) -> URL? {
-        //A resource name comes from the experiment file, which is not trustworthy: refuse any
-        //path traversal so a malicious file cannot reach outside its resource folder (relevant
-        //especially for the /res endpoint, which serves the resolved file over the network)
-        guard !src.components(separatedBy: "/").contains("..") else {
+        return Experiment.resolveResource(src, in: resourceFolder)
+    }
+
+    static func resolveResource(_ src: String, in resourceFolder: URL?) -> URL? {
+        guard src.isSafeResourceName else { //The /res endpoint serves the resolved file, so traversal must not reach outside
             return nil
         }
         if let file = resourceFolder?.appendingPathComponent(src), FileManager.default.fileExists(atPath: file.path) {
@@ -204,8 +196,7 @@ final class Experiment {
     
     let buffers: [String: DataBuffer]
 
-    //The lock giving remote /get reads a consistent snapshot across buffers, shared by all buffers
-    //and the writers (inputs and analysis). See BufferLock.
+    //Shared by all buffers and writers so remote /get reads a consistent snapshot, see BufferLock
     let dataLock = BufferLock()
 
     private var requiredPermissions: ExperimentRequiredPermission = .none
@@ -289,27 +280,21 @@ final class Experiment {
         }
         
         
-        //Before anything can run and before any view exists: an experiment that is opened and
-        //started without the user visiting every page must still have its input defaults
+        //Seed before anything runs or any view exists: a started experiment needs its input defaults on every page
         inputDefaults = Experiment.collectInputDefaults(viewDescriptors)
         seedInputDefaults()
         
         analysis.delegate = self
-        //The queue must be assigned before anything can trigger an analysis run. Input view
-        //modules write their initial values (with a user-input trigger) already while the view
-        //is being built, i.e. before willBecomeActive - without a queue that run would never
-        //execute and its busy flag would block the analysis permanently.
+        //Must precede any analysis trigger: input view modules write initial values while the view is built, before
+        //willBecomeActive - without a queue that run would never execute and its busy flag would block analysis for good
         analysis.queue = queue
 
-        //An MQTT service with a custom CA certificate resolves it as an experiment resource at
-        //connect time, which needs a reference back to this experiment (source and thereby the
-        //resource folder are only assigned after init)
+        //MqttService resolves its CA certificate as a resource at connect time (source is only assigned after init)
         for networkConnection in networkConnections {
             (networkConnection.service as? MqttService)?.experiment = self
         }
 
-        //Wire the shared data lock into every buffer (so writers reach it through the buffers they
-        //hold) and into the analysis stage, so multi-buffer writes and remote reads stay coherent.
+        //Wire the shared data lock into every buffer and the analysis stage
         for buffer in buffers.values {
             buffer.dataLock = dataLock
         }
@@ -378,14 +363,11 @@ final class Experiment {
             try FileManager.default.copyItem(at: fileURL, to: experimentURL)
             
             if self.resources.count > 0, let localResourceFolder = localResourceFolder, let resourceFolder = resourceFolder {
-                //An existing folder is used as it is rather than being an error. The folder is
-                //named after the CRC32 of the experiment file, so whatever is in it belongs to
-                //this very file - it can only be left over from a save or a delete that did not
-                //finish. Insisting on creating it threw here, after the experiment file had
-                //already been copied, which left a saved experiment without its resources.
+                //Reuse an existing folder (named after the file's CRC32, so its content belongs to this file):
+                //failing here, after the experiment file was copied, left a saved experiment without resources
                 try FileManager.default.createDirectory(at: localResourceFolder, withIntermediateDirectories: true)
                 for resource in self.resources {
-                    guard !resource.components(separatedBy: "/").contains("..") else {
+                    guard resource.isSafeResourceName else {
                         print("Refusing to save resource with path traversal: \(resource)")
                         continue
                     }
@@ -428,10 +410,8 @@ final class Experiment {
         }
     }
     
-    //Presents an alert from the top-most presented view controller. These alerts appear outside
-    //the sequenced dialog flow of the experiment view (which may show the photosensitivity
-    //warning of a flashlight output at the same time), so they have to stack on whatever is
-    //already presented instead of failing silently.
+    //Presents on the top-most presented controller: these alerts are outside the experiment view's sequenced
+    //dialog flow (e.g. the flashlight photosensitivity warning) and must stack on whatever is shown
     private func presentPermissionAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
@@ -442,10 +422,7 @@ final class Experiment {
         presenter?.present(alert, animated: true, completion: nil)
     }
 
-    //Checks all required permission categories one after the other and reports the overall
-    //outcome: onSuccess once every one of them is granted (which may be after the user answered
-    //system prompts), so the experiment view can continue its dialog sequence, or failed as
-    //soon as one is not, closing the experiment.
+    //Checks the required permission categories one by one: onSuccess once all are granted, failed as soon as one is not
     private func checkAndAskForPermissions(onSuccess: @escaping () -> Void, _ failed: @escaping () -> Void) {
         let categories: [ExperimentRequiredPermission] = [.microphone, .location, .motionFitness, .camera].filter { requiredPermissions.contains($0) }
         checkNextPermission(of: categories, onSuccess: onSuccess, failed)
@@ -503,8 +480,7 @@ final class Experiment {
                     granted()
                     return
                 }
-                //The system prompt for location has no completion handler, so the answer is
-                //picked up through the location manager's delegate
+                //Location's system prompt has no completion handler; the answer arrives via the location manager delegate
                 gpsInput.onAuthorizationChange = { [weak gpsInput] newStatus in
                     DispatchQueue.main.async {
                         switch newStatus {
@@ -669,55 +645,21 @@ final class Experiment {
         }
     }
     
-    //The translated names of the clear groups defined by this experiment's buffers, offered to
-    //the user for selection when clearing data. The reserved group "_" is never offered.
+    //Translated clear group names offered when clearing data; the reserved group "_" is never offered
     var clearGroups: [String] {
         return Set(buffers.values.compactMap { $0.clearGroup }).subtracting(["_"]).sorted()
     }
 
-    ///Writes each input element's default into its buffer wherever that buffer is empty.
-    ///
-    ///These values are experiment data, not a property of a view being drawn: an analysis module
-    ///reading an edit field, or a bluetooth output sending one to a device, must see the same
-    ///thing whatever page the user happens to be looking at. The view modules used to seed from
-    ///their own render path, which only turns over for the ONE view collection that is active
-    ///(ExperimentPageViewController activates exactly one), so an element on any other page never
-    ///got its value back. Android seeds for every view (ExpView.setValue substitutes the default
-    ///for a buffer holding NaN) and that is the canonical behaviour.
-    ///
-    ///The parser already seeds these while reading the file, so a freshly loaded experiment looks
-    ///right and the gap only opens once something empties the buffer again. In the case this was
-    ///found with - micropython/createExperiment, whose edit field configures the board over BLE -
-    ///that was a plain CLEAR: the "clear data" button, or /control?cmd=clear, which the lab
-    ///issues before every start. From then on the device was told nothing until somebody opened
-    ///the page the edit field is on.
-    ///
-    ///Only empty buffers are touched, so a value the user set - or one restored with a saved
-    ///state - stays as it is. The one other case is a NaN at the end of the buffer, which the
-    ///default replaces the same way (input-default-does-not-replace-nan, decided 2026-09-02):
-    ///a control cannot show NaN and the user could never enter it, so the buffer must not hold a
-    ///value the control does not. It got there from an analysis write, and the replacement is
-    ///not user input any more than the seeding of an empty buffer is - replaceValues() reports
-    ///none, so an analysis with onUserInput does not re-run on its own output. The default is
-    ///written as it stands, not clamped to the element's range: a default is deliberate. A saved
-    ///state needs no exception, a NaN in it would have been replaced in the run that saved it.
+    ///Writes each input element's default into its buffer wherever the buffer is empty or ends in NaN, for every page
+    ///(Android seeds for every view, canonical; input-default-does-not-replace-nan, decided 2026-09-02). Not clamped
+    ///to the range, and not user input: replaceValues() reports none, so an onUserInput analysis does not re-run.
     func seedInputDefaults() {
         for (defaultValue, buffer) in inputDefaults where buffer.last?.isNaN ?? true {
             buffer.replaceValues([defaultValue])
         }
 
-        //The audio input's rate component is seeded here for the same reason and at the same
-        //moments: analysis chains use it for their time base before anything has been recorded.
-        //audio_spectrum computes the time of the NEXT map row as t + samples/rate, deliberately,
-        //so that the row the first analysis pass appends lands just after the existing history
-        //instead of at the current experiment time - with rate empty, that guard collapses to
-        //the timer's value, which on a never-started experiment is exactly 0, and a history
-        //loaded from init values (a saved state, a screenshot scene) gets a row at t=0 whose
-        //quad the map graph then stretches across the whole plot. Android writes the rate on
-        //every input pass for this reason ("Even if we do not use the first recording, we write
-        //the audio rate so it is available early", PhyphoxExperiment.handleDataInput). Only
-        //while the buffer is empty: once the engine runs it appends the rate actually achieved,
-        //which on iOS may differ from the request and must win.
+        //The audio rate is seeded for the same reason: analysis chains (audio_spectrum's next-row time) use it before
+        //any recording, as Android's PhyphoxExperiment.handleDataInput does. Only while empty: the achieved rate must win
         for audioInput in audioInputs {
             guard let rateBuffer = audioInput.sampleRateInfoBuffer, rateBuffer.last == nil else {
                 continue
@@ -726,11 +668,8 @@ final class Experiment {
         }
     }
     
-    ///Collected once in init rather than walked per analysis cycle, which is where the seeding
-    ///runs. The slider is in the list since the NaN rule (see seedInputDefaults): Android seeds
-    ///it on every write pass like the other input elements, and its own module only runs while
-    ///its page is on screen. In range mode its two buffers start from the slider's min and max,
-    ///which is what the handles show - the same values the module writes.
+    ///Collected once in init; the slider is included since Android seeds it on every write pass too (in range mode
+    ///its two buffers start from min and max, as the handles show)
     private static func collectInputDefaults(_ viewDescriptors: [ExperimentViewCollectionDescriptor]?) -> [(Double, DataBuffer)] {
         var found: [(Double, DataBuffer)] = []
         for collection in viewDescriptors ?? [] {
@@ -769,8 +708,7 @@ final class Experiment {
         var resetBuffers = Set<ObjectIdentifier>()
 
         for buffer in buffers.values {
-            //A user clear spares buffers assigned to a clear group unless the user selected
-            //that group. Any other clear (like closing the experiment) resets everything.
+            //A user clear spares buffers in a clear group the user did not select; any other clear resets everything
             if byUser, let clearGroup = buffer.clearGroup, !clearGroups.contains(clearGroup) {
                 continue
             }
@@ -778,8 +716,7 @@ final class Experiment {
             resetBuffers.insert(ObjectIdentifier(buffer))
         }
 
-        //A reset also re-arms static modules, which have been skipped since their single
-        //execution - static data does not survive a clear
+        //Also re-arms static modules: static data does not survive a clear
         analysis.notifyBuffersReset(resetBuffers)
 
         sensorInputs.forEach { $0.clear() }
@@ -787,10 +724,7 @@ final class Experiment {
         cameraInput?.clear()
         gpsInputs.forEach { $0.clear() }
         
-        //The defaults belong to the experiment, not to the data that was just discarded. This is
-        //the call that fixes the observed failure: the lab clears before every start, and so does
-        //a user pressing "clear data", which is what left an input element's buffer empty for the
-        //rest of the run when its page was not the one on screen.
+        //The defaults belong to the experiment, not to the discarded data (the lab clears before every start)
         seedInputDefaults()
         
         if byUser {
@@ -802,12 +736,8 @@ final class Experiment {
 extension Experiment: ExperimentAnalysisDelegate {
     func analysisWillUpdate(_ analysis: ExperimentAnalysis) {
         analysisDelegate?.analysisWillUpdate(analysis)
-        //For the general case rather than the one that started this: an analysis input without
-        //keep="true", or a bluetooth output whose input says keep="false", empties the buffer it
-        //read, and the value has to be back for the NEXT cycle whether or not the page is on
-        //screen. Android's re-init runs for every view on every cycle; this is that. (Neither
-        //applied in micropython/createExperiment: keep defaults to TRUE and its analysis block is
-        //empty - there it was the clear before each start, see clear().)
+        //An analysis input without keep="true" or a bluetooth output with keep="false" empties the buffer it read;
+        //the value must be back for the next cycle whatever page is on screen (Android re-inits every view each cycle)
         seedInputDefaults()
         for networkConnection in networkConnections {
             networkConnection.pushDataToBuffers()

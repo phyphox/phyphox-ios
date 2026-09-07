@@ -47,9 +47,7 @@ class ExperimentCell: UICollectionViewCell {
     
     var optionsButtonCallback: ((_ button: UIButton) -> ())?
 
-    //Multi-select deletion: while the experiment list is in selection mode, deletable
-    //experiments show a checkbox instead of the options button. The checkbox only displays the
-    //state, toggling happens by tapping the cell.
+    //Selection mode: deletable experiments show a checkbox instead of the options button; toggling is by tapping the cell
     private var selectionCheckbox: BEMCheckBox?
 
     var showsSelectionCheckbox = false {
@@ -71,9 +69,7 @@ class ExperimentCell: UICollectionViewCell {
                 selectionCheckbox?.removeFromSuperview()
                 selectionCheckbox = nil
             }
-            //The checkbox shifts the whole content, so the layout must be recomputed even when
-            //the reused cell shows the same experiment as before (whose setter skips the layout
-            //invalidation when the metadata is unchanged)
+            //The checkbox shifts the content, so relayout even when the reused cell shows the same experiment
             setNeedsLayout()
         }
     }
@@ -101,9 +97,7 @@ class ExperimentCell: UICollectionViewCell {
     override func layoutSubviews() {
         super.layoutSubviews()
 
-        //In selection mode the checkbox is inserted at the leading edge, pushing icon and labels
-        //to the right - the indentation makes the deletable experiments easy to spot, like on
-        //Android
+        //In selection mode the checkbox is inserted at the leading edge, indenting deletable experiments like on Android
         var leadingInset: CGFloat = 0.0
         if let checkbox = selectionCheckbox {
             let boxSize: CGFloat = 24.0

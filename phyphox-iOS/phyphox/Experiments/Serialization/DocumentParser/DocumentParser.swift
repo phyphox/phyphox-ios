@@ -17,12 +17,8 @@ protocol AttributeKey {
     var rawValue: String { get }
 }
 
-///Decodes a floating point number from an experiment file value. The accepted lexical space
-///matches the docs validators (number-invalid-value rule in phyphox-docs) and is narrower than
-///what Swift's Double(String) parses: decimal notation plus NaN and [+-]Infinity with case
-///folded - "inf" or hex floats like "0x1p3" are not portable, as Java cannot parse them.
-///Returns nil for a value outside this space. Used by the numeric attribute readers below and
-///for the entries of a data container's init list.
+///Decodes a number in the format's lexical space (number-invalid-value in phyphox-docs): decimal notation, NaN and
+///[+-]Infinity, case folded. Narrower than Double(String): "inf" or hex floats are not portable to Java. nil otherwise.
 func parseExperimentNumber(_ stringValue: String) -> Double? {
     let pattern = "^(?:[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?|[nN][aA][nN]|[+-]?[iI][nN][fF][iI][nN][iI][tT][yY])$"
     guard stringValue.range(of: pattern, options: .regularExpression) != nil else { return nil }
@@ -67,9 +63,7 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
         return stringValue
     }
 
-    ///Booleans from the experiment file fold case like enumerated values ("True" is true), and
-    ///any other value is an error rather than silently false
-    ///(enum-case-insensitive and enum-invalid-value in phyphox-docs)
+    ///Booleans fold case ("True" is true); anything else is an error (enum-case-insensitive/enum-invalid-value in phyphox-docs)
     private func parseBool(_ stringValue: String, key: String) throws -> Bool {
         switch stringValue.lowercased() {
         case "true": return true
@@ -91,9 +85,8 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
         return try parseBool(stringValue, key: key.rawValue)
     }
 
-    ///Colour attributes accept a named phyphox colour or exactly six hex digits with an optional
-    ///"#" prefix. A present but unparseable value is an error with Android's exact message rather
-    ///than a silent fall-back to the caller's default (color-invalid-value in phyphox-docs).
+    ///A named phyphox colour or six hex digits with an optional "#". An unparseable value is an error with Android's exact
+    ///message, not a fall-back to the default (color-invalid-value in phyphox-docs).
     func optionalColor(for key: Key) throws -> UIColor? {
         return try attributes[key.rawValue].map({
             guard let color = mapColorString($0) else {
@@ -126,9 +119,7 @@ struct KeyedAttributeContainer<Key: AttributeKey> {
         return value
     }
 
-    ///Floating point decodes are restricted to the format's number lexical space, which is
-    ///narrower than what T.init(String) accepts (number-invalid-value rule in phyphox-docs,
-    ///see parseExperimentNumber). Other types, i.e. String, pass through unchecked.
+    ///Floats are limited to the format's number lexical space (see parseExperimentNumber); other types pass through unchecked
     private func isValidValue<T: LosslessStringConvertible>(_ stringValue: String, for type: T.Type) -> Bool {
         if T.self == Double.self || T.self == CGFloat.self || T.self == Float.self {
             return parseExperimentNumber(stringValue) != nil
@@ -221,9 +212,7 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
     /// Used internally to store errors thrown by element handlers
     private var parsingError: Error?
 
-    /// Namespace of the root element (usually none or a default xmlns). Elements from any other
-    /// namespace (i.e. editor metadata) are skipped with their entire subtree instead of being
-    /// treated as unknown elements, matching the Android implementation.
+    /// Root namespace; elements from other namespaces (e.g. editor metadata) are skipped with their subtree, matching Android
     private var rootNamespaceURI: String? = nil
     /// Depth within a skipped foreign-namespace subtree; 0 when not skipping
     private var skipDepth = 0
@@ -298,8 +287,7 @@ final class DocumentParser<DocumentHandler: ResultElementHandler>: NSObject, XML
         }
         if let rootNamespaceURI = rootNamespaceURI {
             if (namespaceURI ?? "") != rootNamespaceURI {
-                //This element belongs to a foreign namespace (i.e. from an editor). Ignore it
-                //and its children.
+                //Foreign namespace (e.g. an editor's): skip the element and its children
                 skipDepth = 1
                 return
             }

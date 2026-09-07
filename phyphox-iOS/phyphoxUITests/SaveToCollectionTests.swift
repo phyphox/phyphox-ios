@@ -7,21 +7,13 @@
 
 import XCTest
 
-//Saving a container to the experiment collection (test-matrix row save-to-collection), the flow
-//-phyphoxAutoConfirm deliberately declines: opened from outside the collection, an experiment is
-//offered for saving, and accepting has to bring its resources along. The container fixtures come
-//from phyphox-docs/fixtures/containers.
-//
-//What the collection gains is state that outlives the test, so every saved entry is deleted
-//again through the app's own delete flow.
+//Saving a container to the collection (test-matrix row save-to-collection), the flow -phyphoxAutoConfirm
+//declines; fixtures from phyphox-docs/fixtures/containers. Saved entries outlive the test, so each is deleted again.
 final class SaveToCollectionTests: XCTestCase {
     private let port = 8084
     private var savedTitles: [String] = []
 
-    ///Everything these fixtures can leave in the collection. Cleaning up all of them rather than
-    ///only what this test saved matters because the state outlives the process: a run that dies
-    ///between saving and deleting would otherwise poison the next one - the resource folder it
-    ///left behind makes the next save of the same experiment fail.
+    ///Everything these fixtures can leave behind: a run that died between saving and deleting would poison the next
     private static let fixtureTitles = ["Container fixture with resource",
                                         "Container fixture A", "Container fixture B"]
 
@@ -74,14 +66,12 @@ final class SaveToCollectionTests: XCTestCase {
         offer.buttons["Save to collection"].tap()
         savedTitles = ["Container fixture with resource"]
 
-        //Saving confirms with an alert of its own, which has to go before anything else can be
-        //tapped (Experiment.saveLocally, quiet: false)
+        //Saving confirms with an alert of its own (Experiment.saveLocally, quiet: false)
         let confirmation = app.alerts.firstMatch
         XCTAssertTrue(confirmation.waitForExistence(timeout: 15), "the app confirms that it saved the experiment")
         confirmation.buttons["OK"].tap()
 
-        //Back out and in again: what is opened now is the saved copy, whose resources live in the
-        //per-experiment folder named after the hex CRC32 of the experiment file
+        //Reopened: the saved copy, whose resources live in the folder named after the file's hex CRC32
         returnToCollection(app)
         let entry = try XCTUnwrap(scrollToEntry(app, title: "Container fixture with resource"),
                                   "the collection gained the entry")
@@ -90,8 +80,7 @@ final class SaveToCollectionTests: XCTestCase {
         XCTAssertFalse(app.alerts.firstMatch.waitForExistence(timeout: 3),
                        "and is not offered for saving a second time")
 
-        //The image element resolves its src against that folder, and so does /res - which is how
-        //a test can see what the image element sees
+        //The image element resolves its src against that folder, and so does /res
         let resource = try XCTUnwrap(resourceOverRemoteAccess("pic.png"), "the resource is served for the saved experiment")
         XCTAssertEqual(Array(resource.prefix(4)), [0x89, 0x50, 0x4e, 0x47],
                        "the PNG the container delivered, not the \"Unknown file.\" answer")
@@ -122,9 +111,7 @@ final class SaveToCollectionTests: XCTestCase {
 
     // MARK: - helpers
 
-    ///The collection is longer than the screen and only its visible cells exist, so an entry has
-    ///to be scrolled to before it can be found at all - a saved experiment lands in its own
-    ///category, sorted among all the bundled ones.
+    ///Only visible cells exist, so an entry has to be scrolled to; a saved experiment lands in its own category
     private func scrollToEntry(_ app: XCUIApplication, title: String, swipes: Int = 12) -> XCUIElement? {
         let entry = app.staticTexts[title]
         if entry.exists && entry.isHittable {
@@ -132,8 +119,7 @@ final class SaveToCollectionTests: XCTestCase {
         }
 
         let list = app.collectionViews.firstMatch.exists ? app.collectionViews.firstMatch : app.windows.firstMatch
-        //Back to the top first: searching in one direction only would find an entry or not
-        //depending on where the step before left the list standing
+        //Back to the top first, so the search does not depend on where the step before left the list
         for _ in 0..<4 {
             list.swipeDown(velocity: .fast)
             if entry.exists && entry.isHittable {
@@ -168,10 +154,7 @@ final class SaveToCollectionTests: XCTestCase {
                 result = data
                 done.fulfill()
             }.resume()
-            //XCTWaiter, not wait(for:): the reply not arriving is an ANSWER here, not a test
-            //failure. XCTestCase.wait(for:) records one, so a request that simply found no server -
-            //which is exactly what several of these checks are looking for - failed the test on a
-            //runner where the connection attempt took longer than the wait
+            //XCTWaiter, not wait(for:): no reply is an answer here, and wait(for:) would record a failure
             _ = XCTWaiter().wait(for: [done], timeout: 5)
             if let result = result, !result.isEmpty { return result }
         } while Date() < deadline
@@ -194,8 +177,7 @@ final class SaveToCollectionTests: XCTestCase {
         }
         options.buttons["Delete"].tap()
 
-        //The confirmation names the experiment, which is also what tells it apart from the
-        //Delete entry of the options sheet it replaces
+        //The confirmation names the experiment, which tells it apart from the sheet's own Delete entry
         let confirmation = app.sheets.buttons["Delete \(title)"]
         guard confirmation.waitForExistence(timeout: 5) else {
             XCTFail("the delete confirmation for \(title) did not come up")

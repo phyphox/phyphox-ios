@@ -36,20 +36,13 @@ func getSecureName(_ name: String) -> String {
     return name
 }
 
-//The values of an export set, copied out of its buffers. Everything that writes a file works on
-//this rather than on the buffers themselves: an export of a running experiment would otherwise
-//read containers that the analysis and the sensor threads keep writing, and a cycle in flight -
-//which clears a container before it refills it - was exported as an empty set. Taking the copy
-//under the experiment's data lock (ExperimentExport.snapshot) makes the export see the state
-//before or after a cycle, never inside one. Android does the same since 2b8d7acf.
+//The values of an export set, copied out of its buffers under the data lock (ExperimentExport.snapshot) so an export of
+//a running experiment never sees an analysis cycle half applied. Android does the same since 2b8d7acf.
 struct ExperimentExportSetData {
     let name: String
     let columns: [(name: String, values: [Double])]
 
-    //The rows this set exports, one entry per column, nil where a column has no value for that
-    //row. The LONGEST column decides how many rows there are (ruled 2026-08-25): sizing a set by
-    //its first column silently dropped every value beyond that column's length, and dropped the
-    //set entirely when the first container was empty.
+    //Rows, one entry per column, nil where a column has no value. The LONGEST column decides the row count (ruled 2026-08-25)
     var rowValues: [[Double?]] {
         let rows = columns.map({ $0.values.count }).max() ?? 0
 
@@ -77,8 +70,7 @@ struct ExperimentExportSetData {
         for row in rowValues {
             var line = ""
             for (j, value) in row.enumerated() {
-                //A missing cell of a shorter column is padded NaN in every format on every
-                //platform (ruled 2026-08-25); this writer used to leave an empty string
+                //A missing cell of a shorter column is padded NaN in every format on every platform (ruled 2026-08-25)
                 line += (j == 0 ? "\n" : separator) + (value != nil ? format(value!) : "NaN")
             }
             string += line
@@ -87,9 +79,7 @@ struct ExperimentExportSetData {
         return string.count > 0 ? string.data(using: .utf8) : nil
     }
 
-    //Writes this set as one sheet into an xlsx file, laid out like the Android implementation
-    //(DataExport.ExcelFormat): a bold header row, then one row per value of the longest column,
-    //with cells of shorter columns filled with the text "NaN"
+    //Laid out like Android's DataExport.ExcelFormat: bold header, one row per value of the longest column, "NaN" padding
     func serializeToXlsx(_ xlsx: XlsxWriter) throws {
         try xlsx.startSheet(name)
 
@@ -123,8 +113,7 @@ struct ExperimentExportSet {
         self.data = data
     }
 
-    ///The values of this set, copied out of the buffers. Callers exporting more than one set take
-    ///the copies of all of them together under the data lock, see ExperimentExport.snapshot.
+    ///Copy of the values; exporting several sets takes all copies together under the data lock, see ExperimentExport.snapshot
     func snapshot() -> ExperimentExportSetData {
         return ExperimentExportSetData(name: name,
                                        columns: data.map { (name: $0.name, values: $0.buffer.toArray()) })

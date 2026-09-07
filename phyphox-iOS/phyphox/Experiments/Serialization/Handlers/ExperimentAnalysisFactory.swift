@@ -103,11 +103,8 @@ final class ExperimentAnalysisFactory {
             throw ElementHandlerError.unexpectedChildElement(key)
         }
 
-        //Enforce the module's slot table before building it: whether the as attribute is required
-        //per slot, how many tags may fill it, and whether a value or empty input is allowed
-        //(mirroring Android's ioBlockParser).
-        //Every module declares its own table next to the code consuming the slot names; a unit
-        //test walks this classMap to make sure none is missing.
+        //Enforce the module's slot table before building it (mirroring Android's ioBlockParser); every module declares its
+        //own table and a unit test walks this classMap to make sure none is missing
         if let mapping = analysisClass.ioMapping {
             try IOMappingValidation.validate(mapping: mapping, inputs: descriptor.inputs, outputs: descriptor.outputs)
         }

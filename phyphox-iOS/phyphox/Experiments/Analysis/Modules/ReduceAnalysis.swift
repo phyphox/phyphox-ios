@@ -69,8 +69,7 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
             return
         }
         
-        //A non-finite factor is an error state yielding empty outputs (and must not reach the
-        //Int conversions below)
+        //A non-finite factor yields empty outputs (and must not reach the Int conversions below)
         guard fac.isFinite else {
             return
         }
@@ -78,8 +77,7 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
         let x = inX!.data
         let y = inY?.data
 
-        //Processing truncates to the shortest present buffer; only an absent y input keeps
-        //processing all of x (with 0 as the y contribution)
+        //Truncate to the shortest present buffer; an absent y keeps all of x (y contribution 0)
         let count = y.map { Swift.min(x.count, $0.count) } ?? x.count
 
         var resX = [Double]()
@@ -114,8 +112,7 @@ final class ReduceAnalysis: AutoClearingExperimentAnalysisModule {
                         }
                     }
                 }
-                //The incomplete final chunk is averaged over the number of values actually
-                //summed, not the nominal factor
+                //The incomplete final chunk is averaged over the values actually summed, not the nominal factor
                 if averageX {
                     newX /= Double(used)
                 }

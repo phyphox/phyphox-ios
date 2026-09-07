@@ -64,8 +64,7 @@ enum ExperimentAnalysisDataInput: Equatable {
         }
     }
 
-    ///Compares the "as" name from the experiment file with a canonical slot name, folding case
-    ///(enum-case-insensitive rule in phyphox-docs, matching Android)
+    ///Case-folding comparison of the "as" name with a slot name (phyphox-docs enum-case-insensitive rule, as Android)
     func used(as name: String) -> Bool {
         return asString.lowercased() == name.lowercased()
     }
@@ -101,8 +100,7 @@ enum ExperimentAnalysisDataInput: Equatable {
     func clear() {
         switch self {
         case .buffer(buffer: let buffer, data: _, usedAs: _, keep: let keep):
-            //Buffers bound to interactive view elements are NOT exempt from clearing: the
-            //element re-initializes its buffer to the default value instead (matching Android)
+            //Buffers bound to interactive views are cleared too; the element re-initializes to its default (matching Android)
             if !keep && !buffer.staticBuffer {
                 buffer.clear(reset: false)
             }
@@ -142,8 +140,7 @@ enum ExperimentAnalysisDataOutput: Equatable {
         }
     }
 
-    ///Compares the "as" name from the experiment file with a canonical slot name, folding case
-    ///(enum-case-insensitive rule in phyphox-docs, matching Android)
+    ///Case-folding comparison of the "as" name with a slot name (phyphox-docs enum-case-insensitive rule, as Android)
     func used(as name: String) -> Bool {
         return asString.lowercased() == name.lowercased()
     }
@@ -166,8 +163,7 @@ enum ExperimentAnalysisDataOutput: Equatable {
         return dataBuffer.staticBuffer
     }
 
-    //Declares the module's write into this output complete, which locks a static buffer even if
-    //the module wrote nothing (Android: DataOutput.markSet)
+    //Marks the write complete, which locks a static buffer even if nothing was written (Android: DataOutput.markSet)
     func markSet() {
         dataBuffer.markSet()
     }

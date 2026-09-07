@@ -46,10 +46,8 @@ kernel void computeLuma(texture2d<float, access::read> yTexture [[ texture(0) ]]
 
         localSums[tid.y * groupSize.x] = totalRowSum;
     }
-    //Every thread of the threadgroup must reach this barrier. Placing a threadgroup_barrier in
-    //divergent control flow (as it was, inside if(tid.x==0)) is undefined behaviour and hangs the
-    //GPU on older hardware such as the A9 (iPhone 6s). Hoisted to uniform scope so the row sums are
-    //written before the final sum reads them.
+    //Uniform barrier: a threadgroup_barrier in divergent control flow (e.g. inside if(tid.x==0)) is undefined
+    //behaviour and hangs the A9 GPU (iPhone 6s). The row sums must be written before the final sum reads them.
     threadgroup_barrier(mem_flags::mem_threadgroup);
 
     if (tid.x == 0 && tid.y == 0) {
@@ -63,12 +61,8 @@ kernel void computeLuma(texture2d<float, access::read> yTexture [[ texture(0) ]]
 
 }
 
-//Spectroscopy: one value per pixel along the dispersion axis of the camera image, obtained by
-//averaging the linear luminance of the selected analysis area across the perpendicular axis.
-//The camera texture is in sensor orientation, so computeSpectrumAlongX serves a device held in
-//landscape orientation relative to the spectrum and computeSpectrumAlongY one held in portrait
-//orientation. One thread computes one spectrum pixel; the dispatch is one-dimensional along the
-//dispersion axis.
+//Spectroscopy: one value per pixel along the dispersion axis, averaging the linear luminance of the selected area
+//across the other axis. Textures are sensor-oriented: AlongX = device held landscape to the spectrum, AlongY = portrait.
 kernel void computeSpectrumAlongX(
      texture2d<float, access::read> yTexture [[texture(0)]],
      texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],
@@ -453,8 +447,7 @@ kernel void computeFinalSum(device float *partialSums [[ buffer(0) ]],
     }
     
     if (gid == 0) {
-        //No barrier here: it was inside single-thread control flow (divergent, a GPU hang on the
-        //A9) and served no purpose - the write to device memory is visible once the kernel completes.
+        //No barrier: a divergent one hangs the A9, and the device memory write is visible once the kernel completes
         *result = localSums[0];
     }
 }
@@ -496,7 +489,7 @@ kernel void computeFinalMinMax(device float *partialMins [[ buffer(0) ]],
     }
     
     if (gid == 0) {
-        //No barrier here - see computeFinalSum; it was divergent and pointless.
+        //No barrier here - see computeFinalSum
         result->min = localMins[0];
         result->max = localMaxs[0];
     }

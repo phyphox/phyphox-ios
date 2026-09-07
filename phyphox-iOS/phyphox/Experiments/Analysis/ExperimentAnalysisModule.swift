@@ -8,10 +8,8 @@
 
 import Foundation
 
-///The inputs and outputs of a module, assigned to the slots of its ioMapping by the same
-///algorithm that validated them (IOMappingValidation, mirroring Android's ioBlockParser). A
-///module's init retrieves its slots from this instead of re-matching the slot names by hand, so
-///each name is defined once, in the slot constant that also builds the ioMapping.
+///A module's inputs and outputs assigned to the slots of its ioMapping by the same algorithm that validated
+///them (IOMappingValidation, mirroring Android's ioBlockParser), so each slot name is defined once
 struct MappedAnalysisIO {
     fileprivate var inputsBySlot: [String: [ExperimentAnalysisDataInput]] = [:]
     fileprivate var outputsBySlot: [String: [ExperimentAnalysisDataOutput]] = [:]
@@ -55,15 +53,11 @@ struct MappedAnalysisIO {
  Abstract class providing an Analysis module for Experiments
  */
 class ExperimentAnalysisModule {
-    ///The slot table this module's inputs and outputs are validated against before it is built
-    ///(see IOMappingValidation). Every module overrides this next to the init that consumes the
-    ///same slot names - by referencing the same slot constants - so the vocabulary is defined in
-    ///one place only; a unit test walks the classMap to make sure no module forgets it.
+    ///The slot table inputs and outputs are validated against (see IOMappingValidation). Every module overrides it
+    ///with the same slot constants its init consumes; a unit test walks the classMap to catch omissions.
     class var ioMapping: AnalysisIOMapping? { return nil }
 
-    ///Assigns the inputs and outputs to the slots of this module's ioMapping. The file was
-    ///already validated against the same table in ExperimentAnalysisFactory, so this only
-    ///retrieves the assignment; modules with named slots call it at the start of their init.
+    ///Assigns inputs and outputs to the slots of ioMapping; the file was already validated against it in the factory
     static func mapIO(inputs: [ExperimentAnalysisDataInput], outputs: [ExperimentAnalysisDataOutput]) throws -> MappedAnalysisIO {
         guard let mapping = ioMapping else {
             throw SerializationError.genericError(message: "Module declares no io mapping.")
@@ -95,10 +89,8 @@ class ExperimentAnalysisModule {
     let inputs: [ExperimentAnalysisDataInput]
     let outputs: [ExperimentAnalysisDataOutput]
 
-    ///A module whose output buffers are all static executes a single time and is skipped from then
-    ///on - saving the recomputation of values that do not depend on measured data is the point of
-    ///the static attribute (Android: AnalysisModule.isStatic/executed). Accepted side effect: a
-    ///skipped module no longer clears its keep=false input buffers either.
+    ///A module whose outputs are all static executes once (Android: AnalysisModule.isStatic/executed). Accepted
+    ///side effect: a skipped module no longer clears its keep=false inputs either.
     let isStatic: Bool
     private var executed = false
     
@@ -118,9 +110,7 @@ class ExperimentAnalysisModule {
         self.isStatic = outputs.allSatisfy { $0.isStatic }
     }
 
-    ///Re-arms a skipped static module when a buffer it reads or writes has been reset by the
-    ///user's clear-data action, mirroring Android's buffer notification with reset=true
-    ///(Analysis.java, notifyUpdate).
+    ///Re-arms a skipped static module when a buffer it uses was reset by clear-data (Android: Analysis.java notifyUpdate)
     func notifyBuffersReset(_ resetBuffers: Set<ObjectIdentifier>) {
         guard executed else { return }
 
@@ -146,7 +136,6 @@ class ExperimentAnalysisModule {
             print("Analysis should run in the background!")
         }
 
-        //A module writing only static buffers has nothing left to do after its first execution
         guard !(isStatic && executed) else {
             return
         }
@@ -160,7 +149,7 @@ class ExperimentAnalysisModule {
         update()
         didUpdate()
 
-        //The write is complete, which locks static outputs even if the module wrote nothing
+        //Locks static outputs even if the module wrote nothing
         for output in outputs {
             output.markSet()
         }

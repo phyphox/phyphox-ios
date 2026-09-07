@@ -35,8 +35,7 @@ final class LoessAnalysis: AutoClearingExperimentAnalysisModule {
         let io = try Self.mapIO(inputs: inputs, outputs: outputs)
         xIn = io.data(Self.xInSlot)
         yIn = io.data(Self.yInSlot)
-        //io.input, not io.data: xi allows a value-type input, which acts as a one-element
-        //buffer like on Android
+        //io.input, not io.data: xi allows a value-type input (a one-element buffer, like on Android)
         xLocIn = io.input(Self.xiInSlot)
         dIn = io.input(Self.dInSlot)
 
@@ -56,8 +55,7 @@ final class LoessAnalysis: AutoClearingExperimentAnalysisModule {
             throw SerializationError.genericError(message: "Error: No input for d provided to loess module.")
         }
 
-        //Outputs map by name; an unnamed output fills yi0. The as attribute decides the
-        //slot, never document order.
+        //Outputs map by name (an unnamed output fills yi0); the as attribute decides, never document order
         yi0Output = io.output(Self.yi0OutSlot)
         yi1Output = io.output(Self.yi1OutSlot)
         yi2Output = io.output(Self.yi2OutSlot)
@@ -89,9 +87,7 @@ final class LoessAnalysis: AutoClearingExperimentAnalysisModule {
             return
         }
 
-        //A non-positive or non-finite d is an error state yielding empty outputs - without the
-        //guard every window is empty and det = 0 fills the outputs with NaN. d is read from the
-        //last element of its buffer, the convention for single-value inputs.
+        //A non-positive or non-finite d yields empty outputs, otherwise det = 0 fills them with NaN
         guard let d = dIn?.getSingleValue(), d.isFinite, d > 0 else {
             return
         }

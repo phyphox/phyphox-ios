@@ -28,23 +28,9 @@ enum DataBufferError: Error {
     case baseContentsTooLarge
 }
 
-/**
- A single reader/writer lock shared by all data buffers of one experiment, giving remote reads a
- consistent snapshot across buffers.
-
- Each `DataBuffer` is individually thread-safe, but a group of buffers written together for one
- event (a sensor sample's x/y/z/t, a camera frame's h/s/v/t, an analysis cycle's outputs) is not
- atomic across buffers on its own: a `/get` request reading the group one buffer at a time can
- catch some buffers already advanced by a concurrent write and others not, so their lengths differ
- by a sample or two (GitHub issue 22). Android avoids this with a single `experiment.dataLock` held
- across each write batch and across the remote read; this is the equivalent.
-
- A writer wraps its multi-buffer group in `write`; the remote `/get` handler snapshots all requested
- buffers in one `read`. Because the lock is always taken *around* buffer access and never from
- inside a `DataBuffer` (whose own lock stays the inner leaf), and is never held across a queue or
- main-thread hop, it cannot deadlock: the acquisition order is always this lock, then a buffer lock,
- never the reverse, and write groups never nest.
- */
+//One reader/writer lock per experiment so a remote /get sees a group of buffers (x/y/z/t) consistently (GitHub issue 22),
+//the equivalent of Android's experiment.dataLock. Always taken around buffer access, never inside a DataBuffer's own
+//lock and never across a queue hop, so the order is lock, then buffer lock, and write groups never nest.
 final class BufferLock {
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.dataaccess", attributes: .concurrent)
 
@@ -57,11 +43,7 @@ final class BufferLock {
     }
 }
 
-/**
- Runs a multi-buffer write as one atomic group with respect to remote reads. The lock is taken from
- whichever of the buffers is non-nil (they all share the experiment's lock); before the experiment
- wires up the lock, or in unit tests, it is nil and the writes run directly, exactly as before.
- */
+//Runs a multi-buffer write atomically with respect to remote reads; without a wired-up lock (unit tests) it runs directly
 func synchronizedBufferWrite(_ buffers: [DataBuffer?], _ body: () -> Void) {
     if let lock = buffers.lazy.compactMap({ $0?.dataLock }).first {
         lock.write(body)
@@ -84,8 +66,7 @@ extension DataBufferError: LocalizedError {
  */
 final class DataBuffer {
 
-    //The experiment-wide lock shared by all of an experiment's buffers, wired up in Experiment.init.
-    //nil for a standalone buffer (e.g. in unit tests), where no cross-buffer coordination is needed.
+    //Experiment-wide lock wired up in Experiment.init; nil for a standalone buffer (unit tests)
     weak var dataLock: BufferLock?
 
     let name: String
@@ -163,13 +144,10 @@ final class DataBuffer {
     
     let staticBuffer: Bool
 
-    //If set, the buffer is exempt from a clear by the user unless the group is explicitly
-    //selected. The reserved name "_" protects the buffer without offering it for selection.
+    //Exempts the buffer from a user clear unless the group is selected; "_" protects it without offering it
     let clearGroup: String?
 
-    //Mirrors Android's staticAndSet: a static buffer is locked once the side writing it declares
-    //its write complete (markSet), even if it wrote nothing - not on the first write itself, so a
-    //module can fill a static buffer value by value. The user's clear-data action unlocks it again.
+    //Mirrors Android's staticAndSet: a static buffer locks on markSet (even if nothing was written), not on the first write
     private var staticAndSet: Bool = false
 
     /**
@@ -211,8 +189,7 @@ final class DataBuffer {
 
         appendFromArray(baseContents)
 
-        //A static buffer that carries init values is filled and locked right away, like any other
-        //completed write (Android: DataBuffer.setInit)
+        //Init values lock a static buffer right away (Android: DataBuffer.setInit)
         if !baseContents.isEmpty {
             markSet()
         }
@@ -240,10 +217,7 @@ final class DataBuffer {
         bufferMutated()
     }
 
-    /**
-     Declares the write into this buffer complete. A static buffer locks here - even if nothing was
-     written - and ignores every further write until it is reset (Android: DataBuffer.markSet).
-     */
+    //Declares the write complete: a static buffer locks here until reset (Android: DataBuffer.markSet)
     func markSet() {
         guard staticBuffer else { return }
 
@@ -252,9 +226,7 @@ final class DataBuffer {
         }
     }
 
-    //A static buffer ignores an ordinary clear, but the user's clear-data action (reset) unlocks it
-    //and restores its init values - static data does not survive a user clear (Android:
-    //DataBuffer.clear). Only to be used from within the locking queue.
+    //Ignores an ordinary clear, unlocked by a user clear (reset) as in Android's DataBuffer.clear. Locking queue only
     private func unlockedForClear(reset: Bool) -> Bool {
         guard staticBuffer else { return true }
         guard reset else { return false }

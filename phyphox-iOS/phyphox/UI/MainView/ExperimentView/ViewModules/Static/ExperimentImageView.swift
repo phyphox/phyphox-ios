@@ -20,17 +20,8 @@ final class ExperimentImageView: UIView, DescriptorBoundViewModule {
     required init?(descriptor: ImageViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
         
-        //The src attribute comes from the experiment file, which is not trustworthy: refuse any
-        //path traversal so it cannot reach outside the resource folder
-        let srcIsSafe = !descriptor.src.components(separatedBy: "/").contains("..")
-        if srcIsSafe, let resourceFolder = resourceFolder {
-            let src = resourceFolder.appendingPathComponent(descriptor.src).path
-            image = UIImage(contentsOfFile: src)
-        }
-        if srcIsSafe, image == nil {
-            //Fall back to the internal images bundled with phyphox (at the moment only
-            //hue.png), which allows external experiment files to reuse the bundled images
-            image = UIImage(contentsOfFile: experimentsBaseURL.appendingPathComponent("res").appendingPathComponent(descriptor.src).path)
+        if let file = Experiment.resolveResource(descriptor.src, in: resourceFolder) {
+            image = UIImage(contentsOfFile: file.path)
         }
 
         if let image = image {
@@ -95,9 +86,7 @@ final class ExperimentImageView: UIView, DescriptorBoundViewModule {
         if let image = image {
             let aspect = image.size.width / image.size.height
             let w = descriptor.scale * size.width - 2*sideMargins
-            //A degenerate image (zero width or height, e.g. a corrupt resource) makes aspect NaN
-            //or infinite; w/aspect would then be NaN and returning it as a row height aborts the
-            //table view. Collapse the image to no content height in that case instead.
+            //A degenerate image makes aspect NaN/infinite; a NaN row height aborts the table view
             let h = (aspect.isFinite && aspect > 0) ? w / aspect : 0
             return CGSize(width: w, height: h + 2*verticalMargins)
         } else {

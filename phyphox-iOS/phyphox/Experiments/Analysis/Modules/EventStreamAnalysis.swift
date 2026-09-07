@@ -73,14 +73,11 @@ final class EventStreamAnalysis: AutoClearingExperimentAnalysisModule {
         
         let inArray = dataIn.data
         
-        //A NaN threshold participates in the comparisons like any number (no trigger ever
-        //fires); only an absent input or an empty buffer selects the default of 0.
+        //A NaN threshold participates like any number (no trigger fires); only an absent input or empty buffer selects 0
         let threshold = thresholdIn?.getSingleValue() ?? 0.0
 
-        //index/skip/last are the module's own state loop: absent inputs or empty buffers keep
-        //the documented start defaults (0/0/NaN). A non-finite value reaching one of the Int
-        //conversions is an error state yielding empty outputs - which resets the state loop to
-        //its start defaults on the next run instead of trapping.
+        //index/skip/last are the module's own state loop: absent inputs keep the start defaults (0/0/NaN); a non-finite
+        //value at an Int conversion yields empty outputs, resetting the loop on the next run instead of trapping.
         let distanceValue = distanceIn?.getSingleValue() ?? 0.0
         let indexValue = indexIn?.getSingleValue() ?? 0.0
         let skipValue = skipIn?.getSingleValue() ?? 0.0

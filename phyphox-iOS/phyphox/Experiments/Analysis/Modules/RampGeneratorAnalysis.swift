@@ -34,16 +34,13 @@ final class RampGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
     override func update() {
         guard let firstOutput = outputs.first else { return }
 
-        //An empty start/stop buffer and a non-finite start/stop value are errors yielding
-        //empty output (a value-type input is never empty)
+        //An empty start/stop buffer or a non-finite value yields empty output (a value-type input is never empty)
         guard let start = startInput.getSingleValue(), start.isFinite,
               let stop = stopInput.getSingleValue(), stop.isFinite else {
             return
         }
 
-        //An explicit length of 0, an empty length buffer and a non-finite or negative length
-        //all yield an empty output; only an absent length input falls back to the output
-        //buffer's size.
+        //A length of 0, empty, non-finite or negative yields empty output; only an absent input falls back to the buffer size
         var length = 0
         if let lengthInput = lengthInput {
             guard let l = lengthInput.getSingleValue(), l.isFinite, l >= 0, l < 9e18 else {
@@ -65,7 +62,6 @@ final class RampGeneratorAnalysis: AutoClearingExperimentAnalysisModule {
 
         if length == 1 {
             //A single-point ramp outputs its start value: the step is undefined for one point
-            //and used to produce NaN through the division by length-1
             result = [start]
         } else {
             result = [Double](repeating: 0.0, count: length)

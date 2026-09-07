@@ -49,8 +49,7 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
     
     var executeRequested = false
     var dataReady = false
-    //Parking a response (conversion.prepare on the network callback) and consuming it
-    //(pushDataToBuffers on the analysis thread) must not overlap - see requestFinished
+    //Parking a response (network callback) and consuming it (analysis thread) must not overlap
     private let parkingLock = NSLock()
     var requestCallbacks: [NetworkServiceRequestCallback] = []
     var timer: Timer? = nil
@@ -241,10 +240,8 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
             showError(msg: "Network error: The connection timed out.")
         case .success:
             if let data = service.getResults() {
-                //Parked for the analysis thread, which copies it into the buffers in
-                //pushDataToBuffers. A response that arrives before the parked one is consumed
-                //overwrites it - that is intended and identical on Android - but it must not
-                //overwrite it halfway through being consumed, hence the lock.
+                //Parked for pushDataToBuffers. A newer response may overwrite it (as on Android),
+                //but not while it is being consumed.
                 parkingLock.lock()
                 defer { parkingLock.unlock() }
                 do {
@@ -270,8 +267,7 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
         if !dataReady {
             return
         }
-        //A network response updates all its receive buffers as one atomic group so a remote /get
-        //read never catches the set half-updated (see BufferLock)
+        //All receive buffers update atomically so a remote /get never sees the set half-updated
         synchronizedBufferWrite(receive.values.map { $0.buffer }) {
             for item in receive {
                 if let data = try? conversion.get(item.key) {
@@ -280,7 +276,7 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
                     } else {
                         item.value.buffer.appendFromArray(data)
                     }
-                    //Completes the write, locking a static receive buffer (Android: markSet)
+                    //Android: markSet
                     item.value.buffer.markSet()
                 }
             }

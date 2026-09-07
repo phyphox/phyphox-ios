@@ -75,12 +75,8 @@ let shutterSpeeds : [CMTime] = [
 
 let iso = [25, 50, 100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200]
 
-//A colour from an experiment file is either a named phyphox colour (case-insensitive) or exactly
-//six hex digits, optionally prefixed with "#" - anything else is nil, which the serialization
-//handlers treat as an error rather than falling back to a default (color-invalid-value in
-//phyphox-docs, matching Android's RGB.fromPhyphoxStringStrict). The explicit hex check keeps the
-//lenient NSScanner in UIColor+Expanded (any digit count, trailing garbage ignored) out of the
-//file format.
+//A named phyphox colour (case-insensitive) or exactly six hex digits with optional "#", else nil, which the handlers treat
+//as an error (phyphox-docs color-invalid-value, Android RGB.fromPhyphoxStringStrict). Keeps the lenient NSScanner out.
 func mapColorString(_ string: String?) -> UIColor? {
     guard let colorString = string else {
         return nil
@@ -155,21 +151,18 @@ func measure(label: String? = nil, closure: () -> Void) {
 }
 #endif
 
-func queryDictionary(_ query: String) -> [String: String] {
-    var dict = [String: String]()
-    
-    for item in query.components(separatedBy: "&") {
-        let c = item.components(separatedBy: "=")
-        
-        if c.count > 1 {
-            dict[c.first!] = c.last!
-        }
-        else {
-            dict[c.first!] = ""
-        }
+extension String {
+    //A resource name from an untrusted experiment file: no path component may leave the resource folder
+    var isSafeResourceName: Bool {
+        return !components(separatedBy: "/").contains("..")
     }
-    
-    return dict
+
+    var xmlEscaped: String {
+        return replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+    }
 }
 
 extension Notification.Name {

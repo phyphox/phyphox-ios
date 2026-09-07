@@ -43,9 +43,8 @@ private final class NetworkConnectionSendElementHandler: ResultElementHandler, C
         let type: NetworkConnectionSendDescriptor.SendableType = try attributes.optionalValue(for: .type) ?? NetworkConnectionSendDescriptor.SendableType.buffer
         var additionalAttributes = [String:String]()
         if let datatype = attributes.optionalString(for: .datatype) {
-            //Matched case-insensitively and normalized here, so the send-time comparisons work
-            //on the canonical form; an unknown datatype is an error (enum-case-insensitive and
-            //enum-invalid-value in phyphox-docs)
+            //Folded and normalized here so the send-time comparisons use the canonical form; an unknown datatype is an
+            //error (enum-case-insensitive and enum-invalid-value in phyphox-docs)
             let folded = datatype.lowercased()
             guard folded == "number" || folded == "array" else {
                 throw ElementHandlerError.unexpectedAttributeValue(Attribute.datatype.rawValue)
@@ -167,14 +166,13 @@ private final class NetworkConnectionElementHandler: ResultElementHandler, Looku
         let serviceStr = try attributes.nonEmptyString(for: .service)
         let service: NetworkService
 
-        //username and password are optional for the plain mqtt services (brokers may require
-        //authentication without TLS), but mandatory for the mqtts (TLS) services
+        //Optional for the plain mqtt services (brokers may authenticate without TLS), mandatory for mqtts
         let username = attributes.optionalString(for: .username)
         let password = attributes.optionalString(for: .password)
         let persistence: Bool = try attributes.optionalValue(for: .persistence) ?? false
         let certificate = attributes.optionalString(for: .certificate)
         if let certificate = certificate, !certificate.isEmpty {
-            guard !certificate.components(separatedBy: "/").contains("..") else {
+            guard certificate.isSafeResourceName else {
                 throw ElementHandlerError.message("Invalid certificate file name.")
             }
         }

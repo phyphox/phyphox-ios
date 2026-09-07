@@ -97,8 +97,7 @@ extension ExperimentViewCollectionDescriptor: Equatable {
                 }
             }
             else {
-                //A view type missing from this list makes every experiment containing it unequal
-                //even to itself - exactly what happened to the camera and depth views for years
+                //A view type missing from this list makes every experiment containing it unequal even to itself
                 return false
             }
             return true

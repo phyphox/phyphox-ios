@@ -9,18 +9,8 @@
 import Foundation
 import ZIPFoundation
 
-//Minimal writer for the xlsx format (Office Open XML spreadsheet, ECMA-376), which allows us to
-//export to Excel without an external library, mirroring the Android implementation
-//(helper/XlsxWriter.java) so both platforms produce the same file layout.
-//An xlsx file is a zip archive containing a few XML files: a content type declaration
-//([Content_Types].xml), relationship files pointing to the actual content (*.rels), a workbook
-//definition listing the sheets (xl/workbook.xml), a style definition (xl/styles.xml, here only
-//used to provide a bold font for header cells) and one XML file per worksheet
-//(xl/worksheets/sheetN.xml).
-//Intentional limitations to keep this minimal: strings are stored inline instead of using a
-//shared string table, the optional cell and row references (r attributes) are omitted (cells
-//simply fill each row from left to right), and there are no number formats or styles beyond the
-//bold header font.
+//Minimal xlsx (ECMA-376) writer mirroring Android's helper/XlsxWriter.java, so both platforms produce the same layout.
+//Kept minimal: inline strings instead of a shared string table, no cell/row r attributes, only a bold header style.
 final class XlsxWriter {
     private let archive: Archive
     private var sheetNames: [String] = []
@@ -31,8 +21,7 @@ final class XlsxWriter {
     init(url: URL) throws {
         archive = try Archive(url: url, accessMode: .create)
 
-        //The package relationship file is static and can be written right away. Everything else
-        //depends on the number of sheets and is written in close().
+        //Static; everything else depends on the number of sheets and is written in close()
         try addEntry("_rels/.rels",
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
                 "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">" +
@@ -123,9 +112,7 @@ final class XlsxWriter {
                 "</Relationships>"
         try addEntry("xl/_rels/workbook.xml.rels", workbookRels)
 
-        //Font 0 is the default font, font 1 is bold. Cell style (cellXfs) 0 is the default, 1
-        //uses the bold font and is referenced by bold cells as s="1". The empty fills, border
-        //and cellStyleXfs entries are the minimum Excel expects to find in a style sheet.
+        //Font 1 is bold, style 1 uses it (s="1"); empty fills, borders and cellStyleXfs are the minimum Excel expects
         try addEntry("xl/styles.xml",
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
                 "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">" +
@@ -146,15 +133,10 @@ final class XlsxWriter {
 
     //Escape reserved XML characters and remove control characters that may not occur in XML 1.0
     private static func escape(_ s: String) -> String {
-        return s.replacingOccurrences(of: "[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]", with: "", options: .regularExpression)
-                .replacingOccurrences(of: "&", with: "&amp;")
-                .replacingOccurrences(of: "<", with: "&lt;")
-                .replacingOccurrences(of: ">", with: "&gt;")
-                .replacingOccurrences(of: "\"", with: "&quot;")
+        return s.replacingOccurrences(of: "[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]", with: "", options: .regularExpression).xmlEscaped
     }
 
-    //Excel imposes restrictions on sheet names: Certain characters are forbidden, at most 31
-    //characters, not empty, no duplicates (case-insensitive) and no apostrophe at either end
+    //Excel sheet names: no reserved chars, at most 31, not empty, unique case-insensitively, no apostrophe at either end
     private func uniqueSheetName(_ name: String) -> String {
         var s = name.replacingOccurrences(of: "[\\[\\]:*?/\\\\\\x00-\\x1F]", with: " ", options: .regularExpression).trimmingCharacters(in: .whitespaces)
         while s.hasPrefix("'") {

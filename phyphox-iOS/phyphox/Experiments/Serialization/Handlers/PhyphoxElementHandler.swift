@@ -12,8 +12,7 @@ import CoreBluetooth
 // MARK: - Extensions required for the initialization of an Experiment instance.
 private extension SensorDescriptor {
     func buffer(for component: String, from buffers: [String: DataBuffer]) -> DataBuffer? {
-        //Component names from the experiment file are matched case-insensitively
-        //(enum-case-insensitive rule in phyphox-docs, matching Android)
+        //Component names fold case (enum-case-insensitive in phyphox-docs, matching Android)
         return (outputs.first(where: { $0.component?.lowercased() == component.lowercased() })?.bufferName).map { buffers[$0] } ?? nil
     }
 }
@@ -169,11 +168,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         
         let isLink = try attributes.optionalValue(for: .isLink) ?? false
 
-        //The file format version is strictly "major.minor". Reject any other shape - in particular
-        //a three-part app version like "1.2.0" mistakenly used here, which SemanticVersion would
-        //otherwise reinterpret as 1.2.0 and load, even on an app that a genuine newer file version
-        //would have refused. This matches the Android parser, which requires a plain integer after
-        //the dot and rejects "1.2.0" ("Unable to interpret the file version").
+        //Strictly "major.minor": SemanticVersion would otherwise accept a three-part app version like "1.2.0" and load it;
+        //Android rejects that too ("Unable to interpret the file version")
         guard versionString.components(separatedBy: ".").count == 2, let version = SemanticVersion(string: versionString) else {
             throw ElementHandlerError.unexpectedAttributeValue("version")
         }
@@ -185,8 +181,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         let translationBlocks = try translationsHandler.expectOptionalResult()
         let translations = translationBlocks.map { ExperimentTranslationCollection(translations: $0, defaultLanguageCode: locale) } ?? ExperimentTranslationCollection(translations: [:], defaultLanguageCode: "en")
 
-        //The metadata children tolerate repetition, last occurrence wins (lastResult above) -
-        //unlike every other child of the root element, where a duplicate stays an error
+        //Metadata children tolerate repetition, last occurrence wins (lastResult); elsewhere a duplicate child stays an error
         guard let title = titleHandler.lastResult() ?? translations.selectedTranslation?.titleString else {
             throw ElementHandlerError.missingElement("title")
         }
@@ -206,11 +201,8 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         
         let links = linkHandler.results
 
-        //The label identifies a link, so it must be unique among the root links, and a link in a
-        //translation block that matches no base label is an addition, which needs a URL of its
-        //own. Both are checked for every translation block, not just the applied one, so an
-        //invalid file fails to load regardless of the user's locale
-        //(translation-link-matching in phyphox-docs).
+        //Labels must be unique among root links, and a translated link matching no base label needs its own URL; checked
+        //for every translation block so an invalid file fails regardless of locale (translation-link-matching in phyphox-docs)
         var seenLinkLabels = Set<String>()
         for link in links {
             guard seenLinkLabels.insert(link.label).inserted else {
@@ -319,8 +311,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                         send[item.id] = NetworkSendableData(source: .Buffer(buffer, keep: item.keep), additionalAttributes: item.additionalAttributes)
                     case .meta:
                         let metadata: NetworkSendableData.Source
-                        //Metadata identifiers are matched case-insensitively, like the enumerated
-                        //attribute values (enum-case-insensitive in phyphox-docs)
+                        //Metadata identifiers fold case (enum-case-insensitive in phyphox-docs)
                         switch (item.name.lowercased()) {
                         case "uniqueid": metadata = .Metadata(.uniqueId)
                         case "version": metadata = .Metadata(.version)
@@ -345,8 +336,6 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                             func matchSensor(name: String, sensor: SensorType) throws -> NetworkSendableData.Source? {
                                 if name.lowercased().starts(with: sensor.description.lowercased()) {
                                     let sensorMetadata = String(name.dropFirst(sensor.description.count))
-                                    //The folding attribute decode replaces the former ad-hoc
-                                    //lowercasing of just the first letter
                                     guard let sensorMeta = SensorMetadata(attributeValue: sensorMetadata) else {
                                         throw ElementHandlerError.message("Unknown metadata name \(name)")
                                     }
@@ -768,8 +757,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             let staticBuffer = descriptor.staticBuffer
             let baseContents = descriptor.baseContents
 
-            //The clearGroup name is translatable and, like on Android, resolved at parse time:
-            //buffers are grouped by the translated name, which is also what the user selects.
+            //clearGroup is translatable and resolved at parse time like on Android: buffers group by the translated name
             let clearGroup = descriptor.clearGroup.map { translations.localizeString($0) }
 
             let buffer = try DataBuffer(name: name, size: bufferSize, baseContents: baseContents, static: staticBuffer, clearGroup: clearGroup)

@@ -81,9 +81,7 @@ TRANSLATION = os.path.join(ROOT, "phyphox-translation")
 ANDROID = os.path.join(ROOT, "phyphox-android")
 SHOTS = os.path.join(ROOT, "screenshots", "ios")
 
-# The two form factors Apple's required sizes come down to, in the order they
-# are captured: the iPhone run builds, the iPad run reuses the build. The
-# simulators themselves are created by store_screenshots.py when missing.
+# In capture order: the iPhone run builds, the iPad run reuses the build.
 FORM_FACTORS = ["iphone", "ipad"]
 
 sys.path.insert(0, HERE)
@@ -141,10 +139,7 @@ def preflight(args):
                             "and selected (xcode-select)?")
 
     if not args.no_upload:
-        # fastlane is only used at the end, but a copy too old to know the
-        # screenshot sizes would leave every image out without a word.
-        # appstore_upload.py reads the table out of the installed copy; the
-        # same check, not a second one.
+        # A fastlane too old to know the sizes would leave every image out without a word (appstore_upload.py's check)
         known = au.known_sizes()
         if known is None:
             problems.append("fastlane is not on the PATH, or its screenshot "
@@ -156,8 +151,7 @@ def preflight(args):
                 problems.append("the installed fastlane does not recognise "
                                 + " or ".join(unusable)
                                 + " - brew upgrade fastlane")
-        # And the key, which is the most common way for a run to fall over
-        # and free to find out now
+        # And the key, the most common way for a run to fall over
         if not au.key_from_keychain():
             problems.append(
                 "no App Store Connect API key in the login keychain - "
@@ -166,8 +160,7 @@ def preflight(args):
     if problems:
         raise SystemExit("cannot start:\n  - " + "\n  - ".join(problems))
 
-    # Not a problem, but the one thing the run cannot check for you: the scenes
-    # are composed from the collection in THIS working tree.
+    # Not a problem, but uncheckable: the scenes are composed from the collection in THIS working tree.
     out = subprocess.run(["git", "-C", REPO, "status", "--short"],
                          capture_output=True, text=True).stdout.strip()
     print(f"  phyphox-ios at "
@@ -211,9 +204,7 @@ def capture(args):
         if i == 0:
             cmd += ["--build"]
         else:
-            # The app the first run built, passed explicitly so this run
-            # cannot rebuild - or, worse, quietly photograph an older build
-            # it found lying in the Release output
+            # Passed explicitly so this run cannot rebuild, or quietly photograph an older build in the Release output
             app = store_screenshots.last_built_app()
             if not app:
                 raise SystemExit("the iPhone run left no built app in "
@@ -279,9 +270,7 @@ def main():
                     help="the Android versionCode the release notes are "
                          "filed under, when it is not the one in "
                          "phyphox-android/app/build.gradle")
-    # For exercising the routine without the real neighbours: another
-    # phyphox-android checkout to read and write the release notes in, and
-    # another plate tree
+    # For exercising the routine without the real neighbours: another phyphox-android checkout and plate tree
     ap.add_argument("--android", default=ANDROID, help=argparse.SUPPRESS)
     ap.add_argument("--shots", default=SHOTS, help=argparse.SUPPRESS)
     args = ap.parse_args()
@@ -323,8 +312,7 @@ def main():
         print("  --no-upload: not talking to App Store Connect at all")
     else:
         must(*upload_cmd(args, "--diff"), why="nothing was uploaded")
-        # Informational: before an upload the store is EXPECTED to differ
-        # wherever the plates are new. What matters is that it could be read.
+        # Informational: before an upload the store is EXPECTED to differ wherever the plates are new.
         if run(*upload_cmd(args, "--verify-screenshots")):
             print("  (the store's screenshots differ from the plates here, or "
                   "could not be read -\n   that is what --upload changes; the "

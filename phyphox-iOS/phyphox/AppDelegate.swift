@@ -9,65 +9,16 @@
 import UIKit
 
 
-//Launch-argument seam for unattended automation (the lab driver of the cross-platform test
-//strategy). Launch arguments can only be set through simctl, devicectl or Xcode - never by
-//another app or by a user of an installed build - so these switches ship ungated in release
-//builds:
-//
-//  -phyphoxUrl <url>          opens the URL exactly as if it had been opened from outside the
-//                             app, but without the system's open-in confirmation dialog, which
-//                             cannot be suppressed and would block every scripted
-//                             phyphox://asset= launch. The URL goes through the same handler as
-//                             a real open, so the semantics cannot drift. Android needs no
-//                             counterpart - "adb shell am start" opens URLs without a dialog.
-//  -phyphoxRemote             enables remote access for the launched experiment session, exactly
-//                             as the menu toggle would but without its confirmation dialog.
-//                             Android mirrors this with the shell-only system property
-//                             "debug.phyphox.remote" - one host-controlled switch, two platform
-//                             idioms.
-//  -phyphoxRemotePort <n>     serves remote access on this port instead of the configured one,
-//                             so a host script does not have to discover the port the fallback
-//                             ladder picked.
-//  -phyphoxBleConnect <name>  opens the Bluetooth scan and loads the experiment offered by the
-//                             device advertising under that name, which is what the Bluetooth
-//                             compatibility suite needs: picking a device out of a scan has no
-//                             remote-API equivalent, and the boards it drives sit next to each
-//                             other, so the name decides. It replaces the tapping and nothing
-//                             else - the scan, the name matching, the transfer and the loading
-//                             are the app's own, the experiment is left NOT started, and the
-//                             host takes over through the remote API from there. Android has
-//                             the same seam as an instrumentation argument (bleDevice).
-//  -phyphoxAutoConfirm        confirms the notices an experiment shows when it opens - the
-//                             network privacy warning, the photosensitivity warning - and
-//                             declines the offer to save a downloaded experiment locally. They
-//                             are informational (their only action is OK), but unattended they
-//                             stall the run: the network privacy notice in particular gates the
-//                             connection setup, so the network fixture experiments cannot run
-//                             without this. It skips no user choice and no system permission
-//                             dialog, which the app cannot dismiss anyway.
-//  -phyphoxAssumeSensors      treats every sensor the device could have as present while an
-//                             experiment is loaded, so no entry of the collection is greyed out
-//                             as unavailable. This one is for the store screenshot system, not
-//                             for the lab driver: the simulators it captures on report almost
-//                             every sensor as missing, which would turn the collection
-//                             screenshot into a wall of greyed-out entries. It only affects
-//                             whether an experiment loads - one that is started anyway still
-//                             finds no sensor and records nothing, which is fine for a
-//                             generated copy that carries its data as init values. Sensor types
-//                             iOS supports on no device at all (ambient light, temperature,
-//                             humidity) keep failing, because there the greyed-out entry is the
-//                             truth rather than a simulator artefact. It also suppresses the
-//                             camera loading error, which a simulator raises on every camera
-//                             experiment because AVFoundation offers it no capture device at
-//                             all; the preview simply stays empty. Android mirrors this with
-//                             the shell-only system property "debug.phyphox.assumeSensors".
-//  -phyphoxView <n>           the view (tab) index the experiment opens on, counting from 0 in
-//                             the order the views appear in the file. Absent, not a number or
-//                             out of range means the first view, i.e. the normal behaviour.
-//                             Also for the screenshot system: one scene shows the second view,
-//                             and tapping a tab at coordinates that differ per form factor is
-//                             what made the old screenshot tests unmaintainable. Android:
-//                             "debug.phyphox.view".
+//Launch-argument seam for unattended automation; only settable via simctl/devicectl/Xcode, so ungated in release builds:
+//  -phyphoxUrl <url>          opens the URL like an external open, without the open-in confirmation dialog
+//  -phyphoxRemote             enables remote access for the session like the confirmed menu toggle (Android: debug.phyphox.remote)
+//  -phyphoxRemotePort <n>     serves remote access on this port instead of the configured one
+//  -phyphoxBleConnect <name>  scans for that device and loads the experiment it offers, left NOT started (Android: bleDevice)
+//  -phyphoxAutoConfirm        confirms the informational notices on open (network privacy, photosensitivity), declines the save offer
+//  -phyphoxAssumeSensors      treats every sensor iOS could have as present and suppresses the simulator's camera loading error
+//                             (store screenshot system; Android: debug.phyphox.assumeSensors)
+//  -phyphoxView <n>           the 0-based view (tab) index to open on; absent or out of range means the first
+//                             (Android: debug.phyphox.view)
 //
 //Example:
 //xcrun simctl launch <udid> de.rwth-aachen.physics.phyphox -phyphoxUrl "phyphox://asset=accelerometer.phyphox" -phyphoxRemote
@@ -90,13 +41,10 @@ enum AutomationLaunchOptions {
     ///The Bluetooth device to take an experiment from, for the compatibility suite
     static let bluetoothDeviceName: String? = value(after: "-phyphoxBleConnect")
 
-    ///Whether every sensor the device could have should be treated as available, for the store
-    ///screenshot system
+    ///Whether every sensor the device could have should be treated as available (store screenshot system)
     static let assumeSensors = arguments.contains("-phyphoxAssumeSensors")
 
-    ///The view (tab) index an experiment should open on, or 0 if the argument is absent or does
-    ///not name a positive index. The caller still has to check it against the number of views
-    ///the experiment actually has.
+    ///The view index to open on, or 0 if absent or not a positive index; the caller checks it against the number of views
     static let startView: Int = {
         guard let view = value(after: "-phyphoxView").flatMap({ Int($0) }), view > 0 else { return 0 }
         return view

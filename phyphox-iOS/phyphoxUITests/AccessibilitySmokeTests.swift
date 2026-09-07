@@ -7,12 +7,8 @@
 
 import XCTest
 
-//performAccessibilityAudit() over the main screens (test-matrix row accessibility-smoke).
-//
-//Report-only for now, as the row says: the audit's findings are printed and counted, and the
-//test passes regardless. It escalates to failing once the findings have been triaged - which is
-//what the printed list is for. The range slider was the first finding this work produced, and it
-//is fixed; whatever remains here is the backlog.
+//performAccessibilityAudit() over the main screens (test-matrix row accessibility-smoke). Report-only:
+//findings are printed and counted, the test passes; it escalates to failing once they are triaged.
 final class AccessibilitySmokeTests: XCTestCase {
     private func launch(_ arguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
@@ -94,12 +90,8 @@ final class AccessibilitySmokeTests: XCTestCase {
 
     // phyphox-test: accessibility-smoke
     func testTheAddExperimentMenuIsReachable() throws {
-        //The three ways into a new experiment - a QR code, a Bluetooth device, the simple
-        //creator - live behind the collection's + button. On Android the same menu is drawn but
-        //never made visible in the view-hierarchy sense, so TalkBack cannot reach any of it and
-        //nobody noticed, because no accessibility check ever opened that menu. This one does:
-        //what XCUITest sees IS the accessibility tree VoiceOver reads, so an entry that is
-        //present here with a label, and hittable, is an entry VoiceOver can reach and activate.
+        //The + menu's three entries must be in the accessibility tree (what XCUITest sees is what
+        //VoiceOver reads); Android once drew this menu without ever making it reachable for TalkBack
         let app = launch()
         XCTAssertTrue(app.staticTexts["Raw Sensors"].waitForExistence(timeout: 20))
 
@@ -129,8 +121,7 @@ final class AccessibilitySmokeTests: XCTestCase {
     // phyphox-test: accessibility-smoke
     func testViewElementsScreen() throws {
         guard #available(iOS 17.0, *) else { throw XCTSkip("performAccessibilityAudit needs iOS 17") }
-        //The fixtures put every interactive element on one screen, which is where an audit has
-        //the most to look at - including the range slider whose thumbs are now elements
+        //The fixtures put every interactive element on one screen, including the range slider's thumbs
         guard let fixtures = ViewBehaviorTests.fixturesDirectory else {
             throw XCTSkip("phyphox-docs is not checked out next to this repository")
         }

@@ -106,8 +106,7 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         let type = attributes.optionalString(for: .type) ?? "normal"
         let showValue = try attributes.optionalValue(for: .showValue) ?? true
 
-        //Matched case-insensitively; an unknown type is an error, not a range slider
-        //(enum-case-insensitive and enum-invalid-value in phyphox-docs)
+        //Folds case; an unknown type is an error, not a range slider (enum-case-insensitive/enum-invalid-value in phyphox-docs)
         let sliderType: SliderType
         switch type.lowercased() {
         case "normal": sliderType = SliderType.Normal
@@ -115,10 +114,8 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         default: throw ElementHandlerError.unexpectedAttributeValue("type")
         }
         
-        //The outputs are validated against the slot tables Android uses: a normal slider takes
-        //exactly one output (its value attribute is not consulted), a range slider fills
-        //lowerValue and upperValue, each exactly once, with unnamed outputs taking the next free
-        //one
+        //Validated against Android's slot tables: a normal slider takes exactly one output (value attribute ignored), a range
+        //slider fills lowerValue and upperValue each exactly once, unnamed outputs taking the next free one
         let outputBufferName = (sliderType == .Normal) ? rangeSliderOutputHandler.results.first?.bufferName : nil
 
         var outputBufferNames_: [String] = []

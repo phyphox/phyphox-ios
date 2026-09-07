@@ -32,10 +32,8 @@ private final class StringTranslationElementHandler: ResultElementHandler, Child
     }
 }
 
-/// Element handler for the `link` child elements of a `translation` block. Unlike a link at the
-/// root, the URL may be omitted (inherits from or removes the matched base link) and highlight is
-/// kept optional so that an absent attribute can inherit the base link's state
-/// (translation-link-matching in phyphox-docs).
+/// Handler for link children of a translation block: unlike a root link, the URL may be omitted (inherits from or removes
+/// the matched base link) and highlight is optional to inherit the base state (translation-link-matching in phyphox-docs)
 private final class TranslatedLinkElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [ExperimentTranslatedLink]()
 

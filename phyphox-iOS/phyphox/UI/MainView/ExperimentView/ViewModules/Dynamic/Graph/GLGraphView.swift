@@ -58,9 +58,7 @@ final class GLGraphView: GLKView {
         }
     }
 
-    //If false, a color map shows a homogeneously colored cell around each data point instead of
-    //interpolating the colors between the data points, like on Android - i.e. an image
-    //transferred point by point shows its actual pixels.
+    //false: a color map shows a flat-colored cell around each data point instead of interpolating, like Android
     var interpolateMapColors: Bool = true {
         didSet {
             setNeedsDisplay()
@@ -103,9 +101,7 @@ final class GLGraphView: GLKView {
     var mapTexture: GLuint = 0;
     var colorMap: [UIColor] = [] {
         didSet {
-            //The texture must be created in this view's own context. Without this, it ends up
-            //in the context of whichever GLGraphView was created last (like the z scale of the
-            //same graph), and the map renders black.
+            //Must be created in this view's own context, or it lands in the last-created GLGraphView's and renders black
             EAGLContext.setCurrent(context)
 
             let textureData = UnsafeMutablePointer<GLubyte>.allocate(capacity: colorMap.count*3)
@@ -315,10 +311,8 @@ final class GLGraphView: GLKView {
                     glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), 0)
                 }
             } else if length > 0 && mapWidth > 0 {
-                //Without interpolation, each data point is drawn as a homogeneously colored
-                //cell centered on the data point, reaching halfway to its neighbors. All four
-                //cell vertices carry the point's z value, so the shading across the cell is
-                //flat, like on Android.
+                //Without interpolation each point is a flat-colored cell centered on it, reaching halfway to its
+                //neighbors; all four cell vertices carry the point's z value, like on Android
                 let w = Int(mapWidth)
                 let rows = length / w
                 let cells = rows * w

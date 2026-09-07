@@ -610,8 +610,7 @@ class GraphDataManager {
                 var pauseRanges: [PauseRange] = []
                 var rangeStart: CGFloat? = nil
 
-                //One consistent snapshot: timeMappings is written on other threads, so re-reading it
-                //per iteration could index into a copy that changed length
+                //One consistent snapshot: timeMappings is written on other threads
                 let mappings = timeReference.timeMappings
                 for i in 0..<mappings.count {
                     let t = timeReference.getExperimentTimeReferenceByIndex(i: i) +
@@ -806,8 +805,7 @@ extension ExperimentGraphView: GraphDataManagerDelegate {
         // Update renderer with new data
         graphRenderer.updateData(data)
 
-        //The plot frame is not updated here: if the new grid changes the space needed by the
-        //axis labels, the grid view's layout pass reports it via GraphGridDelegate.updatePlotArea
+        //Plot frame not updated here: a changed axis label space is reported by the grid's layout pass via updatePlotArea
 
         // Update GL graph view
         graphRenderer.plotView.setPoints(

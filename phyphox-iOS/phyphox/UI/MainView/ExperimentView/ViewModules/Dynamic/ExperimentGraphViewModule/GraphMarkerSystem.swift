@@ -21,8 +21,7 @@ class GraphMarkerSystem {
     private var currentBounds: GraphBounds = GraphBounds(min: GraphPoint3D.zero, max: GraphPoint3D.zero)
     var systemTime: Bool = false
 
-    //Persistent annotations for values assigned through the data picker,
-    //drawn as a line across the graph with the output's label.
+    //Persistent annotation for a value written through the data picker: a line across the graph with the output's label
     struct PickAnnotation {
         let vertical: Bool    //vertical line at plot-space x (x-axis pick), horizontal line otherwise
         let plotValue: Double //coordinate in plot space (i.e. log-converted on log axes)
@@ -220,10 +219,7 @@ class GraphMarkerSystem {
         var relativeCoordinates: [(CGFloat, CGFloat)] = []
         var labelText = ""
         
-        let formatter = NumberFormatter()
-        formatter.usesSignificantDigits = true
-        formatter.minimumSignificantDigits = 4
-        formatter.maximumSignificantDigits = 8
+        let formatter = GraphMarkerLabels.makeFormatter()
         
         if markers.count == 1 {
             let marker = markers[0]
@@ -311,8 +307,7 @@ class GraphMarkerSystem {
                 guard relX >= 0.0, relX <= 1.0 else { continue }
                 let x = relX * size.width
                 line.frame = CGRect(x: x - 0.5, y: 0.0, width: 1.0, height: size.height)
-                //Rotate the label to run parallel to the vertical line, placed to its
-                //left at the bottom of the graph
+                //Label rotated parallel to the vertical line, to its left at the bottom of the graph
                 let labelSize = label.frame.size
                 label.transform = CGAffineTransform(rotationAngle: -CGFloat(Double.pi/2.0))
                 label.center = CGPoint(x: Swift.max(x - 3.0 - labelSize.height/2.0, labelSize.height/2.0), y: size.height - 2.0 - labelSize.width/2.0)
@@ -353,7 +348,7 @@ extension GraphMarkerSystem {
     func refreshMarkers(){
 
         let markerData = collectMarkerData()
-        let numberFormatter = createNumberFormatter()
+        let numberFormatter = GraphMarkerLabels.makeFormatter()
 
         switch markerData.count {
         case 1:
@@ -377,7 +372,7 @@ extension GraphMarkerSystem {
         self.markerOverlayView.showMarkers = true
         self.markerOverlayView.markers = markerData.relativeCoordinates
         
-        let labelText = buildSinglePointLabel(
+        let labelText = markerLabels.singlePoint(
             x: markerData.xValues.last ?? markerData.xValues[0] ,
             y: markerData.yValues.last ?? markerData.yValues[0],
             z:markerData.zValues.last ?? markerData.zValues[0],
@@ -391,7 +386,7 @@ extension GraphMarkerSystem {
         markerOverlayView.showMarkers = true
         markerOverlayView.markers = markerData.relativeCoordinates
         
-        let labelText = buildDifferenceLabel(
+        let labelText = markerLabels.difference(
                 x1: markerData.xValues[0], x2: markerData.xValues[1],
                 y1: markerData.yValues[0], y2: markerData.yValues[1],
                 z1: markerData.zValues[0], z2: markerData.zValues[1],
@@ -414,7 +409,7 @@ extension GraphMarkerSystem {
         self.markerOverlayView.showMarkers = false
         self.markerOverlayView.markers = fitMarkerData.relativeCoordinates
         
-        let labelText = buildLinearFitLabel(slope: slope, intercept: intercept, formatter: formatter)
+        let labelText = markerLabels.linearFit(slope: slope, intercept: intercept, formatter: formatter)
         delegate?.markerSystem(self, shouldShowLabel: labelText)
         
         
@@ -523,82 +518,10 @@ extension GraphMarkerSystem {
         
     }
     
-    private func createNumberFormatter() -> NumberFormatter {
-        let formatter = NumberFormatter()
-        formatter.usesSignificantDigits = true
-        formatter.minimumSignificantDigits = 4
-        formatter.maximumSignificantDigits = 8
-        return formatter
-    }
-    
-    private func buildSinglePointLabel(x: GLfloat, y: GLfloat, z: GLfloat, formatter: NumberFormatter) -> String {
-        let hasZData = descriptor.style[0] == .map
-        
-        var labelText = localize("graph_point_label")
-        
-        let convertedX = convertValue(x, isLogarithmic: descriptor.logX)
-        labelText += "\n    " + formatValue(convertedX, formatter: formatter) + formatUnit(descriptor.localizedXUnit)
-        
-        let convertedY = convertValue(y, isLogarithmic: descriptor.logY)
-            labelText += "\n    " + formatValue(convertedY, formatter: formatter) + formatUnit(descriptor.localizedYUnit)
-            
-        if hasZData {
-            let convertedZ = convertValue(z, isLogarithmic: descriptor.logZ)
-            labelText += "\n    " + formatValue(convertedZ, formatter: formatter) + formatUnit(descriptor.localizedZUnit)
-        }
-            
-        return labelText
-        
-    }
-    
-    private func buildDifferenceLabel(x1: GLfloat, x2: GLfloat, y1: GLfloat, y2: GLfloat, z1: GLfloat, z2: GLfloat, formatter: NumberFormatter) -> String {
-        let hasZData = descriptor.style[0] == .map
-        
-        var labelText = localize("graph_difference_label")
-        
-        let convertedX1 = convertValue(x1, isLogarithmic: descriptor.logX)
-        let convertedX2 = convertValue(x2, isLogarithmic: descriptor.logX)
-        let dx = abs(convertedX1 - convertedX2)
-        labelText += "\n    " + formatValue(dx, formatter: formatter) + formatUnit(descriptor.localizedXUnit)
-        
-        let convertedY1 = convertValue(y1, isLogarithmic: descriptor.logY)
-        let convertedY2 = convertValue(y2, isLogarithmic: descriptor.logY)
-        let dy = abs(convertedY1 - convertedY2)
-        labelText += "\n    " + formatValue(dy, formatter: formatter) + formatUnit(descriptor.localizedYUnit)
-        
-        if hasZData {
-            let convertedZ1 = convertValue(z1, isLogarithmic: descriptor.logZ)
-            let convertedZ2 = convertValue(z2, isLogarithmic: descriptor.logZ)
-            let dz = abs(convertedZ1 - convertedZ2)
-            labelText += "\n    " + formatValue(dz, formatter: formatter) + formatUnit(descriptor.localizedZUnit)
-        }
-        
-        labelText += "\n" + localize("graph_slope_label")
-        let slope = (convertedY1 - convertedY2) / (convertedX1 - convertedX2)
-        labelText += "\n    " + formatValue(slope, formatter: formatter) + " " + descriptor.localizedYXUnit
-        
-        return labelText
-    }
-    
-    private func buildLinearFitLabel(slope: GLfloat, intercept: GLfloat, formatter: NumberFormatter) -> String {
-        var labelText = localize("graph_fit_label")
-        labelText += "\na = " + formatValue(slope, formatter: formatter) + " " + descriptor.localizedYXUnit
-        labelText += "\nb = " + formatValue(intercept, formatter: formatter) + formatUnit(descriptor.localizedYUnit)
-        return labelText
-    }
-    
-    private func convertValue(_ value: GLfloat, isLogarithmic: Bool) -> GLfloat {
-        return isLogarithmic ? exp(value) : value
+    private var markerLabels: GraphMarkerLabels {
+        return GraphMarkerLabels(descriptor: descriptor, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, hasZData: descriptor.style[0] == .map)
     }
 
-    private func formatValue(_ value: GLfloat, formatter: NumberFormatter) -> String {
-        return formatter.string(from: value as NSNumber) ?? "N/A"
-    }
-
-    private func formatUnit(_ unit: String) -> String {
-        return unit.isEmpty ? "" : " " + unit
-    }
-    
     private func createLinearFitMarkerData(slope: GLfloat, intercept: GLfloat) -> MarkerData {
         let minPoint = currentBounds.min
         let maxPoint = currentBounds.max
@@ -707,10 +630,7 @@ extension GraphMarkerSystem {
             }
         }
         
-        let formatter = NumberFormatter()
-        formatter.usesSignificantDigits = true
-        formatter.minimumSignificantDigits = 4
-        formatter.maximumSignificantDigits = 8
+        let formatter = GraphMarkerLabels.makeFormatter()
         
         let hasZData = descriptor.style[0] == .map
         

@@ -9,22 +9,12 @@
 import XCTest
 @testable import phyphox
 
-//A callback does not receive the HTTP response: it reads it back through the service's
-//getResults(), from a field every request of that service shares. Android found two responses
-//finishing close together storing A, then B, and both callbacks reading B - one poll parked
-//twice, one lost, seen as a duplicate poll counter in the t1 network fixtures (2026-09-04). The
-//shared URLSession delivers its completion handlers on a serial queue, so that particular
-//interleaving cannot happen here - but the analysis thread's next execute() clears the same
-//field, and it can land between the store and the callback's read: the callback then parks an
-//empty response, and the buffers it feeds are emptied on the next cycle.
-//
-//This pins the order: the first callback is held while the next request is issued, and it must
-//still read its own body. The hold is the window the race needs; the service's lock is what
-//keeps the next request out of it.
+//A callback reads the HTTP response back through getResults(), from a field every request of the
+//service shares, and the analysis thread's next execute() clears it. Pinned: the first callback, held
+//while the next request is issued, still reads its own body - the service's lock keeps the request out.
 final class HttpResultRaceTests: XCTestCase {
 
-    //A loopback stub on a plain socket: URLSession needs nothing more than a status line and a
-    //Content-Length. The body is the request's own v, so a callback can tell whose response it read.
+    //A loopback stub on a plain socket; the body is the request's own v, so a callback can tell whose response it read
     private final class StubServer {
         private var listenFd: Int32 = -1
         let port: UInt16
@@ -116,9 +106,7 @@ final class HttpResultRaceTests: XCTestCase {
         service.execute(send: [:], requestCallbacks: [cb1])
 
         XCTAssertEqual(firstInCallback.wait(timeout: .now() + 10), .success, "first response never arrived")
-        //The first callback is now inside requestFinished. Issue the next request the way the
-        //analysis thread does between cycles, and give it time to reach the point where it
-        //would clear the stored response.
+        //The first callback is inside requestFinished; issue the next request as the analysis thread would
         DispatchQueue.global().async {
             service.connect(address: base + "2")
             service.execute(send: [:], requestCallbacks: [cb2])

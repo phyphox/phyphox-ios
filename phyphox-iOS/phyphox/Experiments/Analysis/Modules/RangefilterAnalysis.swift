@@ -59,8 +59,7 @@ final class RangefilterAnalysis: AutoClearingExperimentAnalysisModule {
                         currentMax = Double.infinity
                         currentMin = -Double.infinity
                     }
-                    //A min/max given before the first in binds to the first group (matching
-                    //Android), so the accumulated bounds are only reset after a flush
+                    //A min/max before the first in binds to the first group (matching Android), so bounds reset only after a flush
                     currentIn = data
                 case .value(value: _, usedAs: _):
                     break
@@ -78,11 +77,8 @@ final class RangefilterAnalysis: AutoClearingExperimentAnalysisModule {
             }))
         #endif
 
-        //Strictly row-wise filtering, matching Android: a row is dropped for ALL outputs when
-        //any input's value falls outside its range, so the outputs always stay aligned. Rows
-        //run to the longest input; exhausted inputs contribute NaN, which never triggers a
-        //filter since no comparison with NaN is true. Non-finite values are compared like any
-        //number, so infinities can be filtered.
+        //Row-wise filtering, matching Android: a row is dropped for ALL outputs when any input is out of range. Rows run
+        //to the longest input; exhausted inputs contribute NaN, which never triggers a filter (no comparison with NaN is true).
         let n = groups.map { $0.1.data.count }.max() ?? 0
 
         var out = [[Double]](repeating: [], count: groups.count)
