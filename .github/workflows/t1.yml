@@ -143,6 +143,7 @@ jobs:
           xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
             -destination "id=${{ steps.prepare.outputs.udid }}" \
             -resultBundlePath "$GITHUB_WORKSPACE/t1-diagnostics/languages-1-2.xcresult" \
+            -only-testing:phyphoxUITests/AAWarmUpTests \
             -only-testing:phyphoxUITests/TranslationsUITests
 
       - name: Remote interface contract test
@@ -218,6 +219,7 @@ jobs:
           xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
             -destination "id=${{ steps.prepare.outputs.udid }}" \
             -resultBundlePath "$GITHUB_WORKSPACE/t1-diagnostics/languages-2-2.xcresult" \
+            -only-testing:phyphoxUITests/AAWarmUpTests \
             -only-testing:phyphoxUITests/TranslationsUITests
 
       - name: Network fixtures
@@ -307,6 +309,7 @@ jobs:
           xcrun simctl terminate "${{ steps.prepare.outputs.udid }}" "$BUNDLE" >/dev/null 2>&1 || true
           xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
             -destination "id=${{ steps.prepare.outputs.udid }}" \
+            -only-testing:phyphoxUITests/AAWarmUpTests \
             -only-testing:phyphoxUITests/SwitchBypassedUITests \
             -only-testing:phyphoxUITests/AccessibilitySmokeTests
 
@@ -368,6 +371,7 @@ jobs:
           xcrun simctl terminate "${{ steps.prepare.outputs.udid }}" "$BUNDLE" >/dev/null 2>&1 || true
           xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
             -destination "id=${{ steps.prepare.outputs.udid }}" \
+            -only-testing:phyphoxUITests/AAWarmUpTests \
             -only-testing:phyphoxUITests/AppChromeTests \
             -only-testing:phyphoxUITests/ViewBehaviorTests
 
@@ -406,6 +410,7 @@ jobs:
           xcrun simctl terminate "${{ steps.prepare.outputs.udid }}" "$BUNDLE" >/dev/null 2>&1 || true
           xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
             -destination "id=${{ steps.prepare.outputs.udid }}" \
+            -only-testing:phyphoxUITests/AAWarmUpTests \
             -only-testing:phyphoxUITests/LifecycleTests \
             -only-testing:phyphoxUITests/SaveToCollectionTests
 
@@ -463,7 +468,7 @@ jobs:
           fi
           xcrun simctl terminate "$IPAD" "$BUNDLE" >/dev/null 2>&1 || true
           xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
-            -destination "id=$IPAD" -only-testing:phyphoxUITests/AppChromeTests
+            -destination "id=$IPAD" -only-testing:phyphoxUITests/AAWarmUpTests -only-testing:phyphoxUITests/AppChromeTests
 
       - name: Diagnostics
         if: failure()

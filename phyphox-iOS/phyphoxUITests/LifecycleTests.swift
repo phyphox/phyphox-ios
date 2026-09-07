@@ -129,6 +129,11 @@ final class LifecycleTests: XCTestCase {
         waitForMeasuring(true, "the first experiment runs")
 
         app.buttons["‹"].tap()
+        //After 10 s of measuring, leaving asks for confirmation - a slow runner can push the run past that
+        let leave = app.alerts["Leave experiment"].buttons["Leave"]
+        if leave.waitForExistence(timeout: 3) {
+            leave.tap()
+        }
         XCTAssertTrue(app.staticTexts["Raw Sensors"].waitForExistence(timeout: 15), "the collection is back")
 
         let second = app.staticTexts["Audio Scope"]
