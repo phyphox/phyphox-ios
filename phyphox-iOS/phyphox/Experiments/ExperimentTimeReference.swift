@@ -9,7 +9,9 @@
 import Foundation
 
 //Maps experiment time to system time across start/pause/stop. Accessed from many threads, so all access goes through a
-//serial queue: public methods lock once and delegate to private unlocked helpers (no deadlock on cross-calls).
+//lock: public methods lock once and delegate to private unlocked helpers (no deadlock on cross-calls). A plain lock rather
+//than a serial dispatch queue: the graph views query this once per data point from their own queues, and on iOS 26.6 the
+//contended dispatch_sync waiter handoff trapped inside libdispatch (the top new crash of 1.2.1).
 final class ExperimentTimeReference: Equatable {
     static func == (lhs: ExperimentTimeReference, rhs: ExperimentTimeReference) -> Bool {
         return lhs.timeMappings == rhs.timeMappings
@@ -29,12 +31,18 @@ final class ExperimentTimeReference: Equatable {
         public var totalGap: Double? = nil
     }
 
-    private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.timereference")
+    private let lock = NSLock()
+    
+    private func locked<T>(_ body: () throws -> T) rethrows -> T {
+        lock.lock()
+        defer { lock.unlock() }
+        return try body()
+    }
     private var _timeMappings: [TimeMapping] = []
 
     //Snapshot copy; bind it once before iterating by index, each access returns a fresh copy
     public var timeMappings: [TimeMapping] {
-        return queue.sync { _timeMappings }
+        return locked { _timeMappings }
     }
 
     init() {
@@ -42,19 +50,19 @@ final class ExperimentTimeReference: Equatable {
     }
 
     public func reset() {
-        queue.sync { _timeMappings = [] }
+        locked { _timeMappings = [] }
     }
 
     //Used when loading a saved state's recorded events
     public func appendMapping(_ mapping: TimeMapping) {
-        queue.sync { _timeMappings.append(mapping) }
+        locked { _timeMappings.append(mapping) }
     }
 
     public func registerEvent(event: TimeMappingEvent) {
         let eventTime = ProcessInfo.processInfo.systemUptime
         let systemTime = Date()
 
-        queue.sync {
+        locked {
             if let last = _timeMappings.last {
                 switch last.event {
                 case .START:
@@ -80,7 +88,7 @@ final class ExperimentTimeReference: Equatable {
     }
 
     public func getExperimentTimeFromEvent(eventTime: TimeInterval) -> Double {
-        return queue.sync { _getExperimentTimeFromEvent(eventTime: eventTime) }
+        return locked { _getExperimentTimeFromEvent(eventTime: eventTime) }
     }
 
     private func _getExperimentTimeFromEvent(eventTime: TimeInterval) -> Double {
@@ -94,7 +102,7 @@ final class ExperimentTimeReference: Equatable {
     }
 
     public func getExperimentTimeFromSystem(systemTime: Date) -> Double {
-        return queue.sync {
+        return locked {
             guard let last = _timeMappings.last else {
                 return 0.0
             }
@@ -107,11 +115,11 @@ final class ExperimentTimeReference: Equatable {
 
     public func getExperimentTime() -> Double {
         let eventTime = ProcessInfo.processInfo.systemUptime
-        return queue.sync { _getExperimentTimeFromEvent(eventTime: eventTime) }
+        return locked { _getExperimentTimeFromEvent(eventTime: eventTime) }
     }
 
     public func getLinearTime() -> Double {
-        return queue.sync {
+        return locked {
             guard let first = _timeMappings.first else {
                 return 0.0
             }
@@ -120,7 +128,7 @@ final class ExperimentTimeReference: Equatable {
     }
 
     public func getReferenceIndexFromExperimentTime(t: Double) -> Int {
-        return queue.sync {
+        return locked {
             var i = 0
             while _timeMappings.count > i+1 && _timeMappings[i+1].experimentTime <= t {
                 i += 1
@@ -130,7 +138,7 @@ final class ExperimentTimeReference: Equatable {
     }
 
     public func getReferenceIndexFromGappedExperimentTime(t: Double) -> Int {
-        return queue.sync {
+        return locked {
             var i = 0
             while _timeMappings.count > i+1 && _timeMappings[i+1].experimentTime + _getTotalGapByIndex(i: i) <= t {
                 i += 1
@@ -140,7 +148,7 @@ final class ExperimentTimeReference: Equatable {
     }
 
     public func getReferenceIndexFromLinearTime(t: Double) -> Int {
-        return queue.sync {
+        return locked {
             var i = 0
             while _timeMappings.count > i+1 && _timeMappings[i+1].systemTime.timeIntervalSinceReferenceDate - _timeMappings[0].systemTime.timeIntervalSinceReferenceDate <= t {
                 i += 1
@@ -150,19 +158,19 @@ final class ExperimentTimeReference: Equatable {
     }
 
     public func getSystemTimeReferenceByIndex(i: Int) -> Date {
-        return queue.sync { _timeMappings.count > i ? _timeMappings[i].systemTime : Date() }
+        return locked { _timeMappings.count > i ? _timeMappings[i].systemTime : Date() }
     }
 
     public func getExperimentTimeReferenceByIndex(i: Int) -> Double {
-        return queue.sync { _timeMappings.count > i ? _timeMappings[i].experimentTime : 0.0 }
+        return locked { _timeMappings.count > i ? _timeMappings[i].experimentTime : 0.0 }
     }
 
     public func getPausedByIndex(i: Int) -> Bool {
-        return queue.sync { _timeMappings.count > i ? _timeMappings[i].event == .PAUSE : true }
+        return locked { _timeMappings.count > i ? _timeMappings[i].event == .PAUSE : true }
     }
 
     public func getTotalGapByIndex(i: Int) -> Double {
-        return queue.sync { _getTotalGapByIndex(i: i) }
+        return locked { _getTotalGapByIndex(i: i) }
     }
 
     private func _getTotalGapByIndex(i: Int) -> Double {
