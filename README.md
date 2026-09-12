@@ -14,7 +14,7 @@ The app and all of its parts are developed by students and researchers who do no
 
 ## Structure
 
-This repository contains the source for the Android version of the app. The whole project is spread across several repositories:
+This repository contains the source for the iOS version of the app. The whole project is spread across several repositories:
 
 * **phyphox-android**
   Android source, includes phyphox-experiments and phyphox-webinterface as subrepositories
@@ -30,6 +30,22 @@ This repository contains the source for the Android version of the app. The whol
   This is the webinterface served by the webserver in the app when the "remote access" feature is activated
 
 The overarching documentation (for example of the phyphox file format or the REST API) can be found in our [Wiki on phyphox.org](https://phyphox.org/wiki).
+
+## Building
+
+You need a Mac with a current Xcode. The experiment definitions and the web interface are git submodules, so clone with them:
+
+```
+git clone --recurse-submodules https://github.com/phyphox/phyphox-ios.git
+```
+
+Open `phyphox-iOS/phyphox.xcodeproj` in Xcode and build the scheme `phyphox` (the only shared scheme; it also runs the unit and UI tests). Third-party libraries are Swift packages declared in the project, so the first build needs network access while Xcode resolves them. Nothing has to be built separately. From the command line:
+
+```
+xcodebuild -project phyphox-iOS/phyphox.xcodeproj -scheme phyphox -destination 'platform=iOS Simulator,name=iPhone 17' build
+```
+
+Pick a simulator that exists on your machine for `name=`. The deployment target is iOS 12; leave it as it is. A build phase increments the build number in `Info.plist` on every build, so that file shows up as modified afterwards. Simply do not commit that change.
 
 ## Branches
 
