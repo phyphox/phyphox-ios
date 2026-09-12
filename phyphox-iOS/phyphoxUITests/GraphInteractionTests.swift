@@ -21,6 +21,11 @@ final class GraphInteractionTests: XCTestCase {
             throw XCTSkip("phyphox-docs is not checked out next to this repository - graph interaction not tested")
         }
         let url = fixtures.appendingPathComponent("graphs-interaction.phyphox")
+        //A checkout without the fixture (a phyphox-docs commit not yet pushed) must not read as an app defect
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            XCTFail("phyphox-docs has no fixtures/views/graphs-interaction.phyphox - is the phyphox-docs commit that added it pushed?")
+            throw XCTSkip("fixture missing")
+        }
 
         let app = XCUIApplication()
         app.launchArguments = ["-phyphoxUrl", url.absoluteString,
