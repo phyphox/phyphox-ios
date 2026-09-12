@@ -147,6 +147,7 @@ class GraphLayoutManager {
         markerLabelFrame?.layer.borderWidth = 1.0
         markerLabelFrame?.layer.borderColor = UIColor(named: "separatorColor")?.cgColor
         markerLabelFrame?.isUserInteractionEnabled = false
+        markerLabelFrame?.accessibilityIdentifier = "graph.readout"
     }
     
     func createMarkerLabel(){
@@ -185,6 +186,8 @@ class GraphLayoutManager {
         }
 
         markerLabel?.text = text
+        //New content after a touch, for assistive technology
+        UIAccessibility.post(notification: .layoutChanged, argument: markerLabel)
 
         let padding = 10.0
         let verticalSpacing = 10.0

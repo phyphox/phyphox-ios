@@ -18,6 +18,7 @@ class GraphToolbar: UIView {
         var selectedItem = false {
             didSet {
                 applyColors()
+                accessibilityTraits = selectedItem ? [.button, .selected] : .button
             }
         }
 
@@ -35,6 +36,9 @@ class GraphToolbar: UIView {
             titleLabel.isUserInteractionEnabled = false
             addSubview(iconView)
             addSubview(titleLabel)
+            isAccessibilityElement = true
+            accessibilityLabel = title
+            accessibilityTraits = .button
             applyColors()
         }
 

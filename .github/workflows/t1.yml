@@ -383,7 +383,8 @@ jobs:
             -destination "id=${{ steps.prepare.outputs.udid }}" \
             -only-testing:phyphoxUITests/AAWarmUpTests \
             -only-testing:phyphoxUITests/AppChromeTests \
-            -only-testing:phyphoxUITests/ViewBehaviorTests 2>&1 \
+            -only-testing:phyphoxUITests/ViewBehaviorTests \
+            -only-testing:phyphoxUITests/GraphInteractionTests 2>&1 \
             | python3 phyphox-ios/.github/scripts/xctest_progress.py "Chrome and view elements" t1-diagnostics/chrome-views.log
 
       - name: Diagnostics
