@@ -127,14 +127,18 @@ final class AudioEngine {
             
             self.recordIn?.sampleRateInfoBuffer?.append(self.recordInput?.outputFormat(forBus: 0).sampleRate ?? avSession.sampleRate)
             
-            self.recordInput!.installTap(onBus: 0, bufferSize: UInt32(avSession.sampleRate/10), format: self.recordInput?.outputFormat(forBus: 0), block: {(buffer, time) in
+            //The block must not touch the input node: it runs after stopEngine has released the engine that owns it (the most frequent crash in the field). The buffer carries the format.
+            self.recordInput!.installTap(onBus: 0, bufferSize: UInt32(avSession.sampleRate/10), format: self.recordInput?.outputFormat(forBus: 0), block: { [weak self] (buffer, time) in
                 audioInputQueue.async {
                     autoreleasepool {
+                        guard let self = self, let recordIn = self.recordIn else {
+                            return
+                        }
                         let channels = UnsafeBufferPointer(start: buffer.floatChannelData, count: Int(buffer.format.channelCount))
                         let data = UnsafeBufferPointer(start: channels[0], count: Int(buffer.frameLength))
                         
-                        self.recordIn?.sampleRateInfoBuffer?.append(self.recordInput?.outputFormat(forBus: 0).sampleRate ?? avSession.sampleRate)
-                        self.recordIn?.backBuffer.appendFromArray(data.map { Double($0) })
+                        recordIn.sampleRateInfoBuffer?.append(buffer.format.sampleRate)
+                        recordIn.backBuffer.appendFromArray(data.map { Double($0) })
                     }
                 }
             })
@@ -428,6 +432,9 @@ final class AudioEngine {
         }
         stop()
         
+        NotificationCenter.default.removeObserver(self)
+        recordInput?.removeTap(onBus: 0)
+        recordInput = nil
         engine?.stop()
         engine = nil
         
