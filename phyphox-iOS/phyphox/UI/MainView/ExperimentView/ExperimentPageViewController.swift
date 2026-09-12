@@ -748,10 +748,21 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    //UIPageViewController throws if a transition starts while another one is still animating (a swipe, or a second tap on the tabs). Taps during a transition are dropped and the tab bar snaps back.
+    private var pageTransitionInProgress = false
+    
     @objc func switchToCollection(_ sender: UISegmentedControl) {
-        let direction = selectedViewCollection < sender.selectedSegmentIndex ? UIPageViewController.NavigationDirection.forward : UIPageViewController.NavigationDirection.reverse
-        pageViewControler.setViewControllers([experimentViewControllers[sender.selectedSegmentIndex]], direction: direction, animated: true, completion: nil)
-        selectedViewCollection = sender.selectedSegmentIndex
+        let target = sender.selectedSegmentIndex
+        if pageTransitionInProgress || target == selectedViewCollection || !experimentViewControllers.indices.contains(target) {
+            sender.selectedSegmentIndex = selectedViewCollection
+            return
+        }
+        let direction = selectedViewCollection < target ? UIPageViewController.NavigationDirection.forward : UIPageViewController.NavigationDirection.reverse
+        pageTransitionInProgress = true
+        pageViewControler.setViewControllers([experimentViewControllers[target]], direction: direction, animated: true, completion: { [weak self] _ in
+            self?.pageTransitionInProgress = false
+        })
+        selectedViewCollection = target
     }
     
     func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {
@@ -771,6 +782,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func pageViewController(_ pageViewController: UIPageViewController, willTransitionTo pendingViewControllers: [UIViewController]) {
+        pageTransitionInProgress = true
         for (index, view) in experimentViewControllers.enumerated() {
             if view == pendingViewControllers[0] as! ExperimentViewController {
                 updateTabScrollPosition(index)
@@ -779,6 +791,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
+        pageTransitionInProgress = false
         if !completed {
             return
         }
