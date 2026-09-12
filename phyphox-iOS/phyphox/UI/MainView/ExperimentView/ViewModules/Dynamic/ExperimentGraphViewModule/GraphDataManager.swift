@@ -12,6 +12,8 @@ class GraphDataManager {
     
     private let descriptor: GraphViewDescriptor
     private let timeReference: ExperimentTimeReference
+    //One lock per update instead of one per data point; only touched on the graph queue, by runUpdate and its helpers
+    private var timeMappingsSnapshot: [ExperimentTimeReference.TimeMapping] = []
     private let queue = DispatchQueue(label: "de.rwth-aachen.phyphox.graphview", qos: .userInitiated, attributes: [], autoreleaseFrequency: .inherit, target: nil)
     
     private var dataSets: [(bounds: (min: GraphPoint3D<Double>, max: GraphPoint3D<Double>), data2D: [GraphPoint2D<GLfloat>], data3D: [GraphPoint3D<GLfloat>], timeReferenceSets: [TimeReferenceSet])] = []
@@ -79,6 +81,7 @@ class GraphDataManager {
     }
     
     private func runUpdate() {
+            timeMappingsSnapshot = timeReference.timeMappings
             var xValues: [[Double]] = []
             var yValues: [[Double]] = []
             var zValues: [[Double]] = []
@@ -236,8 +239,8 @@ class GraphDataManager {
                     if descriptor.timeOnX || descriptor.timeOnY {
                         let t = descriptor.timeOnX ? rawX : rawY
                         let referenceIndex = descriptor.linearTime ?
-                            timeReference.getReferenceIndexFromLinearTime(t: t) :
-                            timeReference.getReferenceIndexFromExperimentTime(t: t)
+                            timeMappingsSnapshot.referenceIndex(fromLinearTime: t) :
+                            timeMappingsSnapshot.referenceIndex(fromExperimentTime: t)
                         
                         if lastReferenceIndex < 0 {
                             lastReferenceIndex = referenceIndex
@@ -246,10 +249,10 @@ class GraphDataManager {
                                 index: lastChange,
                                 count: j - lastChange,
                                 referenceIndex: lastReferenceIndex,
-                                experimentTime: timeReference.getExperimentTimeReferenceByIndex(i: lastReferenceIndex),
-                                systemTime: timeReference.getSystemTimeReferenceByIndex(i: lastReferenceIndex),
-                                totalPauseGap: timeReference.getTotalGapByIndex(i: lastReferenceIndex),
-                                isPaused: timeReference.getPausedByIndex(i: lastReferenceIndex)
+                                experimentTime: timeMappingsSnapshot.experimentTimeReference(byIndex: lastReferenceIndex),
+                                systemTime: timeMappingsSnapshot.systemTimeReference(byIndex: lastReferenceIndex),
+                                totalPauseGap: timeMappingsSnapshot.totalGap(byIndex: lastReferenceIndex),
+                                isPaused: timeMappingsSnapshot.paused(byIndex: lastReferenceIndex)
                             ))
                             lastChange = j
                             lastReferenceIndex = referenceIndex
@@ -299,10 +302,10 @@ class GraphDataManager {
                         index: lastChange,
                         count: count[i] - lastChange,
                         referenceIndex: lastReferenceIndex,
-                        experimentTime: timeReference.getExperimentTimeReferenceByIndex(i: lastReferenceIndex),
-                        systemTime: timeReference.getSystemTimeReferenceByIndex(i: lastReferenceIndex),
-                        totalPauseGap: timeReference.getTotalGapByIndex(i: lastReferenceIndex),
-                        isPaused: timeReference.getPausedByIndex(i: lastReferenceIndex)
+                        experimentTime: timeMappingsSnapshot.experimentTimeReference(byIndex: lastReferenceIndex),
+                        systemTime: timeMappingsSnapshot.systemTimeReference(byIndex: lastReferenceIndex),
+                        totalPauseGap: timeMappingsSnapshot.totalGap(byIndex: lastReferenceIndex),
+                        isPaused: timeMappingsSnapshot.paused(byIndex: lastReferenceIndex)
                     ))
                 }
 
@@ -485,11 +488,11 @@ class GraphDataManager {
             yMinStrict: Bool, yMaxStrict: Bool
         ) {
             if systemTime && !descriptor.linearTime && descriptor.timeOnX && !xMinStrict && !xMaxStrict && !hasZData {
-                minX += timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: minX))
-                maxX += timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: maxX))
+                minX += timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromExperimentTime: minX))
+                maxX += timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromExperimentTime: maxX))
             } else if !systemTime && descriptor.linearTime && descriptor.timeOnX && !xMinStrict && !xMaxStrict && !hasZData {
-                minX -= timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromLinearTime(t: minX))
-                maxX -= timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromLinearTime(t: maxX))
+                minX -= timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromLinearTime: minX))
+                maxX -= timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromLinearTime: maxX))
             } else if !logX && !xMinStrict && !xMaxStrict && !hasZData && !descriptor.timeOnX {
                 let extraX = (maxX - minX) * 0.05
                 maxX += extraX
@@ -497,11 +500,11 @@ class GraphDataManager {
             }
             
             if systemTime && !descriptor.linearTime && descriptor.timeOnY && !yMinStrict && !yMaxStrict && !hasZData {
-                minY += timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: minY))
-                maxY += timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: maxY))
+                minY += timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromExperimentTime: minY))
+                maxY += timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromExperimentTime: maxY))
             } else if !systemTime && descriptor.linearTime && descriptor.timeOnY && !yMinStrict && !yMaxStrict && !hasZData {
-                minY -= timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: minY))
-                maxY -= timeReference.getTotalGapByIndex(i: timeReference.getReferenceIndexFromExperimentTime(t: maxY))
+                minY -= timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromExperimentTime: minY))
+                maxY -= timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromExperimentTime: maxY))
             } else if !logY && !yMinStrict && !yMaxStrict && !hasZData && !descriptor.timeOnY {
                 let extraY = (maxY - minY) * 0.05
                 maxY += extraY
@@ -509,7 +512,7 @@ class GraphDataManager {
             }
             
             if descriptor.timeOnX && !descriptor.linearTime && !xMinStrict && !xMaxStrict && !hasZData {
-                minX = Swift.min(minX, timeReference.getExperimentTimeReferenceByIndex(i: 0))
+                minX = Swift.min(minX, timeMappingsSnapshot.experimentTimeReference(byIndex: 0))
             }
         }
         
@@ -610,11 +613,10 @@ class GraphDataManager {
                 var pauseRanges: [PauseRange] = []
                 var rangeStart: CGFloat? = nil
 
-                //One consistent snapshot: timeMappings is written on other threads
-                let mappings = timeReference.timeMappings
+                let mappings = timeMappingsSnapshot
                 for i in 0..<mappings.count {
-                    let t = timeReference.getExperimentTimeReferenceByIndex(i: i) +
-                           (systemTime ? timeReference.getTotalGapByIndex(i: i) : 0.0)
+                    let t = timeMappingsSnapshot.experimentTimeReference(byIndex: i) +
+                           (systemTime ? timeMappingsSnapshot.totalGap(byIndex: i) : 0.0)
                     let relativeT = CGFloat((t - minX) / xRange)
 
                     if t < minX || t > maxX {
@@ -642,11 +644,10 @@ class GraphDataManager {
                 var pauseRanges: [PauseRange] = []
                 var rangeStart: CGFloat? = nil
 
-                //One consistent snapshot, see above
-                let mappings = timeReference.timeMappings
+                let mappings = timeMappingsSnapshot
                 for i in 0..<mappings.count {
-                    let t = timeReference.getExperimentTimeReferenceByIndex(i: i) +
-                           (systemTime ? timeReference.getTotalGapByIndex(i: i) : 0.0)
+                    let t = timeMappingsSnapshot.experimentTimeReference(byIndex: i) +
+                           (systemTime ? timeMappingsSnapshot.totalGap(byIndex: i) : 0.0)
                     let relativeT = CGFloat((t - minY) / yRange)
 
                     if t < minY || t > maxY {
@@ -672,7 +673,7 @@ class GraphDataManager {
         }
         
         private func systemTimeOffset(timeOnAxis: Bool) -> Double {
-            if let first = timeReference.timeMappings.first, systemTime && timeOnAxis {
+            if let first = timeMappingsSnapshot.first, systemTime && timeOnAxis {
                 return first.systemTime.timeIntervalSince1970 - first.experimentTime
             }
             return 0.0

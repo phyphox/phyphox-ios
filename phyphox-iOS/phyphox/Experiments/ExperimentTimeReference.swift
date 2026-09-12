@@ -127,70 +127,105 @@ final class ExperimentTimeReference: Equatable {
         }
     }
 
+    //The per-index queries take the lock once each. Hot loops (the graph views ask per data point) should take one
+    //snapshot via timeMappings and use the same queries on the array instead.
     public func getReferenceIndexFromExperimentTime(t: Double) -> Int {
-        return locked {
-            var i = 0
-            while _timeMappings.count > i+1 && _timeMappings[i+1].experimentTime <= t {
-                i += 1
-            }
-            return i
-        }
+        return locked { _timeMappings.referenceIndex(fromExperimentTime: t) }
     }
 
     public func getReferenceIndexFromGappedExperimentTime(t: Double) -> Int {
-        return locked {
-            var i = 0
-            while _timeMappings.count > i+1 && _timeMappings[i+1].experimentTime + _getTotalGapByIndex(i: i) <= t {
-                i += 1
-            }
-            return i
-        }
+        return locked { _timeMappings.referenceIndex(fromGappedExperimentTime: t) }
     }
 
     public func getReferenceIndexFromLinearTime(t: Double) -> Int {
-        return locked {
-            var i = 0
-            while _timeMappings.count > i+1 && _timeMappings[i+1].systemTime.timeIntervalSinceReferenceDate - _timeMappings[0].systemTime.timeIntervalSinceReferenceDate <= t {
-                i += 1
-            }
-            return i
-        }
+        return locked { _timeMappings.referenceIndex(fromLinearTime: t) }
     }
 
     public func getSystemTimeReferenceByIndex(i: Int) -> Date {
-        return locked { _timeMappings.count > i ? _timeMappings[i].systemTime : Date() }
+        return locked { _timeMappings.systemTimeReference(byIndex: i) }
     }
 
     public func getExperimentTimeReferenceByIndex(i: Int) -> Double {
-        return locked { _timeMappings.count > i ? _timeMappings[i].experimentTime : 0.0 }
+        return locked { _timeMappings.experimentTimeReference(byIndex: i) }
     }
 
     public func getPausedByIndex(i: Int) -> Bool {
-        return locked { _timeMappings.count > i ? _timeMappings[i].event == .PAUSE : true }
+        return locked { _timeMappings.paused(byIndex: i) }
     }
 
     public func getTotalGapByIndex(i: Int) -> Double {
         return locked { _getTotalGapByIndex(i: i) }
     }
 
+    //Caches the gap in the mapping, so later snapshots carry it
     private func _getTotalGapByIndex(i: Int) -> Double {
-        guard let first = _timeMappings.first, _timeMappings.count > i else {
+        guard _timeMappings.count > i else {
             return 0.0
         }
         if let gap = _timeMappings[i].totalGap {
             return gap
         }
-        var gap = 0.0
-        var lastPause = first.systemTime
-        for j in 0...i {
-            if _timeMappings[j].event == .PAUSE {
-                lastPause = _timeMappings[j].systemTime
-            } else {
-                gap += _timeMappings[j].systemTime.timeIntervalSinceReferenceDate - lastPause.timeIntervalSinceReferenceDate
-            }
-        }
+        let gap = _timeMappings.totalGap(byIndex: i)
         _timeMappings[i].totalGap = gap
         return gap
     }
 
+}
+
+//The queries on a snapshot of the mappings, lock-free. The instance methods above are the same computations under the lock.
+extension Array where Element == ExperimentTimeReference.TimeMapping {
+    func referenceIndex(fromExperimentTime t: Double) -> Int {
+        var i = 0
+        while count > i+1 && self[i+1].experimentTime <= t {
+            i += 1
+        }
+        return i
+    }
+
+    func referenceIndex(fromGappedExperimentTime t: Double) -> Int {
+        var i = 0
+        while count > i+1 && self[i+1].experimentTime + totalGap(byIndex: i) <= t {
+            i += 1
+        }
+        return i
+    }
+
+    func referenceIndex(fromLinearTime t: Double) -> Int {
+        var i = 0
+        while count > i+1 && self[i+1].systemTime.timeIntervalSinceReferenceDate - self[0].systemTime.timeIntervalSinceReferenceDate <= t {
+            i += 1
+        }
+        return i
+    }
+
+    func systemTimeReference(byIndex i: Int) -> Date {
+        return count > i ? self[i].systemTime : Date()
+    }
+
+    func experimentTimeReference(byIndex i: Int) -> Double {
+        return count > i ? self[i].experimentTime : 0.0
+    }
+
+    func paused(byIndex i: Int) -> Bool {
+        return count > i ? self[i].event == .PAUSE : true
+    }
+
+    func totalGap(byIndex i: Int) -> Double {
+        guard let first = first, count > i else {
+            return 0.0
+        }
+        if let gap = self[i].totalGap {
+            return gap
+        }
+        var gap = 0.0
+        var lastPause = first.systemTime
+        for j in 0...i {
+            if self[j].event == .PAUSE {
+                lastPause = self[j].systemTime
+            } else {
+                gap += self[j].systemTime.timeIntervalSinceReferenceDate - lastPause.timeIntervalSinceReferenceDate
+            }
+        }
+        return gap
+    }
 }
