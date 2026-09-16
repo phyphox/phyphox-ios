@@ -4644,14 +4644,17 @@ final class FileVersionValidationTests: XCTestCase {
         return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: InputStream(data: xml.data(using: .utf8)!))
     }
 
+    private var supported: String { "\(latestSupportedFileVersion.major).\(latestSupportedFileVersion.minor)" }
+    private var newer: String { "\(latestSupportedFileVersion.major).\(latestSupportedFileVersion.minor + 1)" }
+
     func testSupportedVersionsLoad() throws {
-        _ = try parse(version: "1.20")     //the latest supported version
+        _ = try parse(version: supported)  //the latest supported version
         _ = try parse(version: "1.7")      //an older version
         _ = try parse(version: "1.0")
     }
 
     func testNewerVersionIsRejected() {
-        XCTAssertThrowsError(try parse(version: "1.21"))
+        XCTAssertThrowsError(try parse(version: newer))
         XCTAssertThrowsError(try parse(version: "2.0"))
         XCTAssertThrowsError(try parse(version: "1.100"), "the minor version must compare numerically, not lexically")
     }
