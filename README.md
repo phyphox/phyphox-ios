@@ -45,7 +45,7 @@ Open `phyphox-iOS/phyphox.xcodeproj` in Xcode and build the scheme `phyphox` (th
 xcodebuild -project phyphox-iOS/phyphox.xcodeproj -scheme phyphox -destination 'platform=iOS Simulator,name=iPhone 17' build
 ```
 
-Pick a simulator that exists on your machine for `name=`. The deployment target is iOS 12; leave it as it is. A build phase increments the build number in `Info.plist` on every build, so that file shows up as modified afterwards. Simply do not commit that change.
+Pick a simulator that exists on your machine for `name=`. The deployment target is iOS 15, the lowest Xcode 27 accepts; leave it as it is. A build phase increments the build number in `Info.plist` on every build, so that file shows up as modified afterwards. Simply do not commit that change.
 
 ## Branches
 
