@@ -394,8 +394,10 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                     
                     let t = gyroData.timestamp
                     
+                    //0 = uncalibrated raw data, as expected (like the raw magnetometer). CoreMotion reports no calibration
+                    //status for the gyroscope, so the calibrated path writes no accuracy at all
                     self.ready = true
-                    self.dataIn(x, y: y, z: z, abs: nil, accuracy: nil, t: t, error: error)
+                    self.dataIn(x, y: y, z: z, abs: nil, accuracy: 0.0, t: t, error: error)
                     })
             }
             
