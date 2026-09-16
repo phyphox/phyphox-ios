@@ -247,6 +247,7 @@ struct SensorInputDescriptor: SensorDescriptor {
     let average: Bool
     let stride: Int
     let ignoreUnavailable: Bool
+    let preferUncalibrated: Bool
 
     let outputs: [SensorOutputDescriptor]
     
@@ -261,7 +262,7 @@ struct SensorInputDescriptor: SensorDescriptor {
                 strategy = .limit
             }
         }
-        return SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: strategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, outputs: outputs)
+        return SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: strategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, preferUncalibrated: preferUncalibrated, outputs: outputs)
     }
 }
 
@@ -285,6 +286,7 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         case average
         case stride
         case ignoreUnavailable
+        case preferUncalibrated
         case nameFilter // ignored, only part of the file format for Android sensors
         case typeFilter // ignored, only part of the file format for Android sensors
     }
@@ -300,13 +302,14 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         let average = try attributes.optionalValue(for: .average) ?? false
         let stride = try attributes.optionalValue(for: .stride) ?? 1
         let ignoreUnavailable = try attributes.optionalValue(for: .ignoreUnavailable) ?? false
+        let preferUncalibrated = try attributes.optionalValue(for: .preferUncalibrated) ?? false
 
         let rate = frequency.isNormal ? 1.0/frequency : 0.0
 
         //Each output's component must be in the element's component list, once at most (matching Android)
         let outputs = try IOMappingValidation.validateComponents(element: "sensor", slots: sensorComponents, outputs: outputHandler.results)
 
-        results.append(SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: rateStrategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, outputs: outputs))
+        results.append(SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: rateStrategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, preferUncalibrated: preferUncalibrated, outputs: outputs))
     }
 }
 

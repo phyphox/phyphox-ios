@@ -5178,6 +5178,56 @@ final class CorpusConformanceTests: XCTestCase {
     }
 }
 
+//preferUncalibrated (format 1.21) reaches the sensor input as its starting version: absent or false starts calibrated,
+//true starts uncalibrated. The corpus fixture sets it on a magnetometer and a gyroscope; the default is checked inline
+final class SensorPreferUncalibratedTests: XCTestCase {
+    private func inputs(of experiment: Experiment) -> [SensorType: Bool] {
+        var calibrated = [SensorType: Bool]()
+        for sensor in experiment.sensorInputs {
+            calibrated[sensor.sensorType] = sensor.calibrated
+        }
+        return calibrated
+    }
+
+    // phyphox-test: sensor-prefer-uncalibrated
+    func testAttributeSelectsStartingVersion() throws {
+        guard let corpus = DocsCorpus.url else {
+            throw XCTSkip("phyphox-docs is not checked out next to this repository - preferUncalibrated fixture not tested")
+        }
+        let url = corpus.appendingPathComponent("generated/sensor-prefer-uncalibrated.phyphox")
+        let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+        XCTAssertEqual(inputs(of: experiment), [.magneticField: false, .gyroscope: true])
+    }
+
+    func testAbsentAttributeStartsCalibrated() throws {
+        let document = """
+        <phyphox version="1.21">
+            <title>default</title>
+            <category>test</category>
+            <description>d</description>
+            <data-containers>
+                <container>magX</container>
+                <container>gyrX</container>
+            </data-containers>
+            <input>
+                <sensor type="magnetic_field"><output component="x">magX</output></sensor>
+                <sensor type="gyroscope"><output component="x">gyrX</output></sensor>
+            </input>
+            <views>
+                <view label="v">
+                    <value label="l"><input>magX</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("prefer-uncalibrated-\(UUID().uuidString).phyphox")
+        try document.write(to: url, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+        XCTAssertEqual(inputs(of: experiment), [.magneticField: true, .gyroscope: true])
+    }
+}
+
 //The analysis golden-vector runner (phyphox-docs corpus/analysis/README.md "The runner contract"): the kernel is driven
 //cycle by cycle and the experiment NEVER started; a mismatch is a finding for the docs session, never coded around
 final class AnalysisGoldenVectorTests: XCTestCase {

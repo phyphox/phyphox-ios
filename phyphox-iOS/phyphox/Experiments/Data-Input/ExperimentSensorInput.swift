@@ -99,7 +99,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         }
     }
     
-    var calibrated = true //Use calibrated version? Can be switched while update is stopped. Currently only used for magnetometer
+    var calibrated = true //Use calibrated version? Can be switched while update is stopped. Only matters for the types in hasCalibratedAndUncalibratedVersion
     var ready = false //Used by some sensors to figure out if there is valid data arriving. Most of them just set this to true when the first reading arrives.
     
     private(set) weak var xBuffer: DataBuffer?
@@ -296,6 +296,22 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         return try ExperimentSensorInput.verifySensorAvailibility(sensorType: self.sensorType, motionSession: motionSession)
     }
     
+    //The types that come in a calibrated (CMDeviceMotion, bias-corrected) and an uncalibrated (raw CoreMotion data)
+    //version on this device. The accelerometer only exists raw on iOS: the fused userAcceleration + gravity is not a
+    //calibration. linear_acceleration, gravity and attitude are fusion outputs with no raw counterpart.
+    static func hasCalibratedAndUncalibratedVersion(sensorType: SensorType, motionSession: MotionSession) -> Bool {
+        guard motionSession.deviceMotionAvailable else { return false }
+        switch sensorType {
+        case .magneticField: return motionSession.magnetometerAvailable
+        case .gyroscope: return motionSession.gyroAvailable
+        default: return false
+        }
+    }
+    
+    func hasCalibratedAndUncalibratedVersion() -> Bool {
+        return ExperimentSensorInput.hasCalibratedAndUncalibratedVersion(sensorType: sensorType, motionSession: motionSession)
+    }
+    
     func configureMotionSession() {
         if (sensorType == .magneticField) {
             self.motionSession.calibratedMagnetometer = calibrated
@@ -345,23 +361,43 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 })
             
         case .gyroscope:
-            _ = motionSession.getDeviceMotion(self, interval: hardwareRate, handler: { [unowned self] (deviceMotion, error) in
-                guard let motion = deviceMotion else {
-                    return
-                }
-                
-                let rotation = motion.rotationRate
-                
-                // rad/s
-                let x = rotation.x
-                let y = rotation.y
-                let z = rotation.z
-                
-                let t = motion.timestamp
-                
-                self.ready = true
-                self.dataIn(x, y: y, z: z, abs: nil, accuracy: nil, t: t, error: error)
-                })
+            if calibrated {
+                _ = motionSession.getDeviceMotion(self, interval: hardwareRate, handler: { [unowned self] (deviceMotion, error) in
+                    guard let motion = deviceMotion else {
+                        return
+                    }
+                    
+                    let rotation = motion.rotationRate
+                    
+                    // rad/s
+                    let x = rotation.x
+                    let y = rotation.y
+                    let z = rotation.z
+                    
+                    let t = motion.timestamp
+                    
+                    self.ready = true
+                    self.dataIn(x, y: y, z: z, abs: nil, accuracy: nil, t: t, error: error)
+                    })
+            } else {
+                _ = motionSession.getGyroData(self, interval: hardwareRate, handler: { [unowned self] (data, error) in
+                    guard let gyroData = data else {
+                        return
+                    }
+                    
+                    let rotation = gyroData.rotationRate
+                    
+                    // rad/s
+                    let x = rotation.x
+                    let y = rotation.y
+                    let z = rotation.z
+                    
+                    let t = gyroData.timestamp
+                    
+                    self.ready = true
+                    self.dataIn(x, y: y, z: z, abs: nil, accuracy: nil, t: t, error: error)
+                    })
+            }
             
         case .magneticField:
             if calibrated {
@@ -513,7 +549,11 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         case .linearAcceleration:
             motionSession.stopDeviceMotionUpdates(self)
         case .gyroscope:
-            motionSession.stopDeviceMotionUpdates(self)
+            if calibrated {
+                motionSession.stopDeviceMotionUpdates(self)
+            } else {
+                motionSession.stopGyroUpdates(self)
+            }
         case .magneticField:
             if calibrated {
                 motionSession.stopDeviceMotionUpdates(self)

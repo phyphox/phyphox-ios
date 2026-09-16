@@ -26,7 +26,7 @@ private extension ExperimentSensorInput {
         let absBuffer = descriptor.buffer(for: "abs", from: buffers)
         let accuracyBuffer = descriptor.buffer(for: "accuracy", from: buffers)
 
-        self.init(sensorType: descriptor.sensor, timeReference: timeReference, calibrated: true, motionSession: MotionSession.sharedSession(), rate: descriptor.rate, rateStrategy: descriptor.rateStrategy!, average: descriptor.average, stride: descriptor.stride, ignoreUnavailable: descriptor.ignoreUnavailable, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer, accuracyBuffer: accuracyBuffer)
+        self.init(sensorType: descriptor.sensor, timeReference: timeReference, calibrated: !descriptor.preferUncalibrated, motionSession: MotionSession.sharedSession(), rate: descriptor.rate, rateStrategy: descriptor.rateStrategy!, average: descriptor.average, stride: descriptor.stride, ignoreUnavailable: descriptor.ignoreUnavailable, xBuffer: xBuffer, yBuffer: yBuffer, zBuffer: zBuffer, tBuffer: tBuffer, absBuffer: absBuffer, accuracyBuffer: accuracyBuffer)
     }
 }
 
@@ -117,7 +117,7 @@ private extension ExperimentBluetoothOutput {
 }
 
 // Mark: - Constants
-public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 20, patch: 0)
+public let latestSupportedFileVersion = SemanticVersion(major: 1, minor: 21, patch: 0)
 
 // Mark: - Phyphox Element Handler
 

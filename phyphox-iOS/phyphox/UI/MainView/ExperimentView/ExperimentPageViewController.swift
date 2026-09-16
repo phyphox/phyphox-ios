@@ -1316,22 +1316,26 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
         
         
-        for sensor in experiment.sensorInputs {
-            if sensor.sensorType == SensorType.magneticField {
-                if sensor.calibrated {
-                    alert.addAction(UIAlertAction(title: localize("switch_to_raw_magnetometer"), style: .default, handler: { [unowned self] action in
-                        self.stopExperiment()
-                        sensor.calibrated = false
-                    }))
-                } else {
-                    alert.addAction(UIAlertAction(title: localize("switch_to_calibrated_magnetometer"), style: .default, handler: { [unowned self] action in
-                        self.stopExperiment()
-                        sensor.calibrated = true
-                    }))
-                }
-                
-                break
+        //One switch per sensor type that exists calibrated and uncalibrated on this device, flipping every input of that type
+        var switchableTypes: [SensorType] = []
+        for sensor in experiment.sensorInputs where sensor.hasCalibratedAndUncalibratedVersion() && !switchableTypes.contains(sensor.sensorType) {
+            switchableTypes.append(sensor.sensorType)
+        }
+        for sensorType in switchableTypes {
+            let sensors = experiment.sensorInputs.filter { $0.sensorType == sensorType }
+            let calibrated = sensors[0].calibrated
+            let stringSuffix: String
+            switch sensorType {
+            case .magneticField: stringSuffix = "magnetometer"
+            case .gyroscope: stringSuffix = "gyroscope"
+            default: continue
             }
+            alert.addAction(UIAlertAction(title: localize((calibrated ? "switch_to_raw_" : "switch_to_calibrated_") + stringSuffix), style: .default, handler: { [unowned self] action in
+                self.stopExperiment()
+                for sensor in sensors {
+                    sensor.calibrated = !calibrated
+                }
+            }))
         }
         
         if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32) {
