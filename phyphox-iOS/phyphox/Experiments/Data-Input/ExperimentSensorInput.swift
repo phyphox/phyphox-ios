@@ -312,6 +312,17 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         return ExperimentSensorInput.hasCalibratedAndUncalibratedVersion(sensorType: sensorType, motionSession: motionSession)
     }
     
+    //The format's accuracy encoding (-1 uncalibrated, 1 low, 2 medium, 3 high), the same states Android reports
+    private static func accuracyValue(_ accuracy: CMMagneticFieldCalibrationAccuracy) -> Double {
+        switch accuracy {
+        case .uncalibrated: return -1.0
+        case .low: return 1.0
+        case .medium: return 2.0
+        case .high: return 3.0
+        @unknown default: return -2.0
+        }
+    }
+    
     func configureMotionSession() {
         if (sensorType == .magneticField) {
             self.motionSession.calibratedMagnetometer = calibrated
@@ -409,16 +420,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                     }
                     
                     let field = motion.magneticField.field
-                    
-                    let accuracy: Double
-                    switch motion.magneticField.accuracy {
-                    case .uncalibrated: accuracy = -1.0
-                    case .low: accuracy = 1.0
-                    case .medium: accuracy = 2.0
-                    case .high: accuracy = 3.0
-                    @unknown default:
-                        accuracy = -2.0
-                    }
+                    let accuracy = ExperimentSensorInput.accuracyValue(motion.magneticField.accuracy)
                     
                     let x = field.x
                     let y = field.y
@@ -506,10 +508,14 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 let y = self.sqrt12*(attitude.quaternion.y + attitude.quaternion.x)
                 let z = self.sqrt12*(attitude.quaternion.z + attitude.quaternion.w)
                 
+                //The attitude runs in the magnetic-north frame, so its yaw is only as good as the magnetic calibration; the
+                //same status Android reports for its rotation vector
+                let accuracy = ExperimentSensorInput.accuracyValue(motion.magneticField.accuracy)
+                
                 let t = motion.timestamp
                 
                 self.ready = true
-                self.dataIn(x, y: y, z: z, abs: w, accuracy: nil, t: t, error: error)
+                self.dataIn(x, y: y, z: z, abs: w, accuracy: accuracy, t: t, error: error)
                 })
             
         case .gravity:
