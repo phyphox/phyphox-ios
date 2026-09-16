@@ -227,22 +227,16 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         guard let navBar = self.navigationController?.navigationBar else {
             return
         }
-        if #available(iOS 13, *) {
-            //Per-item appearance: mutating the shared bar's appearance paints the orange onto the still-tall large-title bar on push
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithOpaqueBackground()
-            appearance.backgroundColor = kHighlightColor
-            appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
-            navigationItem.standardAppearance = appearance
-            navigationItem.scrollEdgeAppearance = appearance
-            navigationItem.compactAppearance = appearance
-            navBar.tintColor = kTextColor
-            navigationItem.largeTitleDisplayMode = .never
-        } else {
-            navBar.barTintColor = kHighlightColor
-            navBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
-            navBar.isTranslucent = false
-        }
+        //Per-item appearance: mutating the shared bar's appearance paints the orange onto the still-tall large-title bar on push
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = kHighlightColor
+        appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
+        navigationItem.standardAppearance = appearance
+        navigationItem.scrollEdgeAppearance = appearance
+        navigationItem.compactAppearance = appearance
+        navBar.tintColor = kTextColor
+        navigationItem.largeTitleDisplayMode = .never
     }
     
     func updateSegControlDesign() {
@@ -251,9 +245,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         let selectedFont: [NSAttributedString.Key : Any] = [NSAttributedString.Key.foregroundColor : kTextColor, NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .subheadline)]
         segControl!.setTitleTextAttributes(font, for: .normal)
         segControl!.setTitleTextAttributes(selectedFont, for: .selected)
-        if #available(iOS 13.0, *) {
-            segControl!.selectedSegmentTintColor = UIColor(named: "highlightColor") ?? kHighlightColor
-        }
+        segControl!.selectedSegmentTintColor = UIColor(named: "highlightColor") ?? kHighlightColor
     }
     
     func updateLayout() {
@@ -277,12 +269,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }
         }
         var offsetBottom: CGFloat = self.bottomLayoutGuide.length
-        let offsetFrame: CGRect
-        if #available(iOS 11, *) {
-            offsetFrame = self.view.safeAreaLayoutGuide.layoutFrame
-        } else {
-            offsetFrame = self.view.frame
-        }
+        let offsetFrame = self.view.safeAreaLayoutGuide.layoutFrame
         
         var pageViewControlerRect = CGRect(x: 0, y: offsetTop, width: self.view.frame.width, height: self.view.frame.height-offsetTop)
         
@@ -381,10 +368,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             let backdrop: UIVisualEffectView
             if #available(iOS 26.0, *) {
                 backdrop = UIVisualEffectView(effect: UIGlassEffect())
-            } else if #available(iOS 13.0, *) {
-                backdrop = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
             } else {
-                backdrop = UIVisualEffectView(effect: UIBlurEffect(style: .regular))
+                backdrop = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
             }
             backdrop.frame = segControl!.frame
             backdrop.layer.cornerRadius = segControl!.frame.height / 2
@@ -658,26 +643,15 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        if #available(iOS 14.0, *) {
-            for vc in experimentViewControllers {
-                for view in vc.modules {
-                    if let depthGUI = view.view as? ExperimentDepthGUIView {
-                        guard let session = experiment.depthInput?.session as? ExperimentDepthInputSession else {
-                            continue
-                        }
-                        session.attachDelegate(delegate: depthGUI)
-                        depthGUI.depthGUISelectionDelegate = session
-                    }
-                    
-                    if let cameraGUI = view.view as? ExperimentCameraUIView {
-                        guard let session = experiment.cameraInput?.session as? ExperimentCameraInputSession else {
-                            continue
-                        }
-                        cameraGUI.cameraModelOwner = session.attachDelegate(cameraGUI)
-                        cameraGUI.cameraTextureProvider = session.cameraModel?.getTextureProvider()
-
-                    }
-                    
+        for vc in experimentViewControllers {
+            for view in vc.modules {
+                if let depthGUI = view.view as? ExperimentDepthGUIView, let session = experiment.depthInput?.session {
+                    session.attachDelegate(delegate: depthGUI)
+                    depthGUI.depthGUISelectionDelegate = session
+                }
+                if let cameraGUI = view.view as? ExperimentCameraUIView, let session = experiment.cameraInput?.session {
+                    cameraGUI.cameraModelOwner = session.attachDelegate(cameraGUI)
+                    cameraGUI.cameraTextureProvider = session.cameraModel?.getTextureProvider()
                 }
             }
         }
@@ -722,15 +696,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
 
-        if #available(iOS 14.0, *) {
-            if let session = experiment.depthInput?.session as? ExperimentDepthInputSession {
-                session.stopSession()
-            }
-            
-            if let camSession = experiment.cameraInput?.session as? ExperimentCameraInputSession {
-                camSession.endSession()
-            }
-        }
+        experiment.depthInput?.session.stopSession()
+        experiment.cameraInput?.session.endSession()
         disconnectFromBluetoothDevices()
         disconnectFromNetworkDevices()
         
@@ -891,15 +858,9 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             self.serverQRIcon = UIButton(type: .system)
             
-            var image = UIImage(named: "new_experiment_qr")!.resize(size: CGSize(width: 30, height: 30))
-            if #available(iOS 13.0, *) {
-                let config = UIImage.SymbolConfiguration(
-                    pointSize: 25, weight: .medium, scale: .default)
-                
-                image = UIImage(systemName: "info.circle.fill", withConfiguration: config)!
-            } else {
-                // Fallback on earlier versions
-            }
+            let config = UIImage.SymbolConfiguration(
+                pointSize: 25, weight: .medium, scale: .default)
+            let image = UIImage(systemName: "info.circle.fill", withConfiguration: config)!
             
             self.serverQRIcon?.setImage(image, for: .normal)
             self.serverQRIcon?.addTarget(self, action: #selector(showQr), for: .touchUpInside)
@@ -1161,10 +1122,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         let backdrop: UIVisualEffectView
         if #available(iOS 26.0, *) {
             backdrop = UIVisualEffectView(effect: UIGlassEffect())
-        } else if #available(iOS 13.0, *) {
-            backdrop = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
         } else {
-            backdrop = UIVisualEffectView(effect: UIBlurEffect(style: .regular))
+            backdrop = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
         }
         backdrop.clipsToBounds = true
         backdrop.isUserInteractionEnabled = false
@@ -1186,10 +1145,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         let textSize = label.sizeThatFits(CGSize(width: 200, height: 100))
         let h = textSize.height + 12
         let w = textSize.width + 24
-        var safeRight: CGFloat = 0
-        if #available(iOS 11, *) {
-            safeRight = view.safeAreaInsets.right
-        }
+        let safeRight = view.safeAreaInsets.right
         container.frame = CGRect(x: view.bounds.width - safeRight - 8 - w, y: self.topLayoutGuide.length + 4, width: w, height: h)
         timerDisplayBackdrop?.frame = container.bounds
         timerDisplayBackdrop?.layer.cornerRadius = h / 2
@@ -1744,24 +1700,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     func refreshAppTheme(){
-        if #available(iOS 12.0, *) {
-            if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE ||
-               (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .light)){
-                if #available(iOS 13.0, *) {
-                    view.overrideUserInterfaceStyle = .light
-                } else {
-                    // Fallback on earlier versions
-                }
-            } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE ||
-                      (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .dark)){
-                if #available(iOS 13.0, *) {
-                    view.overrideUserInterfaceStyle = .dark
-                } else {
-                    // Fallback on earlier versions
-                }
-            }
-        } else {
-            // Fallback on earlier versions
+        if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE ||
+           (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .light)){
+            view.overrideUserInterfaceStyle = .light
+        } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE ||
+                  (SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE && UIScreen.main.traitCollection.userInterfaceStyle == .dark)){
+            view.overrideUserInterfaceStyle = .dark
         }
     }
     

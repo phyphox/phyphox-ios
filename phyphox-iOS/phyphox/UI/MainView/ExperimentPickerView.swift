@@ -202,11 +202,7 @@ class ExperimentPickerDialogView: UIView, ExperimentReceiver {
             experimentPicker.didMove(toParent: rootController)
         }
         
-        if #available(iOS 13.0, *) {
-            self.overrideUserInterfaceStyle = .light
-        } else {
-            // Fallback on earlier versions
-        }
+        self.overrideUserInterfaceStyle = .light
         
         if animated {
             UIView.animate(withDuration: 0.3, animations: {

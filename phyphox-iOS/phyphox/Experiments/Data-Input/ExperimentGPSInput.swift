@@ -84,14 +84,8 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
         }
     }
     
-    @available(iOS 14.0, *)
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         onAuthorizationChange?(manager.authorizationStatus)
-    }
-
-    // For iOS 13 and older
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        onAuthorizationChange?(status)
     }
 
     func clear() {

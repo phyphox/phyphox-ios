@@ -49,23 +49,17 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         guard let navBar = self.navigationController?.navigationBar else {
             return
         }
-        if #available(iOS 13, *) {
-            //Native look: no bar background at rest, large scrollable title, system colours so the glass buttons follow the window
-            //appearance. Per-item, not on the shared bar: UIKit then cross-fades to the experiment page's opaque bar on push/pop
-            let standard = UINavigationBarAppearance()
-            standard.configureWithDefaultBackground()
-            let scrollEdge = UINavigationBarAppearance()
-            scrollEdge.configureWithTransparentBackground()
-            navigationItem.standardAppearance = standard
-            navigationItem.scrollEdgeAppearance = scrollEdge
-            navBar.prefersLargeTitles = true
-            navBar.tintColor = .label
-            navigationItem.largeTitleDisplayMode = .always
-        } else {
-            navBar.barTintColor = kBackgroundColor
-            navBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: kTextColor]
-            navBar.isTranslucent = true
-        }
+        //Native look: no bar background at rest, large scrollable title, system colours so the glass buttons follow the window
+        //appearance. Per-item, not on the shared bar: UIKit then cross-fades to the experiment page's opaque bar on push/pop
+        let standard = UINavigationBarAppearance()
+        standard.configureWithDefaultBackground()
+        let scrollEdge = UINavigationBarAppearance()
+        scrollEdge.configureWithTransparentBackground()
+        navigationItem.standardAppearance = standard
+        navigationItem.scrollEdgeAppearance = scrollEdge
+        navBar.prefersLargeTitles = true
+        navBar.tintColor = .label
+        navigationItem.largeTitleDisplayMode = .always
     }
     
     override func willMove(toParent parent: UIViewController?) {
@@ -1334,9 +1328,6 @@ print("\(url)")
     
     func getAdustedQRCodeIconAsAppMode() -> MenuTableViewController.MenuElement{
         let lightModeMenuElement = MenuTableViewController.MenuElement(label: localize("newExperimentQR"), icon: UIImage(named: "new_experiment_qr")!, callback: launchScanner)
-        guard #available(iOS 13.0, *) else {
-            return lightModeMenuElement
-        }
         let darkModeMenuElement = MenuTableViewController.MenuElement(label: localize("newExperimentQR"), icon: (UIImage(named: "new_experiment_qr")?.withTintColor(.white, renderingMode: .alwaysOriginal))!, callback: launchScanner)
         
         if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
@@ -1356,10 +1347,8 @@ print("\(url)")
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
 
-        if #available(iOS 13.0, *) {
-            if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-                self.selfView.collectionView.reloadData()
-            }
+        if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            self.selfView.collectionView.reloadData()
         }
     }
 }

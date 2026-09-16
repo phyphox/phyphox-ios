@@ -99,13 +99,11 @@ final class MarkerOverlayView: UIView {
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
-        if #available(iOS 13.0, *) {
-            let tmpMarkers = markers
-            markers = []
-            updateOverlay()
-            markers = tmpMarkers
-            updateOverlay()
-        }
+        let tmpMarkers = markers
+        markers = []
+        updateOverlay()
+        markers = tmpMarkers
+        updateOverlay()
     }
     
     override func layoutSubviews() {

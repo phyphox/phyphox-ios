@@ -12,7 +12,6 @@ import MetalKit
 import Combine
 
 
-@available(iOS 13.0, *)
 class CameraViewModel {
     var cameraUIDataModel: CameraUIDataModel
     
@@ -22,7 +21,6 @@ class CameraViewModel {
 }
 
 
-@available(iOS 13.0, *)
 class CameraUIDataModel {
     var cameraIsMaximized: Bool = false
     var cameraSize: CGSize = CGSize(width: 0, height: 0)
@@ -44,7 +42,6 @@ enum CameraShowControlsState {
     case NEVER
 }
 
-@available(iOS 14.0, *)
 final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CameraSettingsModel.SettingsChangeObserver {
     
     var cameraModelOwner: CameraModelOwner? {
@@ -1025,7 +1022,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
 }
 
 // MARK: - camera setting values collection cell
-@available(iOS 14.0, *)
 class CameraSettingValueViewCell: UICollectionViewCell {
     
     static let identifier = "CameraSettingValueViewCell"
@@ -1072,7 +1068,6 @@ class CameraSettingValueViewCell: UICollectionViewCell {
 }
 
 
-@available(iOS 14.0, *)
 class ZoomSlider : UISlider , ZoomButtonViewDelegate{
     
     let cameraModel: CameraSettingsModel
@@ -1158,7 +1153,6 @@ public struct AlertError {
 }
 
 
-@available(iOS 14.0, *)
 extension ExperimentCameraUIView: VisibilityControllableViewModule {
     var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
 }

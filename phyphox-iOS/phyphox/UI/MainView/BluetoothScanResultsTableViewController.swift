@@ -42,11 +42,7 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
         super.init(style: .plain)
         
         for i in 0..<5 {
-            if #available(iOS 13.0, *) {
-                signalImages.append(BluetoothScanResultsTableViewController.showTheSignalImageByAdjustingWithAppMode(i: i))
-            } else {
-                signalImages.append(UIImage(named: "cellular_level_\(i)")!)
-            }
+            signalImages.append(BluetoothScanResultsTableViewController.showTheSignalImageByAdjustingWithAppMode(i: i))
         }
         
         ble.scanResultsDelegate = self
@@ -131,7 +127,6 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
         }
     }
     
-    @available(iOS 13.0, *)
     static func showTheSignalImageByAdjustingWithAppMode(i: Int) -> UIImage{
         if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
             return (UIImage(named: "cellular_level_\(i)")?.withTintColor(.black, renderingMode: .alwaysOriginal))!

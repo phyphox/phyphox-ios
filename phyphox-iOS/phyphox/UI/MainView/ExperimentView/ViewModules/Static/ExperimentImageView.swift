@@ -60,10 +60,6 @@ final class ExperimentImageView: UIView, DescriptorBoundViewModule {
     }
     
     func applyFilter() {
-        guard #available(iOS 13.0, *) else {
-            applyGivenFilter(filter: descriptor.lightFilter)
-            return
-        }
         if SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE {
             applyGivenFilter(filter: descriptor.lightFilter)
         } else if SettingBundleHelper.getAppMode() == Utility.DARK_MODE {
@@ -101,10 +97,8 @@ final class ExperimentImageView: UIView, DescriptorBoundViewModule {
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
-        if #available(iOS 13.0, *) {
-            if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-                applyFilter()
-            }
+        if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            applyFilter()
         }
     }
 }

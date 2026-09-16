@@ -8,7 +8,6 @@
 
 import Foundation
 
-@available(iOS 14.0, *)
 class LuminanceAnalyzer: AnalyzingModule {
     
     var resultBuffer: Double = 0.0

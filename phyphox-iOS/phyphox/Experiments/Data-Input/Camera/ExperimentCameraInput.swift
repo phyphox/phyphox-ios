@@ -33,7 +33,7 @@ final class ExperimentCameraInput {
     let locked: [String:Float?]
     let feature: CameraFeature
     
-    lazy var session: Any? = nil
+    let session: ExperimentCameraInputSession
     
    
     init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, pixelPosition: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, autoExposure: Bool, aeStrategy: AutoExposureStrategy, aeFPSTarget: Double, locked: [String:Float?], feature: CameraFeature) {
@@ -64,29 +64,14 @@ final class ExperimentCameraInput {
         self.locked = locked
         self.feature = feature
         
-        if #available(iOS 14.0, *) {
-            session = ExperimentCameraInputSession()
-            applyCameraInputAttributes()
-        }
-        
-        
+        session = ExperimentCameraInputSession()
+        applyCameraInputAttributes()
     }
     
     static func verifySensorAvaibility() throws{
-        guard #available(iOS 14.0, *) else {
-            throw CameraInputError.sensorUnavailable
-        }
     }
     
     func applyCameraInputAttributes() {
-        guard #available(iOS 14.0, *) else {
-            return
-        }
-        
-        guard let session = session as? ExperimentCameraInputSession else {
-            return
-        }
-        
         session.initx1 = initx1
         session.initx2 = initx2
         session.inity1 = inity1
@@ -104,33 +89,14 @@ final class ExperimentCameraInput {
     }
     
     func start(queue: DispatchQueue) throws {
-        guard #available(iOS 14.0, *) else {
-            return
-        }
-        guard let session = session as? ExperimentCameraInputSession else {
-            return
-        }
-        
         session.startSession(queue: queue)
     }
     
     func stop() {
-        guard #available(iOS 14.0, *) else {
-            return
-        }
-        guard let session = session as? ExperimentCameraInputSession else {
-            return
-        }
         session.stopSession()
     }
     
     func clear() {
-        guard #available(iOS 14.0, *) else {
-            return
-        }
-        guard let session = session as? ExperimentCameraInputSession else {
-            return
-        }
         session.clear()
     }
     

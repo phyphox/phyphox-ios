@@ -11,7 +11,6 @@ import AVFoundation
 import MetalKit
 
 
-@available(iOS 14.0, *)
 class CameraSettingsModel {
     let updateLock = DispatchSemaphore(value: 1)
     func safeAccess(_ block: () -> Void) {
@@ -126,7 +125,6 @@ class CameraSettingsModel {
     var resolution: CGSize? = nil
     var maxFrameDuration = 1.0/30.0
     
-    @available(iOS 14.0, *)
     init(service: CameraService){
         self.service = service
     }
@@ -140,7 +138,6 @@ class CameraSettingsModel {
 }
 
 
-@available(iOS 14.0, *)
 final class CameraModel {
     
     var x1: Float = 0.4

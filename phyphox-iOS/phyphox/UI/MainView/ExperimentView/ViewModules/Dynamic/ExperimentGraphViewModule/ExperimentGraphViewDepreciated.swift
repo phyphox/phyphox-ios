@@ -174,17 +174,11 @@ final class ExperimentGraphViewDepreciated: UIView, DynamicViewModule, Descripto
         } else {
             zLabel = nil
         }
-        if #available(iOS 13.0, *) {
-            let config = UIImage.SymbolConfiguration(
-                pointSize: 25, weight: .regular, scale: .default)
-            unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: config))
-            unfoldMoreImageView = UIImageView(image: UIImage(systemName: "arrow.up.left.and.arrow.down.right",
-                                                             withConfiguration: config))
-        } else {
-            unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
-            unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
-            // Fallback on earlier versions
-        }
+        let config = UIImage.SymbolConfiguration(
+            pointSize: 25, weight: .regular, scale: .default)
+        unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: config))
+        unfoldMoreImageView = UIImageView(image: UIImage(systemName: "arrow.up.left.and.arrow.down.right",
+                                                         withConfiguration: config))
         
         timeReference = descriptor.timeReference
         systemTime = descriptor.systemTime
@@ -1327,9 +1321,7 @@ final class ExperimentGraphViewDepreciated: UIView, DynamicViewModule, Descripto
         graphTools.backgroundImage = UIImage()
         graphTools.backgroundColor = UIColor(named: "mainBackground")!
         graphTools.tintColor = kHighlightColor
-        if #available(iOS 10, *) {
-            graphTools.unselectedItemTintColor = UIColor(named: "textColor")
-        }
+        graphTools.unselectedItemTintColor = UIColor(named: "textColor")
         
         graphTools.delegate = self
         
@@ -1593,11 +1585,9 @@ final class ExperimentGraphViewDepreciated: UIView, DynamicViewModule, Descripto
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
-        if #available(iOS 13.0, *) {
-            if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-                refreshView()
-                refreshMarkers()
-            }
+        if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            refreshView()
+            refreshMarkers()
         }
     }
     

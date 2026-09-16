@@ -15,7 +15,6 @@ protocol ExposureStatisticsListener {
     func newExposureStatistics(minRGB: Double, maxRGB: Double, meanLuma: Double)
 }
 
-@available(iOS 14.0, *)
 class AnalyzingRenderer {
     
     var cameraModelOwner: CameraModelOwner? = nil

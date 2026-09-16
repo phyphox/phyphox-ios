@@ -10,7 +10,6 @@ import Foundation
 import MetalKit
 import AVFoundation
 
-@available(iOS 14.0, *)
 class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     
     var cameraModelOwner: CameraModelOwner?

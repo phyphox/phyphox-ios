@@ -13,7 +13,6 @@ import ARKit
 import Metal
 import MetalKit
 
-@available(iOS 14.0, *)
 protocol DepthGUIDelegate {
     func updateFrame(frame: ARFrame)
     func updateResolution(resolution: CGSize)
@@ -31,7 +30,6 @@ protocol DepthGUISelectionDelegate {
 extension MTKView: RenderDestinationProvider {
 }
 
-@available(iOS 14.0, *)
 final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, ResizableViewModule, MTKViewDelegate, DepthGUIDelegate {
     
     var resolution: CGSize?
@@ -354,7 +352,6 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
     }
 }
 
-@available(iOS 14.0, *)
 extension ExperimentDepthGUIView: VisibilityControllableViewModule {
     var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
 }

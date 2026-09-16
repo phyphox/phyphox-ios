@@ -8,7 +8,6 @@
 
 import Foundation
 
-@available(iOS 14.0, *)
 class LumaAnalyzer : AnalyzingModule {
     
     var analysisPipelineState : MTLComputePipelineState?

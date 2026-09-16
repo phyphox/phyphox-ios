@@ -395,10 +395,8 @@ final class GraphGridView: UIView {
         if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
             borderColor  = UIColor(white: 0.0, alpha: 1.0).cgColor
         } else if(SettingBundleHelper.getAppMode() == Utility.SYSTEM_MODE){
-            if #available(iOS 12.0, *) {
-                if(UIScreen.main.traitCollection.userInterfaceStyle == .light) {
-                    borderColor  = UIColor(white: 0.0, alpha: 1.0).cgColor
-                }
+            if(UIScreen.main.traitCollection.userInterfaceStyle == .light) {
+                borderColor  = UIColor(white: 0.0, alpha: 1.0).cgColor
             }
         }
         return borderColor

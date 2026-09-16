@@ -19,7 +19,6 @@ protocol CameraMetalTextureProvider {
     func safeTextureAccess(_ block: () -> Void)
 }
 
-@available(iOS 14.0, *)
 public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, CameraMetalTextureProvider, ExposureStatisticsListener {
     
     var cameraImageTextureY: CVMetalTexture?

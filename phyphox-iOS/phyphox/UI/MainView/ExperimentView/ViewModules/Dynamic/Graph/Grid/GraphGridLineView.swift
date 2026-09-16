@@ -82,8 +82,6 @@ final class GraphGridLineView: UIView {
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
-        if #available(iOS 13.0, *) {
-            gridLayer.strokeColor = UIColor(named: "graphLinesWithAlpha")!.cgColor
-        }
+        gridLayer.strokeColor = UIColor(named: "graphLinesWithAlpha")!.cgColor
     }
 }

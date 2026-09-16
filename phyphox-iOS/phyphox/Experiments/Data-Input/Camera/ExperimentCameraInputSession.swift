@@ -12,13 +12,11 @@ protocol CameraGUIDelegate {
     func updateResolution(resolution: CGSize)
 }
 
-@available(iOS 14.0, *)
 protocol CameraModelOwner {
     var cameraModel: CameraModel? { get }
     func updateResolution(_ resolution: CGSize)
 }
 
-@available(iOS 14.0, *)
 class ExperimentCameraInputSession: NSObject, CameraModelOwner {
     var initx1: Float = 0.0
     var initx2: Float = 0.0

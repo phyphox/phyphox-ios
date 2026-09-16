@@ -47,14 +47,9 @@ class GraphLayoutManager {
     init(descriptor: GraphViewDescriptor, gridView: GraphGridView, zGridView: GraphGridView?) {
         self.descriptor = descriptor
         
-        if #available(iOS 13.0, *) {
-            let config = UIImage.SymbolConfiguration(pointSize: 25, weight: .regular, scale: .default)
-            self.unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: config))
-            self.unfoldMoreImageView = UIImageView(image: UIImage(systemName: "arrow.up.left.and.arrow.down.right", withConfiguration: config))
-        } else {
-            self.unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
-            self.unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
-        }
+        let config = UIImage.SymbolConfiguration(pointSize: 25, weight: .regular, scale: .default)
+        self.unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: config))
+        self.unfoldMoreImageView = UIImageView(image: UIImage(systemName: "arrow.up.left.and.arrow.down.right", withConfiguration: config))
         
         // Initialize labels
         self.xLabel = Self.makeLabel(descriptor.systemTime ? descriptor.localizedXLabelWithTimezone : descriptor.localizedXLabelWithUnit)
