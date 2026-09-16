@@ -8,10 +8,6 @@
 
 import Foundation
 
-enum CameraInputError : Error {
-    case sensorUnavailable
-}
-
 final class ExperimentCameraInput {
 
     enum AutoExposureStrategy: String, CaseInsensitiveAttributeDecodable, CaseIterable {
@@ -66,9 +62,6 @@ final class ExperimentCameraInput {
         
         session = ExperimentCameraInputSession()
         applyCameraInputAttributes()
-    }
-    
-    static func verifySensorAvaibility() throws{
     }
     
     func applyCameraInputAttributes() {
