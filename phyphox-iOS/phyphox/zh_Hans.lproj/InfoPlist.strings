@@ -12,3 +12,4 @@
 "NSCameraUsageDescription" = "Phyphox 使用相机扫描二维码，可用于添加自定义实验配置。相机也被用于光学实验或深度传感器实验（LiDAR/ToF）。";
 "NSBluetoothPeripheralUsageDescription" = "phyphox具有从外部蓝牙传感器读取数据和向外部蓝牙设备写入数据的能力。你可以在http://phyphox.org/ble，了解更多关于这个功能和支持的设备。";
 "NSBluetoothAlwaysUsageDescription" = "phyphox具有从外部蓝牙传感器读取数据和向外部蓝牙设备写入数据的能力。你可以在http://phyphox.org/ble，了解更多关于这个功能和支持的设备。";
+"NSLocalNetworkUsageDescription" = "以下情况 phyphox 会访问您的本地网络：从网络上的设备加载实验配置、实验从本地设备（例如 Wi-Fi 测量硬件或 MQTT 服务器）读取或发送数据，以及启用远程访问以通过网页浏览器控制实验。";
