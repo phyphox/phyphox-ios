@@ -1,1 +1,17 @@
 
+
+/* 
+  InfoPlist.strings
+  phyphox
+
+  Created by Sebastian Kuhlen on 17.09.16.
+  Copyright © 2016 RWTH Aachen. All rights reserved.
+*/
+"NSMicrophoneUsageDescription" = "phyphox digər sensorlarda olduğu kimi mikrofondan da səs yazır və seçilmiş təcrübəyə uyğun olaraq onu təhlil edir. Verilənlər tətbiqdən yalnız istifadəçi xaricə köçürmə funksiyasından istifadə etməyi seçdiyi halda çıxarılır.";
+"NSLocalNetworkUsageDescription" = "phyphox yerli şəbəkənizə o hallarda müraciət edir: təcrübə konfiqurasiyası şəbəkənizdəki bir cihazdan yükləndikdə, təcrübə yerli cihazlardan (məsələn, Wi-Fi ölçmə avadanlığı və ya MQTT brokeri) verilən oxuduqda və ya onlara verilən göndərdikdə, həmçinin təcrübəni veb brauzerdən idarə etmək üçün uzaqdan giriş aktivləşdirildikdə.";
+"NSLocationWhenInUseUsageDescription" = "phyphox digər sensorlarda olduğu kimi GPS-dən də məkan verilənlərini qeyd edir və seçilmiş təcrübəyə uyğun olaraq onları təhlil edir. Verilənlər tətbiqdən yalnız istifadəçi xaricə köçürmə funksiyasından istifadə etməyi seçdiyi halda çıxarılır.";
+"NSPhotoLibraryAddUsageDescription" = "Təcrübə menyusundan \"Ekran görüntüsünü paylaş\" seçsəniz, phyphox ekran görüntülərini foto kitabxananıza əlavə edə bilər.";
+"NSMotionUsageDescription" = "phyphox telefonunuzun sensorlarını fizika təcrübələrində istifadə etmək üçün oxuyur.";
+"NSCameraUsageDescription" = "phyphox kameradan QR kodları skan etmək üçün istifadə edir; bu kodlarla fərdi təcrübə konfiqurasiyaları əlavə etmək olar. Kamera həmçinin optik təcrübələrdə və dərinlik sensorundan (LiDAR/ToF) istifadə edən təcrübələrdə ölçmə aləti kimi istifadə olunur.";
+"NSBluetoothPeripheralUsageDescription" = "phyphox xarici Bluetooth sensorlarından veriləni oxuya və xarici Bluetooth cihazlarına veriləni yaza bilir. Bu funksiya və dəstəklənən cihazlar haqqında ətraflı məlumatı http://phyphox.org/ble ünvanında əldə edə bilərsiniz.";
+"NSBluetoothAlwaysUsageDescription" = "phyphox xarici Bluetooth sensorlarından veriləni oxuya və xarici Bluetooth cihazlarına veriləni yaza bilir. Bu funksiya və dəstəklənən cihazlar haqqında ətraflı məlumatı http://phyphox.org/ble ünvanında əldə edə bilərsiniz.";
