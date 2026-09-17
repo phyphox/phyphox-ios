@@ -409,8 +409,7 @@ final class FormulaParser {
                         s2 = formula.index(after: i)
                     }
                 case "-":
-                    //A minus at the start of the term or after an operator is a unary minus,
-                    //handled below - only the rest is a binary subtraction
+                    //A leading minus (start of term or after an operator) is unary, handled below
                     if i == s {
                         break
                     }
@@ -451,8 +450,7 @@ final class FormulaParser {
                         s2 = formula.index(after: i)
                     }
                 case "^":
-                    //Strictly greater: the FIRST ^ splits, making ^ right-associative
-                    //(2^3^2 = 2^(3^2) = 512)
+                    //Strictly greater: the FIRST ^ splits, making ^ right-associative (2^3^2 = 512)
                     if previousPriority > 3 {
                         previousPriority = 3
                         function = PowerFunction()
@@ -551,9 +549,7 @@ final class FormulaParser {
             throw FormulaError.parseError("Brackets do not match!")
         }
 
-        //A leading minus is a unary minus binding tighter than + - * / % but looser than ^
-        //and function calls: it applies to the immediately following operand only, so
-        //-2+3 = 1 and -2^2 = -(2^2) = -4
+        //A leading minus binds tighter than + - * / % but looser than ^ and functions: -2+3 = 1, -2^2 = -4
         if formula[s] == "-" && (function == nil || previousPriority >= 3) {
             guard let operand = try parse(formula: formula, start: formula.index(after: s), end: e) else {
                 throw FormulaError.parseError("Missing operand for unary minus.")
@@ -564,8 +560,7 @@ final class FormulaParser {
         if let fun = function {
             let in1 = try parse(formula: formula, start: s1, end: e1)
             let in2 = try parse(formula: formula, start: s2, end: e2)
-            //Structurally broken formulas - wrong arity, dangling operands - are a permanent
-            //failure state and reject the file at load instead of producing NaN at runtime
+            //Wrong arity or dangling operands reject the file at load instead of producing NaN at runtime
             if fun is FormulaFunction2 {
                 guard in1 != nil && in2 != nil else {
                     throw FormulaError.parseError("Missing operand in: " + formula[s..<e])
@@ -587,8 +582,7 @@ final class FormulaParser {
     
     init(formula: String) throws {
         let strippedFormula = formula.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "\t", with: "").replacingOccurrences(of: "\n", with: "").lowercased()
-        //An empty formula is a permanent failure state and rejects the file at load, like any
-        //other structurally broken formula
+        //An empty formula rejects the file at load like any other structurally broken one
         guard let parsed = try Self.parse(formula: strippedFormula, start: strippedFormula.startIndex, end: strippedFormula.endIndex) else {
             throw FormulaError.parseError("Empty formula.")
         }

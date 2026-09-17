@@ -9,19 +9,9 @@ import XCTest
 import SnapshotTesting
 @testable import phyphox
 
-//Golden images of the non-graph view elements, over the fixtures in phyphox-docs
-//fixtures/views/ (test-matrix row view-snapshots). Every fixture is loaded through the real
-//parser and its elements are built by the same factory the experiment screen uses, so what is
-//pinned is the rendering of a parsed descriptor, not a hand-built view.
-//
-//Each element is rendered on its own, in the configuration matrix the fixtures' README states:
-//light and dark, two font scales, phone and tablet width, plus one forced right-to-left layout
-//pass. The goldens live in this repository - they are renderer output and platform-specific by
-//nature - under phyphoxTests/Snapshots/views/<fixture>/<element>/<configuration>.png, so a
-//failure names the fixture line it came from.
-//
-//The graph fixtures are deliberately absent: the OpenGL renderer needs a real context, which
-//makes it row graph-snapshots (T1) instead.
+//Golden images of the non-graph view elements over phyphox-docs fixtures/views/ (test-matrix row
+//view-snapshots), rendered from parsed descriptors by the real view factory in the README's matrix
+//(light/dark, two font scales, phone/tablet width, one RTL pass). Graphs need GL: row graph-snapshots (T1).
 final class ViewSnapshotTests: XCTestCase {
     //The five non-graph fixtures, in the order the README lists them
     private static let fixtures = ["values", "edits", "buttons-toggles", "sliders-dropdowns",
@@ -33,14 +23,10 @@ final class ViewSnapshotTests: XCTestCase {
         let style: UIUserInterfaceStyle
         let contentSize: UIContentSizeCategory
         let rightToLeft: Bool
-        //nil for the two explicit themes; set for the follow-system spot checks, which only run
-        //when the simulator's system appearance is the one they pin
+        //set for the follow-system spot checks, which only run in the system appearance they pin
         let followsSystem: Bool
 
-        //The app picks its colours from its OWN light/dark setting (SettingBundleHelper), not
-        //from the trait collection - it defaults to dark whatever the system does, and can be
-        //set to light, dark or follow-system. The goldens drive that setting, which is what the
-        //elements actually read.
+        //Colours come from the app's OWN theme setting (SettingBundleHelper), not the trait collection
         var appMode: String {
             if followsSystem { return Utility.SYSTEM_MODE }
             return style == .dark ? Utility.DARK_MODE : Utility.LIGHT_MODE
@@ -58,8 +44,7 @@ final class ViewSnapshotTests: XCTestCase {
         }
     }
 
-    //Phone and tablet portrait widths, both themes, the default font scale and a large Dynamic
-    //Type step, and one RTL smoke pass (layout mirroring only - no RTL language ships yet)
+    //Phone and tablet widths, both themes, two font scales, one RTL pass (layout mirroring only)
     private static let configurations: [Configuration] = {
         var configurations: [Configuration] = []
         for (widthName, width) in [("phone", CGFloat(390)), ("tablet", CGFloat(834))] {
@@ -79,10 +64,8 @@ final class ViewSnapshotTests: XCTestCase {
         return configurations
     }()
 
-    //The follow-system setting resolves against the SCREEN's appearance (UIColor.autoLightColor
-    //reads UIScreen.main), which no API changes from inside the process - so these two are spot
-    //checks on one fixture rather than a doubling of the matrix, and each runs only when the
-    //simulator is in the appearance it pins. The T0 workflow runs the suite once per appearance.
+    //Follow-system resolves against the SCREEN's appearance (UIColor.autoLightColor reads UIScreen.main),
+    //which cannot be changed in-process, so each runs only when the simulator is in the appearance it pins
     private static let systemSpotChecks: [Configuration] = [
         Configuration(name: "system-light-phone", width: 390, style: .light, contentSize: .large,
                       rightToLeft: false, followsSystem: true),
@@ -96,8 +79,7 @@ final class ViewSnapshotTests: XCTestCase {
         return try DocsCorpus.docsDirectory("fixtures/views", notTestedNotice: "view snapshots")
     }
 
-    //Snapshots go next to the tests, one directory per fixture and one file per element and
-    //configuration, so the path reads like the fixture line it renders
+    //One directory per fixture, one file per element and configuration
     private func snapshotDirectory(fixture: String) -> String {
         return DocsCorpus.repositoryRoot
             .appendingPathComponent("phyphox-iOS/phyphoxTests/Snapshots/views", isDirectory: true)
@@ -113,14 +95,11 @@ final class ViewSnapshotTests: XCTestCase {
         return String(allowed).split(separator: "-", omittingEmptySubsequences: true).joined(separator: "-")
     }
 
-    ///The key an element is filed under: its label, or the element kind where a label would be
-    ///meaningless (separators and images carry none), and a counter where that repeats
+    ///The key an element is filed under: its label, or the element kind where it has none, deduplicated
     private func key(for descriptor: ViewDescriptor?, at index: Int, used: inout Set<String>) -> String {
         var base = slug(descriptor?.localizedLabel ?? "")
         if base.isEmpty {
-            //Separators and images carry no label at all, and a button may take its label from a
-            //buffer (dynamicLabel) - name those after the element instead of the position, which
-            //would shift whenever the fixture gains a line
+            //Named after the element, not the position, which would shift whenever the fixture gains a line
             switch descriptor {
             case is SeparatorViewDescriptor: base = "separator"
             case is ImageViewDescriptor: base = "image"
@@ -145,8 +124,7 @@ final class ViewSnapshotTests: XCTestCase {
         return candidate
     }
 
-    ///Builds the elements of one fixture, ready to render: the modules the experiment screen
-    ///would build, activated once so they pull their (static) buffer values in.
+    ///The modules the experiment screen would build, activated once so they pull their static values in
     private func elements(of url: URL) throws -> [(key: String, view: UIView)] {
         let experiment = try ExperimentSerialization.readExperimentFromURL(url)
         var elements: [(key: String, view: UIView)] = []
@@ -162,9 +140,7 @@ final class ViewSnapshotTests: XCTestCase {
                     dynamic.active = true
                     dynamic.setNeedsUpdate()
                 }
-                //The dynamic elements pull their value on a display-link tick. The values here
-                //are static, so one tick delivered by hand settles them - and does not depend on
-                //a display link firing in a test host with no visible window.
+                //Dynamic elements pull their value on a display-link tick; one tick by hand settles them
                 if let listener = view as? DisplayLinkListener {
                     listener.display(DisplayLink(refreshRate: 0))
                 }
@@ -172,8 +148,7 @@ final class ViewSnapshotTests: XCTestCase {
             }
         }
 
-        //Anything that still schedules work on the main queue (image decoding, layout) settles
-        //in one short turn of the run loop
+        //Image decoding and layout on the main queue settle in one short run-loop turn
         RunLoop.current.run(until: Date().addingTimeInterval(0.3))
 
         return elements
@@ -198,8 +173,7 @@ final class ViewSnapshotTests: XCTestCase {
             }
 
             for configuration in configurations {
-                //A follow-system golden can only be produced while the simulator is in that
-                //appearance; the other one is left to the run that is
+                //A follow-system golden can only be produced while the simulator is in that appearance
                 if configuration.followsSystem,
                    UIScreen.main.traitCollection.userInterfaceStyle != configuration.style {
                     skippedSystemChecks += 1
@@ -223,15 +197,10 @@ final class ViewSnapshotTests: XCTestCase {
                         view.semanticContentAttribute = .unspecified
                     }
 
-                    //These modules lay their subviews out in layoutSubviews from the bounds, so
-                    //they have to be sized and laid out before anything is rendered - and they
-                    //draw on the experiment screen's background (their text is the app's light
-                    //text colour, invisible on the renderer's white), so they are rendered inside
-                    //the same background the table view gives them.
+                    //Laid out before rendering (subviews are sized in layoutSubviews) and drawn on the
+                    //experiment screen's background - the light text would be invisible on white
                     let host = UIView(frame: CGRect(x: 0, y: 0, width: configuration.width, height: height))
-                    //The elements pick their colours up in traitCollectionDidChange, so the
-                    //appearance has to be in place before they are laid out - the renderer's own
-                    //traits arrive too late for that
+                    //Colours are picked up in traitCollectionDidChange, so the style must precede layout
                     host.overrideUserInterfaceStyle = configuration.style
                     if #available(iOS 17.0, *) {
                         host.traitOverrides.preferredContentSizeCategory = configuration.contentSize
@@ -244,9 +213,7 @@ final class ViewSnapshotTests: XCTestCase {
                     host.setNeedsLayout()
                     host.layoutIfNeeded()
 
-                    //verifySnapshot rather than assertSnapshot: only it takes the directory, and
-                    //the goldens are keyed by fixture, element and configuration rather than by
-                    //test function (element as the file stem, configuration as the name after it)
+                    //verifySnapshot, not assertSnapshot: only it takes the directory; goldens are keyed by element
                     let failure = verifySnapshot(
                         of: host,
                         as: .image(size: CGSize(width: configuration.width, height: height),

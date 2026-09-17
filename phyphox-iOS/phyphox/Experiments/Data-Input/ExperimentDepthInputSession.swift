@@ -9,7 +9,6 @@
 import Foundation
 import ARKit
 
-@available(iOS 14.0, *)
 final class ExperimentDepthInputSession: NSObject, ARSessionDelegate, DepthGUISelectionDelegate {
 
     var mode: ExperimentDepthInput.DepthExtractionMode = .closest

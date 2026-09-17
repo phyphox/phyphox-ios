@@ -127,9 +127,7 @@ extension ExperimentGraphView: GraphGestureDelegate {
             )
         }
         
-        //In normal (non-exclusive) mode a tap on the plot maximizes the graph, like a
-        //tap anywhere else on the graph area. The plot's own recognizer swallows the
-        //tap before it reaches the graph area's recognizer, so it has to forward it.
+        //In normal mode a tap maximizes the graph like on the rest of the graph area; this recognizer swallows it, so forward
         if resizableState == .normal {
             layoutDelegate?.presentExclusiveLayout(self)
             return

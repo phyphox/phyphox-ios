@@ -10,10 +10,8 @@ import CoreGraphics
 import Foundation
 import ImageIO
 
-//Decode an image file (any format supported by ImageIO, at least PNG, JPEG and BMP) from a
-//buffer holding the bytes of the encoded file (one byte per value, 0..255) into its dimensions
-//and per-pixel channel data (0..1, line-wise from the top), like the Android implementation
-//does via BitmapFactory.
+//Decodes an encoded image file (PNG, JPEG, BMP, ... via ImageIO) from a buffer of bytes into dimensions and
+//per-pixel channel data (0..1, line-wise from the top), like Android does via BitmapFactory.
 final class ImageDecodeAnalysis: AutoClearingExperimentAnalysisModule {
     private static let inInSlot = AnalysisIOSlot(name: "in", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
     private static let widthOutSlot = AnalysisIOSlot(name: "width", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
@@ -99,9 +97,8 @@ final class ImageDecodeAnalysis: AutoClearingExperimentAnalysisModule {
             return
         }
 
-        //Drawing into an sRGB context converts wide-gamut images and unifies the pixel format,
-        //like the BitmapFactory options on Android. The buffer holds the image line-wise from
-        //the top as premultiplied RGBA.
+        //Drawing into an sRGB context converts wide-gamut images and unifies the pixel format (like the BitmapFactory
+        //options on Android); the buffer is premultiplied RGBA, line-wise from the top.
         var pixelData = [UInt8](repeating: 0, count: width * height * 4)
         let drawn = pixelData.withUnsafeMutableBytes { (rawBuffer: UnsafeMutableRawBufferPointer) -> Bool in
             guard let context = CGContext(data: rawBuffer.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 4 * width, space: colorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Big.rawValue) else {
@@ -146,8 +143,7 @@ final class ImageDecodeAnalysis: AutoClearingExperimentAnalysisModule {
             var gv = Double(pixelData[4*i + 1]) / 255.0
             var bv = Double(pixelData[4*i + 2]) / 255.0
 
-            //The context stores premultiplied alpha, but the channel outputs are the plain
-            //color values, like Android's getPixels delivers them
+            //Un-premultiply: the outputs are plain color values, like Android's getPixels
             if av > 0.0 && av < 1.0 {
                 rv = min(rv / av, 1.0)
                 gv = min(gv / av, 1.0)

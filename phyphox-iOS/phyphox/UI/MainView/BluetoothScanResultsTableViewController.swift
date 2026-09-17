@@ -11,10 +11,8 @@ import CoreBluetooth
 
 protocol ScanResultsDelegate {
     func reloadScanResults(updatedEntry: UUID)
-    //advertisedName is the name from the advertisement (remembered from an earlier packet of
-    //the same peripheral if this one carried none), which is NOT peripheral.name: that one is
-    //whatever CoreBluetooth cached for the device, typically from an earlier connection, and is
-    //stale as soon as the device is renamed. A receiver that needs the current name needs this.
+    //advertisedName is from the advertisement (remembered from an earlier packet if needed), NOT peripheral.name, which is
+    //CoreBluetooth's cached name and stale once the device is renamed
     func autoConnect(device: CBPeripheral, advertisedUUIDs: [CBUUID]?, advertisedName: String?)
 }
 
@@ -44,11 +42,7 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
         super.init(style: .plain)
         
         for i in 0..<5 {
-            if #available(iOS 13.0, *) {
-                signalImages.append(BluetoothScanResultsTableViewController.showTheSignalImageByAdjustingWithAppMode(i: i))
-            } else {
-                signalImages.append(UIImage(named: "cellular_level_\(i)")!)
-            }
+            signalImages.append(BluetoothScanResultsTableViewController.showTheSignalImageByAdjustingWithAppMode(i: i))
         }
         
         ble.scanResultsDelegate = self
@@ -133,7 +127,6 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
         }
     }
     
-    @available(iOS 13.0, *)
     static func showTheSignalImageByAdjustingWithAppMode(i: Int) -> UIImage{
         if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
             return (UIImage(named: "cellular_level_\(i)")?.withTintColor(.black, renderingMode: .alwaysOriginal))!

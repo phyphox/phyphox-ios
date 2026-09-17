@@ -12,7 +12,6 @@ import MetalKit
 import Combine
 
 
-@available(iOS 13.0, *)
 class CameraViewModel {
     var cameraUIDataModel: CameraUIDataModel
     
@@ -22,7 +21,6 @@ class CameraViewModel {
 }
 
 
-@available(iOS 13.0, *)
 class CameraUIDataModel {
     var cameraIsMaximized: Bool = false
     var cameraSize: CGSize = CGSize(width: 0, height: 0)
@@ -44,7 +42,6 @@ enum CameraShowControlsState {
     case NEVER
 }
 
-@available(iOS 14.0, *)
 final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModule, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, CameraSettingsModel.SettingsChangeObserver {
     
     var cameraModelOwner: CameraModelOwner? {
@@ -256,17 +253,12 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         headerView.frame = CGRect(x: sideMargins, y: spacing, width: frame.width-2*sideMargins, height: headSize.height)
         
         //Controls
-        //In fullscreen landscape the main camera controls become a vertical column at the right
-        //edge, using the full height with the labels moving next to the icons, like on Android,
-        //so the preview keeps the full (scarce) height
+        //Fullscreen landscape: controls become a right-edge column (like Android) so the preview keeps the full height
         let isFullscreenLandscape = resizableState == .exclusive && frame.width > frame.height
         cameraSettingUIView?.axis = isFullscreenLandscape ? .vertical : .horizontal
         let controlButtonWidth: CGFloat = 44.0
-        //Each control is itself a stack of button and label: below each other (label centered)
-        //in the horizontal bar, next to each other (label left-aligned right beside the icon)
-        //in the vertical column. The buttons get a fixed width in the column, because their
-        //intrinsic image sizes differ wildly (some icons are scaled by insets or transforms),
-        //which would otherwise make the icon/label split inconsistent between the controls.
+        //Each control is a stack of button and label: stacked in the bar, side by side in the column. The column needs
+        //fixed button widths, as the intrinsic icon sizes differ wildly and would misalign the icon/label split.
         if let settings = cameraSettingUIView {
             for item in settings.arrangedSubviews {
                 guard let itemStack = item as? UIStackView else { continue }
@@ -287,9 +279,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
                 }
             }
         }
-        //The column is exactly as wide as its content: the fixed icon block plus the widest of
-        //the current labels (measured with their actual font, so a system-wide text size change
-        //adapts the layout instead of breaking it)
+        //Column width = fixed icon block + widest current label (measured with its actual font)
         var controlColumnWidth: CGFloat = 0.0
         if isFullscreenLandscape, controlsVisible, let settings = cameraSettingUIView {
             var maxLabelWidth: CGFloat = 0.0
@@ -301,19 +291,17 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         }
         let bottomWidth = frame.width - 2*sideMargins - (controlColumnWidth > 0 ? controlColumnWidth + spacing : 0)
 
-        //The spectrum orientation button only exists for spectroscopy experiments, so its row
-        //is only reserved when it is actually shown
+        //The spectrum orientation row (spectroscopy only) is only reserved while the button is shown
         let spectrumButtonShown = dialogButton.superview != nil && !dialogButton.isHidden
 
         let controlSize = controlsVisible && !isFullscreenLandscape ? CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlHeight) : .zero
         let controlExtraSize = collectionView.isHidden ? .zero : CGSize(width: bottomWidth, height: ExperimentCameraUIView.controlExtraHeight)
         let controlZoomSize = (zoomSlider?.isHidden ?? true) ? .zero : CGSize(width: bottomWidth, height: ExperimentCameraUIView.controlZoomHeight)
         let controlSpectrumOrientationAnalysisSize = spectrumButtonShown ? CGSize(width: bottomWidth, height: ExperimentCameraUIView.controlSpectrumOrientationHeight) : .zero
-        //The button height is reduced by spacing to leave a small gap to the camera controls below
+        //Height reduced by spacing to leave a gap to the camera controls below
         dialogButton.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - controlZoomSize.height - controlSize.height - controlSpectrumOrientationAnalysisSize.height - 2*spacing, width: bottomWidth, height: max(controlSpectrumOrientationAnalysisSize.height - spacing, 0.0))
         if isFullscreenLandscape, controlsVisible, let settings = cameraSettingUIView {
-            //Top-aligned with the headline, risking a collision to buy some space, and pushed
-            //to the right edge - like on Android
+            //Top-aligned with the headline and pushed to the right edge, like on Android
             settings.frame = CGRect(x: frame.width - controlColumnWidth,
                                     y: spacing,
                                     width: controlColumnWidth, height: frame.height - 2*spacing)
@@ -328,8 +316,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         let metalTop: CGFloat
         let metalAvailableHeight: CGFloat
         if isFullscreenLandscape {
-            //Landscape height is scarce: no decorative margins, the preview reaches from right
-            //below the header to the bottom edge (or the value picker rows when they are open)
+            //Height is scarce: the preview reaches from below the header to the bottom edge (or the open picker rows)
             let bottomRows = controlExtraSize.height + controlZoomSize.height + controlSpectrumOrientationAnalysisSize.height
             metalTop = headSize.height + spacing
             metalAvailableHeight = frame.height - metalTop - bottomRows - (bottomRows > 0 ? spacing : 0)
@@ -550,7 +537,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         dialogButton.addTarget(self, action: #selector(showSpectrumOrientationDialog), for: .touchUpInside)
 
         updateSpectrumOrientationButtonIcon()
-        //Same label as the (untranslated) text of the corresponding Android button
+        //Same label as the corresponding Android button
         dialogButton.setTitle(localize("spectrum_orientation"), for: .normal)
         dialogButton.setTitleColor(UIColor(named: "textColor") ?? .white, for: .normal)
         dialogButton.titleLabel?.font = .systemFont(ofSize: 12)
@@ -786,8 +773,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     @objc func showSpectrumOrientationDialog() {
 
-        //Like on Android, the user only picks the orientation of the device relative to the
-        //spectrum. A change is applied immediately; OK just dismisses the dialog.
+        //Like on Android only the device orientation is picked; a change applies immediately, OK just dismisses
         let dialogView = SpectrumAnalysisConfigurationDialogView(
             description: localize("which_spectrum_orientation"),
             options: [localize("landscape_orientation"), localize("portrait_orientation")],
@@ -938,8 +924,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
 
         guard let cameraModel = cameraModelOwner?.cameraModel else { return }
         let lockedControls = cameraModel.locked.keys
-        //While auto exposure is enabled, it controls shutter speed and ISO itself, so these
-        //cannot be set by the user
+        //Auto exposure controls shutter speed and ISO itself, so the user cannot
         let autoExposure = cameraModel.autoExposureEnabled
 
         shutterSpeedButton.setLocked(autoExposure || lockedControls.contains("shutter_speed"))
@@ -1037,7 +1022,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
 }
 
 // MARK: - camera setting values collection cell
-@available(iOS 14.0, *)
 class CameraSettingValueViewCell: UICollectionViewCell {
     
     static let identifier = "CameraSettingValueViewCell"
@@ -1084,7 +1068,6 @@ class CameraSettingValueViewCell: UICollectionViewCell {
 }
 
 
-@available(iOS 14.0, *)
 class ZoomSlider : UISlider , ZoomButtonViewDelegate{
     
     let cameraModel: CameraSettingsModel
@@ -1170,7 +1153,6 @@ public struct AlertError {
 }
 
 
-@available(iOS 14.0, *)
 extension ExperimentCameraUIView: VisibilityControllableViewModule {
     var visibilityBuffer: DataBuffer? { descriptor.visibilityBuffer }
 }

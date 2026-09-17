@@ -31,6 +31,9 @@ class HttpGetService: NetworkService {
     
     var address: String? = nil
     var data: Data?
+    //Callbacks read the response back via getResults(), so store+callbacks and the clear in execute()
+    //are each one step under this lock. getResults() runs inside the locked callbacks: no lock there.
+    private let resultLock = NSLock()
     
     func connect(address: String) {
         self.address = address
@@ -45,7 +48,9 @@ class HttpGetService: NetworkService {
             requestCallbacks.forEach{$0.requestFinished(result: .noConnection)}
             return
         }
+        resultLock.lock()
         data = nil
+        resultLock.unlock()
         
         guard var url = URLComponents(string: address) else {
             requestCallbacks.forEach{$0.requestFinished(result: .genericError(message: "No valid URL: \(address)"))}
@@ -91,8 +96,10 @@ class HttpGetService: NetworkService {
                 return
             }
                 
+            self.resultLock.lock()
             self.data = data
             requestCallbacks.forEach{$0.requestFinished(result: .success)}
+            self.resultLock.unlock()
         }
         task.resume()
     }
@@ -110,6 +117,9 @@ class HttpPostService: NetworkService {
     
     var address: String? = nil
     var data: Data?
+    //Callbacks read the response back via getResults(), so store+callbacks and the clear in execute()
+    //are each one step under this lock. getResults() runs inside the locked callbacks: no lock there.
+    private let resultLock = NSLock()
     
     func connect(address: String) {
         self.address = address
@@ -124,7 +134,9 @@ class HttpPostService: NetworkService {
             requestCallbacks.forEach{$0.requestFinished(result: .noConnection)}
             return
         }
+        resultLock.lock()
         data = nil
+        resultLock.unlock()
         
         guard let url = URL(string: address) else {
             requestCallbacks.forEach{$0.requestFinished(result: .genericError(message: "No valid URL: \(address)"))}
@@ -192,8 +204,10 @@ class HttpPostService: NetworkService {
                 return
             }
                 
+            self.resultLock.lock()
             self.data = data
             requestCallbacks.forEach{$0.requestFinished(result: .success)}
+            self.resultLock.unlock()
         }
         task.resume()
     }
@@ -206,19 +220,9 @@ class HttpPostService: NetworkService {
     }
 }
 
-/**
- Base class of the MQTT network services, driving the from-scratch `MqttClient` (MQTT 3.1.1, no
- external dependency - it replaced CocoaMQTT). The concrete subclasses only choose the payload
- format (JSON or CSV) and whether TLS and authentication are used, mirroring the class structure
- on Android (NetworkConnection/Mqtt/MqttService.java). See network-mqtts-unofficial in
- phyphox-docs.
-
- The former QoS-2 "persistence" mode is gone: persistence="true" now publishes with QoS 1
- (at-least-once) while connected, and there is no more offline message buffering. Plain publishes
- use QoS 0.
- */
+//Base class of the MQTT services on top of MqttClient; subclasses pick payload format (JSON/CSV), TLS and auth,
+//mirroring Android's NetworkConnection/Mqtt/MqttService.java. persistence="true" means QoS 1, else QoS 0.
 class MqttService: MqttClientDelegate {
-    //Configuration, set by the concrete subclasses before connect()
     var receiveTopic: String = ""
     var clientID: String = ""
     var username: String? = nil
@@ -234,8 +238,7 @@ class MqttService: MqttClientDelegate {
     private var data: [Data] = []
     private let dataLock = NSLock()
 
-    //Resources this service needs from the experiment container, so the certificate is copied
-    //along when the experiment is saved to the collection, like an image resource
+    //The certificate is a container resource, copied along with the experiment like an image
     var resources: [String] {
         if let certificateFileName = certificateFileName, !certificateFileName.isEmpty {
             return [certificateFileName]
@@ -249,9 +252,7 @@ class MqttService: MqttClientDelegate {
 
         var customCACertificate: SecCertificate? = nil
         if tls, let certificateFileName = certificateFileName, !certificateFileName.isEmpty {
-            //A named certificate that cannot be loaded is an error - silently falling back to the
-            //system trust store would connect with a different trust model than the experiment
-            //author intended
+            //An unloadable certificate is an error, not a fallback to the system trust store
             guard let file = experiment?.resolveResource(certificateFileName), let certificate = MqttService.loadCertificate(from: file) else {
                 connectionError = "Certificate \"\(certificateFileName)\" could not be loaded."
                 return
@@ -259,7 +260,6 @@ class MqttService: MqttClientDelegate {
             customCACertificate = certificate
         }
 
-        //Parse host and port out of the address, which may carry a scheme prefix
         var hostPort = address
         if let schemeRange = hostPort.range(of: "://") {
             hostPort = String(hostPort[schemeRange.upperBound...])
@@ -310,9 +310,7 @@ class MqttService: MqttClientDelegate {
 
     func getState() -> NetworkServiceResult {
         if !(client?.connected ?? false) {
-            //The client reconnects on its own with exponential backoff; here we only report.
-            //Keeping the last error gives the user a descriptive message (e.g. the CONNACK
-            //return code) instead of a generic "no connection".
+            //The client reconnects on its own; only report, with the last error (e.g. CONNACK code) if any
             if let connectionError = connectionError {
                 return NetworkServiceResult.genericError(message: "MQTT: \(connectionError)")
             }
@@ -328,7 +326,7 @@ class MqttService: MqttClientDelegate {
         client?.publish(topic: topic, payload: Data(payload.utf8), qos: qos)
     }
 
-    //Loads a CA certificate in PEM or DER form (.pem/.crt/.cer/.der)
+    //PEM or DER (.pem/.crt/.cer/.der)
     static func loadCertificate(from url: URL) -> SecCertificate? {
         guard let data = try? Data(contentsOf: url) else {
             return nil
@@ -336,7 +334,7 @@ class MqttService: MqttClientDelegate {
         if let certificate = SecCertificateCreateWithData(nil, data as CFData) {
             return certificate //DER
         }
-        //PEM: extract the first CERTIFICATE block and decode its base64 payload
+        //PEM: first CERTIFICATE block
         guard let text = String(data: data, encoding: .utf8),
               let beginRange = text.range(of: "-----BEGIN CERTIFICATE-----"),
               let endRange = text.range(of: "-----END CERTIFICATE-----"),
@@ -407,7 +405,6 @@ class MqttJsonService: MqttService, NetworkService {
         self.username = username //optional: nil connects without authentication
         self.password = password
         self.clientID = "phyphox_" + String(format: "%06x", Int(CFAbsoluteTimeGetCurrent()*1e9) & 0xffffff)
-        //persistence now selects at-least-once delivery (QoS 1) instead of the former QoS 2
         self.qos = persistence ? 1 : 0
     }
 

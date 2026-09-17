@@ -174,9 +174,8 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     let showColorScale: Bool
     let interpolateMapColors: Bool
     
-    //Data picker configuration: slots of six (x, xcal, y, ycal, z, zcal),
-    //repeating for further picks on the same axis. A cal slot prompts the user
-    //for a value assigned to the pick written by the preceding plain slot.
+    //Data picker slots of six (x, xcal, y, ycal, z, zcal), repeating per further pick on the axis; a cal slot prompts
+    //the user for a value assigned to the preceding plain slot's pick
     struct PickOutput: Equatable {
         let label: String
         let buffer: DataBuffer
@@ -300,10 +299,8 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         var rescale = ""
         var scaleX = ""
         if followX && minX.isFinite && maxX.isFinite {
-            //The graph follows the data: Keep the window width given by the minX and maxX
-            //attributes, but anchor its end at the newest x value of the data, mirroring the
-            //behavior of the graph view in the app. Before any data arrives (or after the data
-            //has been cleared) the initial range from the attributes is used.
+            //Follow the data like the app does: keep the window width from minX/maxX but anchor its end at the newest x;
+            //before any data arrives (or after clearing) the attribute range is used
             scaleX += "\"min\":\(minX), \"max\":\(maxX), "
             rescale += "if (elementData[\(id)][\"datasets\"][0][\"data\"].length > 0) {"
             rescale += "elementData[\(id)][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;"

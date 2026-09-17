@@ -41,7 +41,7 @@ jobs:
           UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print([x['udid'] for r in sorted(d) for x in d[r] if x.get('isAvailable') and x['name'].startswith('iPhone')][-1])")
           test -n "$UDID"
           xcrun simctl boot "$UDID"
-          xcrun simctl bootstatus "$UDID" -b
+          bash phyphox-ios/.github/scripts/wait_for_boot.sh "$UDID"
           echo "UDID=$UDID" >> "$GITHUB_ENV"
 
       - name: Tests, system appearance light

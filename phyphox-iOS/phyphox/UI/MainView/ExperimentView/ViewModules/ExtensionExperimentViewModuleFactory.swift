@@ -12,7 +12,6 @@ import SwiftUI
 
 extension ExperimentViewModuleFactory {
     
-    @available(iOS 13.0, *)
     class func createSwiftUiViews(_ viewDescriptor: ExperimentViewCollectionDescriptor) -> [UIView] {
         
         var views: [UIView] = []
@@ -20,15 +19,10 @@ extension ExperimentViewModuleFactory {
         /**
         for descriptor in viewDescriptor.views {
             if let descriptor = descriptor as? CameraViewDescriptor {
-                if #available(iOS 14.0, *) {
-                    // TODO need to pass descriptor in view argument.
-                    let hostingController = UIHostingController(rootView: PhyphoxCameraView())
-                    views.append(hostingController.view)
-                    //views.append(UIHostingController(rootView: PhyphoxCameraView()).view)
-                } else {
-                    // Fallback on earlier versions
-                }
-
+                // TODO need to pass descriptor in view argument.
+                let hostingController = UIHostingController(rootView: PhyphoxCameraView())
+                views.append(hostingController.view)
+                //views.append(UIHostingController(rootView: PhyphoxCameraView()).view)
             } else {
                 print("Error! Invalid view descriptor: \(descriptor)")
             }

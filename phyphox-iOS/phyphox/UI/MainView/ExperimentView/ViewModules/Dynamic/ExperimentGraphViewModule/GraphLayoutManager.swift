@@ -25,8 +25,7 @@ class GraphLayoutManager {
     private var markerLabelFrame: UIView?
     var buttonView: UIView?
 
-    //Data picker: one button per configured pick output, shown with the marker
-    //label while a point is selected in pick mode. Set by the graph view.
+    //Data picker: one button per pick output, shown with the marker label while a point is selected; set by the graph view
     var pickButtons: [(slot: Int, title: String)] = []
     var onPickButtonTapped: ((Int) -> Void)?
     
@@ -48,14 +47,9 @@ class GraphLayoutManager {
     init(descriptor: GraphViewDescriptor, gridView: GraphGridView, zGridView: GraphGridView?) {
         self.descriptor = descriptor
         
-        if #available(iOS 13.0, *) {
-            let config = UIImage.SymbolConfiguration(pointSize: 25, weight: .regular, scale: .default)
-            self.unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: config))
-            self.unfoldMoreImageView = UIImageView(image: UIImage(systemName: "arrow.up.left.and.arrow.down.right", withConfiguration: config))
-        } else {
-            self.unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
-            self.unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
-        }
+        let config = UIImage.SymbolConfiguration(pointSize: 25, weight: .regular, scale: .default)
+        self.unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: config))
+        self.unfoldMoreImageView = UIImageView(image: UIImage(systemName: "arrow.up.left.and.arrow.down.right", withConfiguration: config))
         
         // Initialize labels
         self.xLabel = Self.makeLabel(descriptor.systemTime ? descriptor.localizedXLabelWithTimezone : descriptor.localizedXLabelWithUnit)
@@ -148,6 +142,7 @@ class GraphLayoutManager {
         markerLabelFrame?.layer.borderWidth = 1.0
         markerLabelFrame?.layer.borderColor = UIColor(named: "separatorColor")?.cgColor
         markerLabelFrame?.isUserInteractionEnabled = false
+        markerLabelFrame?.accessibilityIdentifier = "graph.readout"
     }
     
     func createMarkerLabel(){
@@ -186,6 +181,8 @@ class GraphLayoutManager {
         }
 
         markerLabel?.text = text
+        //New content after a touch, for assistive technology
+        UIAccessibility.post(notification: .layoutChanged, argument: markerLabel)
 
         let padding = 10.0
         let verticalSpacing = 10.0
@@ -198,8 +195,7 @@ class GraphLayoutManager {
         if let buttonView = buttonView {
             buttonView.setNeedsLayout()
             buttonView.layoutIfNeeded()
-            //Fitting-size on both axes, so the box hugs its content instead of
-            //stretching to the available width
+            //Fitting size on both axes, so the box hugs its content
             buttonViewSize = buttonView.systemLayoutSizeFitting(
                 CGSize(width: contentWidth, height: UIView.layoutFittingCompressedSize.height),
                 withHorizontalFittingPriority: .fittingSizeLevel,
@@ -317,8 +313,7 @@ class GraphLayoutManager {
 
         // Layout toolbar if in exclusive mode
         if resizableState == .exclusive, let toolbar = toolbar {
-            //In landscape the toolbar becomes a vertical strip at the right edge so the graph
-            //keeps the full (scarce) height, like on Android
+            //Landscape: vertical toolbar strip at the right edge so the graph keeps the full height, like on Android
             let isLandscape = bounds.width > bounds.height
             toolbar.vertical = isLandscape
             let toolbarSize = toolbar.sizeThatFits(bounds.size)

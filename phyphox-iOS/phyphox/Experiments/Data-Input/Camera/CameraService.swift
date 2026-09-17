@@ -19,7 +19,6 @@ protocol CameraMetalTextureProvider {
     func safeTextureAccess(_ block: () -> Void)
 }
 
-@available(iOS 14.0, *)
 public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, CameraMetalTextureProvider, ExposureStatisticsListener {
     
     var cameraImageTextureY: CVMetalTexture?
@@ -224,8 +223,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         if !cameraModel.autoExposureEnabled {
             return
         }
-        //Auto exposure only ever adjusts ISO and shutter speed, so locked settings need to be
-        //excluded from its strategy. If both are locked, there is nothing left to adjust.
+        //Locked settings are excluded from auto exposure; with both locked there is nothing left to adjust
         let isoLocked = cameraModel.locked.keys.contains("iso")
         let shutterLocked = cameraModel.locked.keys.contains("shutter_speed")
         if isoLocked && shutterLocked {
@@ -247,9 +245,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             maxExposureTime = CMTime(value: 1, timescale: 15)
         case .prioritizeFramerate:
             adjust = 1.0 - speedfactor * 0.1 * (meanLuma - targetExposure)
-            //With aeFPSTarget set, its inverse acts as the maximum exposure time to at least
-            //achieve the target frame rate; otherwise the shortest supported frame duration
-            //is used, like on Android
+            //1/aeFPSTarget caps the exposure time, else the shortest supported frame duration does, like on Android
             if cameraModel.aeFPSTarget > 0.0 {
                 maxExposureTime = CMTime(value: Int64(1_000_000_000/cameraModel.aeFPSTarget), timescale: 1_000_000_000)
             } else {
@@ -291,7 +287,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
 
         if shutterLocked {
-            //Only the ISO may be changed, so pick the available ISO that gets closest to the required adjustment
+            //Only the ISO may change: pick the available ISO closest to the required adjustment
             let targetIso = Double(iso) * adjust
             var isoOption = iso
             var optionRating = Double.greatestFiniteMagnitude
@@ -374,7 +370,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             do {
                 let videoDeviceInput = try AVCaptureDeviceInput(device: newVideoDevice)
 
-                //The old camera would keep its locked configuration beyond this session otherwise
+                //Otherwise the old camera keeps its locked configuration beyond this session
                 self.releaseConfigurationLocks()
 
                 self.session.beginConfiguration()
@@ -718,11 +714,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
     }
 
-    //Locks the focus at a given distance in meters, zero denoting infinity, as this is more
-    //intuitive than the dioptres or the uncalibrated lens position used by the camera APIs.
-    //Besides being desirable for a fixed setup, disabling the autofocus prevents focus drift
-    //that would ruin a spectroscopy calibration. There is no UI element for this, so it can
-    //only be locked to an explicit value and the autofocus stays enabled if there is none.
+    //Locks the focus at a distance in meters (0 = infinity); no UI for this, so only an explicit value locks it.
+    //Besides suiting a fixed setup, this prevents focus drift that would ruin a spectroscopy calibration.
     func setFocusDistanceLock(_ distance: Float) {
         guard distance >= 0.0 else {
             print("Ignoring negative locked focus distance: \(distance)")
@@ -733,10 +726,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 print("Cannot lock the focus distance as this camera does not support a custom lens position.")
                 return
             }
-            //The API takes an uncalibrated lens position from 0.0 (closest) to 1.0 (furthest)
-            //instead of a physical distance. Assuming the lens position to be proportional to
-            //dioptres (reasonable for a voice-coil actuator), the requested distance is mapped
-            //linearly in dioptres between infinity (1.0) and the closest focus distance (0.0).
+            //The API takes a lens position 0.0 (closest) to 1.0 (infinity); assuming it proportional to dioptres, the
+            //distance is mapped linearly in dioptres between infinity and the closest focus distance
             let lensPosition: Float
             if distance == 0.0 {
                 lensPosition = 1.0
@@ -754,12 +745,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
     }
 
-    //Configuration applied to the capture device via lockForConfiguration - a locked focus, a
-    //custom exposure (set by the locked attribute, the manual controls and phyphox's own auto
-    //exposure alike) or a locked white balance - sticks to the shared device beyond the
-    //lifetime of this session and would affect every other camera user in the app, including
-    //the QR code scanner. So everything is returned to its automatic mode when the camera
-    //session ends or switches to another camera.
+    //Locked focus, custom exposure and locked white balance stick to the shared device beyond this session and
+    //would affect every other camera user (e.g. the QR scanner), so all return to automatic on session end/switch
     func releaseConfigurationLocks() {
         lockConfig { (_ camera: AVCaptureDevice) -> () in
             if camera.focusMode == .locked {

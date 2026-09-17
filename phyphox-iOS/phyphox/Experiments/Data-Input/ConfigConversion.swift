@@ -12,12 +12,9 @@ protocol ConfigConversion {
     func convert(data: String) -> Data
 }
 
-//Numeric helpers shared by the BLE config and output conversions. They replicate Java's
-//primitive cast semantics so the resulting bytes are identical to Android's implementation
-//(ConversionsConfig/ConversionsOutput).
+//Java cast semantics for the BLE config/output conversions, byte-identical to Android's ConversionsConfig/Output
 enum JavaByteConversion {
-    //Double to integer like a Java (int) cast: NaN becomes 0, out-of-range values saturate,
-    //everything else is truncated towards zero.
+    //Like a Java (int) cast: NaN becomes 0, out-of-range values saturate, else truncated towards zero
     static func toInt32(_ value: Double) -> Int32 {
         if value.isNaN {
             return 0

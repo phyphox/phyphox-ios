@@ -8,7 +8,6 @@
 
 import Foundation
 
-@available(iOS 14.0, *)
 class AnalyzingModule {
     
     static var metalDevice: MTLDevice?

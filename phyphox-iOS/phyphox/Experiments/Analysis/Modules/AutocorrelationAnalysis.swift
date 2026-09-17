@@ -68,9 +68,7 @@ final class AutocorrelationAnalysis: AutoClearingExperimentAnalysisModule {
                 count = min(xIn.data.count, count);
             }
             
-            //x is needed for the x output, but also for min/max filtering when no x output is
-            //connected. An omitted x output must simply be skipped, like on Android - building
-            //x only in that case trapped on the forced unwrap below.
+            //x also serves min/max filtering when no x output is connected; an omitted x output is skipped, like on Android
             var x: [Double] = []
 
             if xOut != nil || needsFiltering {

@@ -132,7 +132,6 @@ class ConnectedBleDeviceCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    @available(iOS 13.0, *)
     func getSignal(rssi: Int) -> UIImage{
       
         if rssi > -35 {
@@ -150,7 +149,6 @@ class ConnectedBleDeviceCell: UICollectionViewCell {
         
     }
     
-    @available(iOS 13.0, *)
     func getBatteryLevel(level: Int) -> UIImage{
         let config = UIImage.SymbolConfiguration(
             pointSize: 25, weight: .medium, scale: .default)
@@ -176,7 +174,6 @@ class ConnectedBleDeviceCell: UICollectionViewCell {
     }
     
     
-    @available(iOS 13.0, *)
     func getImageAsDeviceMode(image: UIImage) -> UIImage{
         if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
             return image.withTintColor(.black, renderingMode: .alwaysOriginal)
@@ -193,12 +190,8 @@ class ConnectedBleDeviceCell: UICollectionViewCell {
     
     func configure(model: ConnectedDevicesDataModel){
         deviceLabel.text = model.getDeviceName()
-        if #available(iOS 13.0, *) {
-            signalImageView.image = getImageAsDeviceMode(image: getSignal(rssi: model.getSignalStrength()))
-            batteryImageView.image = getImageAsDeviceMode(image: getBatteryLevel(level: model.getBatteryLabel()))
-        } else {
-            // Fallback on earlier versions
-        }
+        signalImageView.image = getImageAsDeviceMode(image: getSignal(rssi: model.getSignalStrength()))
+        batteryImageView.image = getImageAsDeviceMode(image: getBatteryLevel(level: model.getBatteryLabel()))
     }
     
 }

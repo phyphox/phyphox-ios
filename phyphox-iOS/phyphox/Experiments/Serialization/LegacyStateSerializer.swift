@@ -18,7 +18,7 @@ final class LegacyStateSerializer {
         let data = try String(contentsOf: file, encoding: .utf8)
         let modifiedData = data.replacingOccurrences(
             of: "<state-title>.*<\\/state-title>",
-            with: "<state-title>\(customTitle.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;"))</state-title>",
+            with: "<state-title>\(customTitle.xmlEscaped)</state-title>",
             options: .regularExpression
         )
         try modifiedData.write(to: file, atomically: true, encoding: .utf8)
@@ -108,9 +108,8 @@ final class LegacyStateSerializer {
             throw stateError.SourceError("No valid data containers block found.")
         }
         
-        //The values of every container are copied in ONE go under the experiment's data lock, so
-        //a saved state cannot catch an analysis cycle half applied - the same treatment the
-        //export got, and for the same reason (see ExperimentExport.snapshot; Android: 2b8d7acf)
+        //All containers are copied in ONE go under the data lock, so a saved state cannot catch an analysis cycle half
+        //applied (same reason as ExperimentExport.snapshot; Android: 2b8d7acf)
         let contents: [String: [Double]] = experiment.dataLock.read {
             var contents: [String: [Double]] = [:]
             for buffer in experiment.buffers {
@@ -136,7 +135,7 @@ final class LegacyStateSerializer {
             newBlock += buffer.value.name
             newBlock += "</container>\n"
         }
-        let customTitle = "<state-title>\(customTitle.replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;"))</state-title>"
+        let customTitle = "<state-title>\(customTitle.xmlEscaped)</state-title>"
         let color = "<color>blue</color>"
         var events = "<events>"
         for event in experiment.timeReference.timeMappings {

@@ -125,10 +125,8 @@ final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewT
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
-        if #available(iOS 13.0, *) {
-            if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-                button.setTitleColor(button.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
-            }
+        if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            button.setTitleColor(button.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
         }
     }
 }

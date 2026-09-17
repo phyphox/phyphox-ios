@@ -13,9 +13,7 @@ protocol ExperimentWebServerDelegate: AnyObject {
     var timerRunning: Bool { get }
     var remainingTimerTime: Double { get }
     
-    //Answers whether the measurement (or, with a timed run, its countdown) actually began.
-    //A start can be refused, most commonly by a Bluetooth device that is not connected yet,
-    //and /control?cmd=start has to report that (control-start-refused).
+    //Whether the measurement (or its countdown) actually began; /control?cmd=start reports a refusal (control-start-refused)
     func startExperiment() -> Bool
     func stopExperiment()
     func clearData(clearGroups: [String])
@@ -49,9 +47,7 @@ final class ExperimentWebServer {
         self.experiment = experiment
     }
 
-    //CORS: allow cross-origin browser pages to read remote-access responses, matching the
-    //Android implementation (RemoteServer.respond()). Wraps a handler's completion block so
-    //every response, including error responses, carries the header.
+    //CORS on every response including errors, matching Android (RemoteServer.respond())
     private static func cors(_ completionBlock: @escaping GCDWebServerCompletionBlock) -> GCDWebServerCompletionBlock {
         return { response in
             response?.setValue("*", forAdditionalHeader: "Access-Control-Allow-Origin")
@@ -59,19 +55,15 @@ final class ExperimentWebServer {
         }
     }
 
-    //An error response is never empty: it carries {"error": "<reason>"} as application/json
-    //whatever the status code, the pattern /export and /res already use
-    //(error-response-content-type in phyphox-docs; must stay in step with Android). The reason
-    //is human-readable and not part of the contract - clients must not match on it.
+    //Error responses carry {"error": "<reason>"} as application/json whatever the status (error-response-content-type in
+    //phyphox-docs, in step with Android); the reason is not part of the contract
     private static func errorResponse(statusCode: Int, reason: String) -> GCDWebServerResponse? {
         let response = GCDWebServerDataResponse(jsonObject: ["error": reason])
         response?.statusCode = statusCode
         return response
     }
 
-    //Registers a handler for both GET and POST: every endpoint accepts POST as well as GET with
-    //the same parameters (see control-post in phyphox-docs). POST is registered with
-    //GCDWebServerDataRequest so the request body is available to requestParams.
+    //Every endpoint accepts POST as well as GET (control-post); POST uses GCDWebServerDataRequest so requestParams sees the body
     private func addGETPOSTHandler(pathRegex: String, asyncProcessBlock: @escaping (GCDWebServerRequest, @escaping GCDWebServerCompletionBlock) -> Void) {
         server!.addHandler(forMethod: "GET", pathRegex: pathRegex, request: GCDWebServerRequest.self, asyncProcessBlock: asyncProcessBlock)
         server!.addHandler(forMethod: "POST", pathRegex: pathRegex, request: GCDWebServerDataRequest.self, asyncProcessBlock: asyncProcessBlock)
@@ -82,10 +74,17 @@ final class ExperimentWebServer {
         return s.replacingOccurrences(of: "+", with: " ").removingPercentEncoding
     }
 
-    //Coerce every scalar to its string form; JSON null becomes an empty value, as an empty form
-    //field would. Nested objects/arrays are not part of this flat API and simply stringify (and
-    //will then fail the value parsing of the endpoint). Must stay in step with Android
-    //(RemoteServer.requestParamsList).
+    //Adds the key=value pairs of a form body or URL query, the first occurrence of a key winning like on Android
+    private static func addFormParams(_ encoded: String, to params: inout [String: String]) {
+        for item in encoded.components(separatedBy: "&") {
+            let c = item.components(separatedBy: "=")
+            guard let key = formDecode(c[0]), !key.isEmpty, params[key] == nil else { continue }
+            params[key] = c.count > 1 ? (formDecode(c.dropFirst().joined(separator: "=")) ?? "") : ""
+        }
+    }
+
+    //Scalars stringify, null becomes empty like an empty form field, nested values just stringify; in step with Android
+    //(RemoteServer.requestParamsList)
     private static func coerceJSONValue(_ value: Any) -> String {
         if value is NSNull {
             return ""
@@ -105,10 +104,8 @@ final class ExperimentWebServer {
         return ""
     }
 
-    //Reads the request's parameters: the query string plus, for a POST, a JSON or form-encoded
-    //body chosen by Content-Type, with body parameters taking precedence over query parameters
-    //of the same name (control-post; must stay in step with Android's requestParams). Answers
-    //400 and returns nil for a malformed or oversized body.
+    //Query string plus a JSON or form body chosen by Content-Type, body winning over query (control-post, in step with
+    //Android's requestParams); answers 400 and returns nil for a malformed or oversized body
     private static func requestParams(_ request: GCDWebServerRequest, orRespond completionBlock: @escaping GCDWebServerCompletionBlock) -> [String: String]? {
         var params: [String: String] = [:]
 
@@ -123,8 +120,7 @@ final class ExperimentWebServer {
             }
             let contentType = (request.contentType ?? "").lowercased()
             if contentType.hasPrefix("application/json") {
-                //A flat JSON object; anything else, including bare Infinity/NaN, is a malformed
-                //body
+                //Only a flat JSON object; anything else, including bare Infinity/NaN, is a malformed body
                 guard let obj = try? JSONSerialization.jsonObject(with: dataRequest.data), let dict = obj as? [String: Any] else {
                     return malformed()
                 }
@@ -135,19 +131,13 @@ final class ExperimentWebServer {
                 guard let body = String(data: dataRequest.data, encoding: .utf8) else {
                     return malformed()
                 }
-                for item in body.components(separatedBy: "&") {
-                    let c = item.components(separatedBy: "=")
-                    guard let key = formDecode(c[0]), !key.isEmpty, params[key] == nil else { continue }
-                    params[key] = c.count > 1 ? (formDecode(c.dropFirst().joined(separator: "=")) ?? "") : ""
-                }
+                addFormParams(body, to: &params)
             }
             //Any other content type: the body is ignored, like on Android
         }
 
-        if let queryString = URLComponents(url: request.url, resolvingAgainstBaseURL: true)?.query {
-            for (key, value) in queryDictionary(queryString) where params[key] == nil && !key.isEmpty {
-                params[key] = value
-            }
+        if let queryString = URLComponents(url: request.url, resolvingAgainstBaseURL: true)?.percentEncodedQuery {
+            addFormParams(queryString, to: &params)
         }
 
         return params
@@ -189,8 +179,7 @@ final class ExperimentWebServer {
         
         server = GCDWebServer()
         
-        //Serves the prepared web interface files. Replaces GCDWebServer's addGETHandler so the
-        //CORS header is present on the static files as well.
+        //Replaces GCDWebServer's addGETHandler so the static files carry the CORS header as well
         let staticPath = path
         addGETPOSTHandler(pathRegex: "/.*", asyncProcessBlock: { (request, completionBlock) in
             let completionBlock = ExperimentWebServer.cors(completionBlock)
@@ -225,11 +214,8 @@ final class ExperimentWebServer {
             }
             
             guard let query = ExperimentWebServer.requestParams(request, orRespond: completionBlock) else { return }
-            //Resolves against the experiment's res folder with a fallback to the images
-            //bundled with phyphox, matching the fallback of the image view element. The content
-            //type is always application/octet-stream - the client determines what it received
-            //(res-content-type) - and a missing src answers the same "Unknown file." as an
-            //unknown one (res-fallback).
+            //Experiment res folder with fallback to the bundled images, like the image view element. Always application/octet-stream
+            //(res-content-type); a missing src answers "Unknown file." like an unknown one (res-fallback)
             if let src = query["src"], self.experiment.resources.contains(src), let file = self.experiment.resolveResource(src), let data = try? Data(contentsOf: file) {
                 completionBlock(GCDWebServerDataResponse(data: data, contentType: "application/octet-stream"))
                 return
@@ -247,8 +233,7 @@ final class ExperimentWebServer {
                         
             guard let query = ExperimentWebServer.requestParams(request, orRespond: completionBlock) else { return }
 
-            //Error messages match the Android implementation: a missing or non-numeric format
-            //is "Invalid format.", a numeric one outside the format list "Format out of range."
+            //Error messages match Android: "Invalid format." for missing/non-numeric, "Format out of range." otherwise
             if let formatStr = query["format"], Int(formatStr) != nil {
                 if let format = WebServerUtilities.mapFormatString(formatStr) {
                     self.delegate!.runExport(self.experiment.export!, singleSet: false, format: format) { error, URL in
@@ -290,9 +275,7 @@ final class ExperimentWebServer {
             let cmd = query["cmd"]
             
             if cmd == "start" {
-                //Unlike the other commands, the answer says whether the measurement began and
-                //not merely that the command was accepted, so wait for the attempt on the main
-                //thread and report its outcome (control-start-refused).
+                //The answer says whether the measurement began, so wait for the attempt on the main thread (control-start-refused)
                 mainThread {
                     if self.delegate!.startExperiment() {
                         returnSuccessResponse()
@@ -308,14 +291,11 @@ final class ExperimentWebServer {
                 returnSuccessResponse()
             }
             else if cmd == "clear" {
-                //Like on Android, clearGroup1, clearGroup2, ... name the clear groups the user
-                //selected; the first gap ends the list. The web interface sends them
-                //form-encoded, so a "+" stands for a space (the rest of the query arrives
-                //percent-decoded already).
+                //Like Android: clearGroup1, clearGroup2, ... up to the first gap
                 var clearGroups: [String] = []
                 var i = 1
                 while let clearGroup = query["clearGroup\(i)"] {
-                    clearGroups.append(clearGroup.replacingOccurrences(of: "+", with: " "))
+                    clearGroups.append(clearGroup)
                     i += 1
                 }
                 mainThread {
@@ -343,9 +323,7 @@ final class ExperimentWebServer {
                     return
                 }
                 
-                //An out-of-range index or an element that is not a button is a bad request:
-                //answer {"result": false} instead of reporting success for a trigger that was
-                //not performed (control-trigger-out-of-range)
+                //Out-of-range index or non-button element answers {"result": false} (control-trigger-out-of-range)
                 if elementIndex >= 0 && self.htmlId2ViewElement.count > elementIndex, let buttonDescriptor = self.htmlId2ViewElement[elementIndex] as? ButtonViewDescriptor {
                     self.delegate?.buttonPressed(viewDescriptor: buttonDescriptor, buttonViewTriggerCallback: nil)
                     returnSuccessResponse()
@@ -358,19 +336,15 @@ final class ExperimentWebServer {
             }
             })
 
-        //Bulk write of buffer values from a JSON body: the array-valued counterpart of
-        //control?cmd=set, specified in phyphox-docs (openapi.yaml, path /set). GET is
-        //registered so it can be answered with a clean result:false instead of a 405. Must
-        //stay in step with Android (RemoteServer.handleSet), error messages included.
+        //Bulk write from a JSON body, the array-valued counterpart of control?cmd=set (openapi.yaml, path /set); in step with
+        //Android (RemoteServer.handleSet), error messages included. GET is registered to answer result:false instead of a 405
         addGETPOSTHandler(pathRegex: "/set", asyncProcessBlock: { [unowned self] (request, completionBlock) in
             let completionBlock = ExperimentWebServer.cors(completionBlock)
             func returnSetError(_ error: String) {
                 completionBlock(GCDWebServerDataResponse(jsonObject: ["result": false, "error": error]))
             }
 
-            //A GET or a form-encoded body is a well-formed request that cannot carry the
-            //documented shape - rejected with result:false, while a body that is not
-            //parseable JSON at all (or not a JSON object) is a 400 like everywhere else
+            //GET or a form body is well-formed but cannot carry the documented shape: result:false; unparseable JSON is a 400
             guard let dataRequest = request as? GCDWebServerDataRequest, (request.contentType ?? "").lowercased().hasPrefix("application/json") else {
                 returnSetError("A JSON body of the form {\"buffers\": {...}} is required.")
                 return
@@ -413,17 +387,14 @@ final class ExperimentWebServer {
                 values.reserveCapacity(entries.count)
                 for entry in entries {
                     if entry is NSNull {
-                        //null is exactly the representation /get uses for every non-finite
-                        //value, so /get output can be fed back unchanged
+                        //null is what /get uses for non-finite values, so /get output feeds back unchanged
                         values.append(.nan)
                     }
                     else if let number = entry as? NSNumber, CFGetTypeID(number) != CFBooleanGetTypeID() {
                         values.append(number.doubleValue)
                     }
                     else if let string = entry as? String {
-                        //The file format's number lexical space, with the same helper the
-                        //experiment parser uses: "nan"/"Infinity"/"-infinity" work, "inf"
-                        //does not
+                        //The file format's number lexical space: "nan"/"Infinity"/"-infinity" work, "inf" does not
                         guard let value = parseExperimentNumber(string) else {
                             returnSetError("Invalid value \"\(string)\" for buffer \"\(name)\".")
                             return
@@ -439,9 +410,7 @@ final class ExperimentWebServer {
                 writes.append((buffer, values))
             }
 
-            //...then write: on any error above nothing was written. The buffer writes mark
-            //the analysis as having new data through the observer mechanism, exactly like
-            //cmd=set. An empty buffers object is a valid no-op.
+            //...then write; the writes mark the analysis through the observers like cmd=set. An empty buffers object is a valid no-op
             for (buffer, values) in writes {
                 if !append {
                     buffer.clear(reset: false) //Normal buffer semantics apply, so this cannot clear a written static buffer
@@ -458,23 +427,17 @@ final class ExperimentWebServer {
             }
             
             guard let query = ExperimentWebServer.requestParams(request, orRespond: completionBlock) else { return }
-            //A request without any parameters is fine: it answers an empty buffer object and
-            //the status object, the natural way to poll only the status (get-no-parameters)
+            //No parameters is fine: answers an empty buffer object plus the status (get-no-parameters)
             
             var mainDict = [String: AnyObject]()
 
             var bufferDict = [String: AnyObject]()
 
-            //Read the force-full flag once, so it is consistent with the snapshot below and with
-            //the reset at the end of the request
+            //Read once, so it is consistent with the snapshot and the reset at the end
             let forceFullUpdate = self.forceFullUpdate
 
-            //Snapshot all requested buffers (and any referenced threshold buffers) in one read on
-            //the experiment's data lock, so their lengths are mutually consistent even though inputs
-            //and analysis keep writing during the measurement. Without this, a buffer written to
-            //after another was already read comes back one sample longer (GitHub issue 22). The JSON
-            //is built afterwards, outside the lock, to keep the writers blocked as briefly as
-            //possible.
+            //Snapshot all requested buffers (and threshold buffers) under one data lock, so their lengths are mutually consistent
+            //(GitHub issue 22); the JSON is built outside the lock
             var snapshots: [String: (raw: [Double], size: Int)] = [:]
             var extraSnapshots: [String: [Double]] = [:]
             self.experiment.dataLock.read {
@@ -484,8 +447,7 @@ final class ExperimentWebServer {
                     }
                     snapshots[bufferName] = (raw: b.toArray(), size: b.size)
 
-                    //A partial request may reference a second buffer (t) as the threshold axis;
-                    //capture it in the same snapshot so it aligns with the data buffer
+                    //A partial request's threshold axis buffer (t) goes into the same snapshot so it aligns
                     if value.count > 0 && value != "full" && !forceFullUpdate {
                         let extraComponents = value.components(separatedBy: "|")
                         if extraComponents.count > 1, let extra = extraComponents.last, let extraBuffer = self.experiment.buffers[extra] {
@@ -506,8 +468,7 @@ final class ExperimentWebServer {
                 if value.count > 0 {
                     let raw = snapshot.raw
 
-                    //After a clear, every requested buffer is upgraded to a full update,
-                    //whatever its request asked for (get-force-full-update)
+                    //After a clear every buffer gets a full update (get-force-full-update)
                     if value == "full" || forceFullUpdate {
                         dict["updateMode"] = "full" as AnyObject
                         dict["buffer"] = raw.map({$0.isFinite ? $0 as AnyObject : NSNull() as AnyObject}) as AnyObject //The array may contain NaN or Inf, which will throw an error in the JSON conversion.
@@ -516,8 +477,7 @@ final class ExperimentWebServer {
                     }
                     else {
                         let extraComponents = value.components(separatedBy: "|")
-                        //A threshold that does not parse as a number is a malformed request
-                        //(get-invalid-threshold)
+                        //A non-numeric threshold is a malformed request (get-invalid-threshold)
                         guard let thresholdGiven = Double(extraComponents.first!) else {
                             returnErrorResponse("Invalid threshold.")
                             return
@@ -525,9 +485,8 @@ final class ExperimentWebServer {
                         
                         //We only offer 8-digit precision, so we need to move the threshold to avoid receiving a close number multiple times.
                         //Missing something will probably not be visible on a remote graph and a missing value will be recent after stopping anyway.
-                        //The nudge magnitude derives from the absolute value (log10 of a negative
-                        //threshold would be NaN and break the request); its direction stays
-                        //positive (get-negative-threshold)
+                        //Nudge magnitude from the absolute value (log10 of a negative would be NaN), direction stays positive
+                        //(get-negative-threshold)
                         let threshold = thresholdGiven.isFinite ? thresholdGiven + pow(10.0, floor(log10(abs(thresholdGiven)/1e7))) : thresholdGiven
                         
                         var final: [Double] = []
@@ -562,8 +521,7 @@ final class ExperimentWebServer {
                 }
                 else {
                     dict["updateMode"] = "single" as AnyObject
-                    //JSON has no representation for NaN or infinity, so a non-finite value is
-                    //null in every update mode (get-nonfinite-single-value)
+                    //JSON has no NaN/infinity: non-finite is null in every update mode (get-nonfinite-single-value)
                     if let v = snapshot.raw.last, v.isFinite {
                         dict["buffer"] = [v] as AnyObject
                     } else {
@@ -708,8 +666,7 @@ final class ExperimentWebServer {
                 case .uniqueId:
                     continue
                 default:
-                    //An unavailable value omits its key entirely instead of answering null
-                    //(meta-missing-value-representation)
+                    //An unavailable value omits its key instead of answering null (meta-missing-value-representation)
                     if let value = metadata.get(hash: "") {
                         json[metadata.identifier] = value as AnyObject
                     }
@@ -742,14 +699,10 @@ final class ExperimentWebServer {
             completionBlock(response)
         })
         
-        //-phyphoxRemotePort pins the port for unattended automation (see AutomationLaunchOptions
-        //in AppDelegate); otherwise the user's setting applies
+        //-phyphoxRemotePort (AutomationLaunchOptions) pins the port for automation; otherwise the user's setting applies
         let configuredPort = AutomationLaunchOptions.remotePort ?? UInt(UserDefaults.standard.string(forKey: "remoteAccessPort") ?? "80") ?? 80
 
-        //If the port setting is at its default, we assume that the user does not care (or might
-        //not even know) which port is used, so if the default port is taken, we try 8080 and then
-        //count upwards from there until we find a free one. A custom port, however, is used
-        //exactly as configured.
+        //Default port: if 80 is taken, try 8080 and count upwards; a custom port is used exactly as configured
         var candidates: [UInt] = [configuredPort]
         if configuredPort == 80 {
             candidates.append(contentsOf: (8080...8180).map { UInt($0) })

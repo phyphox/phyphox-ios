@@ -8,14 +8,9 @@
 import XCTest
 @testable import phyphox
 
-//Which languages this build enables, and how that compares to the canonical list and to Android
-//(test-matrix row translations-build).
-//
-//The hard assertion is narrow on purpose: every language the build enables must actually load
-//its strings. Everything else - a language the canonical list has and this build does not, or a
-//difference between the platforms - is a WARNING printed into the report, because development
-//drift is harmless and should stay visible rather than block. The release gate is T2, against
-//the built artifact.
+//Which languages this build enables, against the canonical list and Android (test-matrix row
+//translations-build). Only "every enabled language loads its strings" fails; drift is a printed WARNING,
+//since the release gate is T2 against the built artifact.
 final class TranslationsBuildTests: XCTestCase {
     ///What the platforms spell differently, mapped onto the canonical BCP-47 code
     private static func normalize(_ code: String) -> String {
@@ -34,8 +29,7 @@ final class TranslationsBuildTests: XCTestCase {
             .map { TranslationsBuildTests.normalize($0) })
     }
 
-    ///The canonical list, read from phyphox-docs without a YAML dependency: a flat sequence
-    ///under "languages:", one "- code" per line
+    ///The canonical list, read from phyphox-docs without a YAML dependency ("- code" lines under "languages:")
     private func canonicalLanguages() throws -> Set<String> {
         guard let docs = DocsCorpus.docs else {
             throw XCTSkip("phyphox-docs is not checked out next to this repository - language comparison not run")
@@ -77,8 +71,7 @@ final class TranslationsBuildTests: XCTestCase {
         XCTAssertFalse(enabled.isEmpty, "the bundle reports no localizations at all")
         XCTAssertTrue(enabled.contains("en"), "English is always there")
 
-        //A key that every translation carries: if the table is missing or unreadable, localized
-        //lookup falls back to the key itself
+        //A key every translation carries; a missing table falls back to the key itself
         let key = "cancel"
         for language in enabled.sorted() {
             //The bundle stores them under the platform's own spelling, so denormalize by lookup

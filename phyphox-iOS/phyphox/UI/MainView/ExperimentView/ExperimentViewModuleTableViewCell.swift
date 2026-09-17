@@ -24,6 +24,14 @@ final class ExperimentViewModuleTableViewCell: UITableViewCell {
         }
     }
 
+    //A cell caches its accessibility children once it is configured, so anything a module shows later (a graph's
+    //read-out, its pick buttons) stayed invisible to VoiceOver and UI automation. Naming the module as the only element
+    //keeps the traversal live; a module hidden by another one's maximized layout is left out.
+    override var accessibilityElements: [Any]? {
+        get { return module.flatMap { $0.isHidden ? nil : [$0] } }
+        set { }
+    }
+
     var topInset: CGFloat = 0.0 {
         didSet {
             setNeedsLayout()

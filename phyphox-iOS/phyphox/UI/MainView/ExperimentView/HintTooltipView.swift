@@ -9,11 +9,7 @@
 import Foundation
 import UIKit
 
-/// A small coach-mark bubble with an upward pointer, shown below the navigation bar to point at a
-/// top-bar button. It replaces the UIPopover-based hint for the experiment page: iOS 26 renders a
-/// popover anchored to a bar button item as a glass bubble placed over the very button it is meant
-/// to indicate, so the hint covered its target. This view is a plain subview we position ourselves,
-/// so it can never cover the bar.
+/// Coach-mark bubble with a pointer, positioned as a plain subview: an iOS 26 popover on a bar button covers the very button
 class HintTooltipView: UIView {
     private let bubble = UIView()
     private let label = UILabel()
@@ -30,8 +26,7 @@ class HintTooltipView: UIView {
     /// Horizontal position, in this view's coordinate space, the pointer tip should aim at.
     var pointerX: CGFloat = 0 { didSet { setNeedsLayout() } }
 
-    /// `pointsDown` puts the pointer at the bottom (bubble above it) for hints that point at
-    /// something below them, e.g. the support options at the end of the experiment list.
+    /// `pointsDown` puts the pointer at the bottom for hints pointing at something below them
     init(text: String, pointsDown: Bool = false, onDismiss: @escaping () -> Void) {
         self.onDismiss = onDismiss
         self.pointsDown = pointsDown

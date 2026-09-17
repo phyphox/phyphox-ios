@@ -35,8 +35,7 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
     
     private var queue: DispatchQueue?
 
-    //Reports authorization changes so the permission check can continue its dialog sequence
-    //once the user answered the system's location permission prompt
+    //Lets the permission check continue its dialog sequence once the user answered the system prompt
     var onAuthorizationChange: ((CLAuthorizationStatus) -> Void)?
 
     init (latBuffer: DataBuffer?, lonBuffer: DataBuffer?, zBuffer: DataBuffer?, zWgs84Buffer: DataBuffer?, vBuffer: DataBuffer?, dirBuffer: DataBuffer?, accuracyBuffer: DataBuffer?, zAccuracyBuffer: DataBuffer?, tBuffer: DataBuffer?, statusBuffer: DataBuffer?, satellitesBuffer: DataBuffer?, timeReference: ExperimentTimeReference) {
@@ -85,14 +84,8 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
         }
     }
     
-    @available(iOS 14.0, *)
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         onAuthorizationChange?(manager.authorizationStatus)
-    }
-
-    // For iOS 13 and older
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        onAuthorizationChange?(status)
     }
 
     func clear() {
@@ -122,8 +115,7 @@ final class ExperimentGPSInput: NSObject, CLLocationManagerDelegate {
             buffer.append(value)
         }
 
-        //One location fix is written as one atomic group so a remote /get read never sees a partial
-        //fix across the components (see BufferLock)
+        //One atomic group so a remote /get never sees a partial fix (see BufferLock)
         synchronizedBufferWrite([latBuffer, lonBuffer, zBuffer, zWgs84Buffer, vBuffer, dirBuffer, accuracyBuffer, zAccuracyBuffer, tBuffer, statusBuffer, satellitesBuffer]) {
             tryAppend(value: lat, to: latBuffer)
             tryAppend(value: lon, to: lonBuffer)

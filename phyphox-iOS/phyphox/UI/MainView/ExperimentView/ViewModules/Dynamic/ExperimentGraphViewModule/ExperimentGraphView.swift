@@ -39,7 +39,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     var analysisRunning: Bool = false
 
-    //Data picker state: values written so far, aligned with descriptor.pickOutputs slots.
+    //Data picker values written so far, aligned with descriptor.pickOutputs slots
     private var pickData: [Double?]
     var hasPickOutputs: Bool {
         return descriptor.pickOutputs.contains(where: { $0 != nil })
@@ -151,7 +151,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
         var buttons: [(slot: Int, title: String)] = []
         for (slot, output) in descriptor.pickOutputs.enumerated() {
-            //Only the plain slots get a button; the cal slot after them is handled through a value prompt.
+            //Only the plain slots get a button; the cal slot after them is set through a value prompt
             guard let output = output, slot % 2 == 0 else { continue }
             buttons.append((slot: slot, title: descriptor.translation?.localizeString(output.label) ?? output.label))
         }
@@ -201,14 +201,11 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     private func writePick(slot: Int, value: Double) {
         pickData[slot] = value
         descriptor.pickOutputs[slot]?.buffer.replaceValues([value])
-        //Like any user input (and like on Android), a pick triggers an analysis run even while
-        //the experiment is paused, so dependent views like a calibrated graph update immediately
+        //Like any user input (and on Android), a pick triggers an analysis run even while paused
         descriptor.pickOutputs[slot]?.buffer.triggerUserInput()
     }
 
-    //The pick buffers can change externally, for example through the analysis or when the data
-    //is cleared, so their current state is re-read on every graph update, like on Android. An
-    //empty buffer or NaN removes the corresponding annotation.
+    //Re-read every update (as on Android): analysis or a clear may change pick buffers; empty or NaN removes the annotation
     func syncPickDataFromBuffers() {
         guard hasPickOutputs else { return }
         var changed = false
@@ -347,23 +344,17 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
-        if #available(iOS 13.0, *) {
-            if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-                graphRenderer.refresh()
-                markerSystem.refreshMarkers()
-            }
+        if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            graphRenderer.refresh()
+            markerSystem.refreshMarkers()
         }
     }
 }
 
 
 extension ExperimentGraphView: GraphGridDelegate {
-    //Called by the grid view when the space needed by its tick labels changed, which shifts the
-    //plot area: the plot and the marker overlay have to follow, or the data no longer lines up
-    //with the grid. The grid recalculates this space in its own layout pass, i.e. after the data
-    //update that set the new grid, so without this callback the plot stays one update behind -
-    //which goes unnoticed while measuring but sticks when the next update never comes, like
-    //after switching to this tab while paused.
+    //The grid recalculates its tick label space in its own layout pass, after the data update; the plot and marker
+    //overlay must follow or they stay one update behind (which sticks when paused, e.g. after switching to this tab)
     func updatePlotArea() {
         let graphFrame = layoutManager.graphFrame
         if graphRenderer.plotView.frame != graphFrame {

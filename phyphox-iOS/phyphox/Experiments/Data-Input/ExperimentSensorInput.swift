@@ -99,7 +99,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         }
     }
     
-    var calibrated = true //Use calibrated version? Can be switched while update is stopped. Currently only used for magnetometer
+    var calibrated = true //Use calibrated version? Can be switched while update is stopped. Only matters for the types in hasCalibratedAndUncalibratedVersion
     var ready = false //Used by some sensors to figure out if there is valid data arriving. Most of them just set this to true when the first reading arrives.
     
     private(set) weak var xBuffer: DataBuffer?
@@ -247,9 +247,13 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     }
     
     static func verifySensorAvailibility(sensorType: SensorType, motionSession: MotionSession) throws {
-        //The following line is used by the UI test to automatically generate screenshots for the App Store using fastlane. The UI test sets the argument "screenshot" and we will then ignore sensor tests as otherwise the generated screenshots in the simulator will show almost all sensors as missing
-        if ProcessInfo.processInfo.arguments.contains("screenshot") {
-            if sensorType != .light {
+        //-phyphoxAssumeSensors (AutomationLaunchOptions) for store screenshots on the simulator: skips only the hardware
+        //tests below, sensor types iOS supports on no device still fail
+        if AutomationLaunchOptions.assumeSensors {
+            switch sensorType {
+            case .light, .temperature, .humidity, .custom:
+                break
+            default:
                 return
             }
         }
@@ -290,6 +294,33 @@ final class ExperimentSensorInput: MotionSessionReceiver {
     
     func verifySensorAvailibility() throws {
         return try ExperimentSensorInput.verifySensorAvailibility(sensorType: self.sensorType, motionSession: motionSession)
+    }
+    
+    //The types that come in a calibrated (CMDeviceMotion, bias-corrected) and an uncalibrated (raw CoreMotion data)
+    //version on this device. The accelerometer only exists raw on iOS: the fused userAcceleration + gravity is not a
+    //calibration. linear_acceleration, gravity and attitude are fusion outputs with no raw counterpart.
+    static func hasCalibratedAndUncalibratedVersion(sensorType: SensorType, motionSession: MotionSession) -> Bool {
+        guard motionSession.deviceMotionAvailable else { return false }
+        switch sensorType {
+        case .magneticField: return motionSession.magnetometerAvailable
+        case .gyroscope: return motionSession.gyroAvailable
+        default: return false
+        }
+    }
+    
+    func hasCalibratedAndUncalibratedVersion() -> Bool {
+        return ExperimentSensorInput.hasCalibratedAndUncalibratedVersion(sensorType: sensorType, motionSession: motionSession)
+    }
+    
+    //The format's accuracy encoding (-1 uncalibrated, 1 low, 2 medium, 3 high), the same states Android reports
+    private static func accuracyValue(_ accuracy: CMMagneticFieldCalibrationAccuracy) -> Double {
+        switch accuracy {
+        case .uncalibrated: return -1.0
+        case .low: return 1.0
+        case .medium: return 2.0
+        case .high: return 3.0
+        @unknown default: return -2.0
+        }
     }
     
     func configureMotionSession() {
@@ -341,23 +372,45 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 })
             
         case .gyroscope:
-            _ = motionSession.getDeviceMotion(self, interval: hardwareRate, handler: { [unowned self] (deviceMotion, error) in
-                guard let motion = deviceMotion else {
-                    return
-                }
-                
-                let rotation = motion.rotationRate
-                
-                // rad/s
-                let x = rotation.x
-                let y = rotation.y
-                let z = rotation.z
-                
-                let t = motion.timestamp
-                
-                self.ready = true
-                self.dataIn(x, y: y, z: z, abs: nil, accuracy: nil, t: t, error: error)
-                })
+            if calibrated {
+                _ = motionSession.getDeviceMotion(self, interval: hardwareRate, handler: { [unowned self] (deviceMotion, error) in
+                    guard let motion = deviceMotion else {
+                        return
+                    }
+                    
+                    let rotation = motion.rotationRate
+                    
+                    // rad/s
+                    let x = rotation.x
+                    let y = rotation.y
+                    let z = rotation.z
+                    
+                    let t = motion.timestamp
+                    
+                    self.ready = true
+                    self.dataIn(x, y: y, z: z, abs: nil, accuracy: nil, t: t, error: error)
+                    })
+            } else {
+                _ = motionSession.getGyroData(self, interval: hardwareRate, handler: { [unowned self] (data, error) in
+                    guard let gyroData = data else {
+                        return
+                    }
+                    
+                    let rotation = gyroData.rotationRate
+                    
+                    // rad/s
+                    let x = rotation.x
+                    let y = rotation.y
+                    let z = rotation.z
+                    
+                    let t = gyroData.timestamp
+                    
+                    //0 = uncalibrated raw data, as expected (like the raw magnetometer). CoreMotion reports no calibration
+                    //status for the gyroscope, so the calibrated path writes no accuracy at all
+                    self.ready = true
+                    self.dataIn(x, y: y, z: z, abs: nil, accuracy: 0.0, t: t, error: error)
+                    })
+            }
             
         case .magneticField:
             if calibrated {
@@ -367,16 +420,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                     }
                     
                     let field = motion.magneticField.field
-                    
-                    let accuracy: Double
-                    switch motion.magneticField.accuracy {
-                    case .uncalibrated: accuracy = -1.0
-                    case .low: accuracy = 1.0
-                    case .medium: accuracy = 2.0
-                    case .high: accuracy = 3.0
-                    @unknown default:
-                        accuracy = -2.0
-                    }
+                    let accuracy = ExperimentSensorInput.accuracyValue(motion.magneticField.accuracy)
                     
                     let x = field.x
                     let y = field.y
@@ -464,10 +508,14 @@ final class ExperimentSensorInput: MotionSessionReceiver {
                 let y = self.sqrt12*(attitude.quaternion.y + attitude.quaternion.x)
                 let z = self.sqrt12*(attitude.quaternion.z + attitude.quaternion.w)
                 
+                //The attitude runs in the magnetic-north frame, so its yaw is only as good as the magnetic calibration; the
+                //same status Android reports for its rotation vector
+                let accuracy = ExperimentSensorInput.accuracyValue(motion.magneticField.accuracy)
+                
                 let t = motion.timestamp
                 
                 self.ready = true
-                self.dataIn(x, y: y, z: z, abs: w, accuracy: nil, t: t, error: error)
+                self.dataIn(x, y: y, z: z, abs: w, accuracy: accuracy, t: t, error: error)
                 })
             
         case .gravity:
@@ -509,7 +557,11 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         case .linearAcceleration:
             motionSession.stopDeviceMotionUpdates(self)
         case .gyroscope:
-            motionSession.stopDeviceMotionUpdates(self)
+            if calibrated {
+                motionSession.stopDeviceMotionUpdates(self)
+            } else {
+                motionSession.stopGyroUpdates(self)
+            }
         case .magneticField:
             if calibrated {
                 motionSession.stopDeviceMotionUpdates(self)
@@ -540,8 +592,7 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             buffer.append(value)
         }
 
-        //One sample's components are written as one atomic group so a remote /get read sees all of
-        //them or none, never a partial sample (see BufferLock)
+        //One atomic group so a remote /get never sees a partial sample (see BufferLock)
         synchronizedBufferWrite([xBuffer, yBuffer, zBuffer, accuracyBuffer, tBuffer, absBuffer]) {
             tryAppend(value: x, to: xBuffer)
             tryAppend(value: y, to: yBuffer)

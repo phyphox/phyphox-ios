@@ -55,10 +55,8 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
         }
     }
     
-    //Careful: All numbers written into the web interface's HTML and JavaScript must be plain
-    //(locale-independent) values. A locale-aware formatter turns 0.5 into "0,5" or 1000 into
-    //"1,000" and either silently misassigns via the JavaScript comma operator or is a syntax
-    //error. Android writes plain values here as well.
+    //Numbers written into the web interface's HTML/JavaScript must be locale-independent: "0,5" or "1,000" would silently
+    //misassign via the comma operator or be a syntax error. Android writes plain values too.
     func generateViewHTMLWithID(_ id: Int) -> String {
 
         let valueTag = showValue ? "<span class=\"label\">\(localizedLabel)</span><span class=\"value\" id=\"value\(id)\">\(defaultValue)</span>" : ""

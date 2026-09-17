@@ -16,14 +16,8 @@ struct ExperimentExport: Equatable {
         self.sets = sets
     }
     
-    ///Copies the values of every set out of the buffers in ONE go, under the experiment's data
-    ///lock. Without it an export of a running experiment reads containers that the analysis and
-    ///the sensor threads keep writing: an analysis cycle clears a container before it refills it,
-    ///and an export landing in that window wrote a set with nothing but its header - reproduced
-    ///twice by the device lab on camera_stopwatch_luma, each time in a single one of the six
-    ///formats. One acquisition for all sets also keeps the sets consistent with each other. The
-    ///files are written from the copy, outside the lock: holding the barrier across file I/O
-    ///would stall the measurement for as long as the export takes. (Android: 2b8d7acf.)
+    ///Copies every set's values in ONE go under the data lock, so no set catches an analysis cycle half applied and the sets
+    ///stay consistent with each other. Files are written outside the lock so I/O never stalls the measurement (Android: 2b8d7acf)
     func snapshot() -> [ExperimentExportSetData] {
         let lock = sets.lazy.flatMap({ $0.data }).compactMap({ $0.buffer.dataLock }).first
         guard let lock = lock else {
@@ -33,8 +27,7 @@ struct ExperimentExport: Equatable {
         return lock.read { sets.map { $0.snapshot() } }
     }
 
-    //filename is expected to be a complete file name base (without extension), typically generated
-    // from the user's template by FileNameFormat
+    //filename is a complete file name base without extension, typically generated from the user's template by FileNameFormat
     func runExport(_ format: ExportFileFormat, singleSet: Bool, filename: String, timeReference: ExperimentTimeReference?, callback: @escaping (_ errorMessage: String?, _ fileURL: URL?) -> Void) {
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             autoreleasepool {

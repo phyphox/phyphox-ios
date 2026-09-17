@@ -17,8 +17,7 @@ final class FirstAnalysis: AutoClearingExperimentAnalysisModule {
         ])
     }
     override func update() {
-        //Output i receives the first value of input i; an empty input skips only its own pair
-        //(matching Android) - never broadcast all first values to every output
+        //Output i gets the first value of input i; an empty input skips only its own pair (matching Android)
         for (i, output) in outputs.enumerated() {
             guard i < inputs.count else { break }
 

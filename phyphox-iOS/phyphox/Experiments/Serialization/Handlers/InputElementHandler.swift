@@ -16,10 +16,8 @@ struct SensorOutputDescriptor {
     let bufferName: String
 }
 
-//The component tables of the input elements, mirroring the ioMapping arrays in Android's
-//PhyphoxFile.java. They live here, next to the handlers that enforce them, so the component
-//vocabulary is defined in one file only (the buffer wiring in PhyphoxElementHandler receives
-//components already normalized to these names).
+//Component tables of the input elements, mirroring the ioMapping arrays in Android's PhyphoxFile.java; kept next to the
+//handlers that enforce them so the vocabulary is defined once (PhyphoxElementHandler receives normalized names).
 private let sensorComponents = ["x", "y", "z", "t", "abs", "accuracy"].map {
     AnalysisIOSlot(name: $0, asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
 }
@@ -56,8 +54,7 @@ private final class SensorOutputElementHandler: ResultElementHandler, ChildlessE
 
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        //An absent component attribute stays nil: whether an unnamed output is allowed - and
-        //which component it then fills - is decided by the element's component table
+        //nil stays nil: whether an unnamed output is allowed, and which component it fills, is decided by the component table
         let component = attributes.optionalString(for: .component)
         results.append(SensorOutputDescriptor(component: component, bufferName: text))
     }
@@ -206,8 +203,7 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
         for lockedSetting in lockedStr.split(separator: ",") {
             if lockedSetting.contains("=") {
                 let parts = lockedSetting.split(separator: "=", maxSplits: 1)
-                //Setting names are matched case-insensitively; storing them lowercased normalizes
-                //them for every later lookup (enum-case-insensitive in phyphox-docs)
+                //Setting names fold case; stored lowercased for every later lookup (enum-case-insensitive in phyphox-docs)
                 let setting = String(parts[0]).trimmingCharacters(in: .whitespaces).lowercased()
                 var value: Float? = nil
                 if setting == "shutter_speed" && parts[1].contains("/") {
@@ -226,8 +222,7 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
             }
         }
         
-        //An invalid enumerated value is an error, only an absent attribute selects the default
-        //(enum-invalid-value in phyphox-docs, matching Android)
+        //An invalid value is an error, only an absent attribute selects the default (enum-invalid-value in phyphox-docs)
         let feature_: CameraFeature = try attributes.optionalValue(for: .feature) ?? .PHOTOMETRIC
 
         let aeStrategy: ExperimentCameraInput.AutoExposureStrategy = try attributes.optionalValue(for: .aeStrategy) ?? .mean
@@ -252,6 +247,7 @@ struct SensorInputDescriptor: SensorDescriptor {
     let average: Bool
     let stride: Int
     let ignoreUnavailable: Bool
+    let preferUncalibrated: Bool
 
     let outputs: [SensorOutputDescriptor]
     
@@ -266,7 +262,7 @@ struct SensorInputDescriptor: SensorDescriptor {
                 strategy = .limit
             }
         }
-        return SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: strategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, outputs: outputs)
+        return SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: strategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, preferUncalibrated: preferUncalibrated, outputs: outputs)
     }
 }
 
@@ -290,6 +286,7 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         case average
         case stride
         case ignoreUnavailable
+        case preferUncalibrated
         case nameFilter // ignored, only part of the file format for Android sensors
         case typeFilter // ignored, only part of the file format for Android sensors
     }
@@ -300,20 +297,19 @@ private final class SensorElementHandler: ResultElementHandler, LookupElementHan
         let sensor: SensorType = try attributes.value(for: .type)
 
         let frequency = try attributes.optionalValue(for: .rate) ?? 0.0
-        //An invalid rate strategy is an error; only an absent attribute selects the
-        //version-dependent default (enum-invalid-value in phyphox-docs, matching Android)
+        //An invalid strategy is an error; only an absent attribute selects the version-dependent default (enum-invalid-value)
         let rateStrategy: ExperimentSensorInput.RateStrategy? = try attributes.optionalValue(for: .rateStrategy)
         let average = try attributes.optionalValue(for: .average) ?? false
         let stride = try attributes.optionalValue(for: .stride) ?? 1
         let ignoreUnavailable = try attributes.optionalValue(for: .ignoreUnavailable) ?? false
+        let preferUncalibrated = try attributes.optionalValue(for: .preferUncalibrated) ?? false
 
         let rate = frequency.isNormal ? 1.0/frequency : 0.0
 
-        //Each output's component must be in the element's component list, once at most
-        //(matching Android)
+        //Each output's component must be in the element's component list, once at most (matching Android)
         let outputs = try IOMappingValidation.validateComponents(element: "sensor", slots: sensorComponents, outputs: outputHandler.results)
 
-        results.append(SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: rateStrategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, outputs: outputs))
+        results.append(SensorInputDescriptor(sensor: sensor, rate: rate, rateStrategy: rateStrategy, average: average, stride: stride, ignoreUnavailable: ignoreUnavailable, preferUncalibrated: preferUncalibrated, outputs: outputs))
     }
 }
 
@@ -524,9 +520,7 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
 
-        //address is an Android-only scan criterion: iOS gives no access to a BLE device's
-        //hardware address, so the criterion cannot be honoured here. Reject rather than silently
-        //connecting to whatever device matches the remaining criteria
+        //address is Android-only: iOS exposes no BLE hardware address, so reject rather than match on the remaining criteria
         //(ble-address-ios-must-reject in phyphox-docs)
         if attributes.optionalString(for: .address) != nil {
             throw ElementHandlerError.message("The bluetooth address attribute is not supported on iOS, which does not expose hardware addresses. Experiments using it are Android-only.")

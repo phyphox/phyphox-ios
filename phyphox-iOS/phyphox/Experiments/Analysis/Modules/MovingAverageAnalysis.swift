@@ -42,14 +42,13 @@ final class MovingAverageAnalysis: AutoClearingExperimentAnalysisModule {
 
         let width: Int
         if let widthValue = widthIn?.getSingleValue() {
-            //A present but invalid width - non-finite or negative - is an error state yielding
-            //empty output; it must not act as some substitute width.
+            //A non-finite or negative width is an error state yielding empty output, not a substitute width
             guard widthValue.isFinite && widthValue >= 0 && widthValue < 9e18 else {
                 return
             }
             width = Int(widthValue)
         } else {
-            //The documented default, also selected by an empty width buffer
+            //Documented default, also for an empty width buffer
             width = 10
         }
 
@@ -62,8 +61,7 @@ final class MovingAverageAnalysis: AutoClearingExperimentAnalysisModule {
 
         for i in start..<inArray.count {
             let substart = max(i-width, 0)
-            //Skip non-finite values inside the window, aligning with average and binning; a
-            //window without any finite value yields NaN
+            //Non-finite values are skipped (as in average and binning); a window without any yields NaN
             var sum = 0.0
             var count = 0
             for j in substart...i {

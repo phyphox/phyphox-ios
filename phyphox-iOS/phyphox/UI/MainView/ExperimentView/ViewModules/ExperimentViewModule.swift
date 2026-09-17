@@ -104,14 +104,7 @@ final class DisplayLink {
     weak var listener: DisplayLinkListener?
 
     init(refreshRate: Int) {
-        if #available(iOS 10.0, *) {
-            displayLink.preferredFramesPerSecond = refreshRate
-        }
-        else {
-            if refreshRate >= 1 {
-                displayLink.frameInterval = 60 / refreshRate
-            }
-        }
+        displayLink.preferredFramesPerSecond = refreshRate
 
         displayLink.isPaused = true
         displayLink.add(to: .main, forMode: RunLoop.Mode.common)

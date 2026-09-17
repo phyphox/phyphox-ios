@@ -149,8 +149,7 @@ final class AnalysisElementHandler: ResultElementHandler {
     func startElement(attributes: AttributeContainer) throws {}
 
     func childHandler(for elementName: String) throws -> ElementHandler {
-        //Module names are matched case-insensitively; lowercasing here normalizes them for the
-        //all-lowercase classMap lookup in ExperimentAnalysisFactory
+        //Module names fold case; lowercased here for the all-lowercase classMap lookup in ExperimentAnalysisFactory
         moduleNames.append(elementName.lowercased())
         return moduleHandler
     }

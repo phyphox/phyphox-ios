@@ -32,8 +32,7 @@ final class ExperimentSwitchView: UIView, DynamicViewModule, DescriptorBoundView
     }
     
     private func update(){
-        //Seeded by Experiment.seedInputDefaults() - see the note there; this path only runs
-        //for the view collection that is on screen
+        //Seeded by Experiment.seedInputDefaults() (see the note there); this path only runs for the on-screen view collection
 
         let value = descriptor.value
         var state = false

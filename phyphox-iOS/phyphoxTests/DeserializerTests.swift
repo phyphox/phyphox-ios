@@ -66,8 +66,7 @@ final class DeserializerTests: XCTestCase {
 
     /// This test case deserializes all default experiment, ensuring that the deserializer successfully deserializes them without throwing an error. Also tests that reusing the same parser and using a fresh parser produces the same result.
     func testDefaultExperimentsAndReuse() throws {
-        //The experiments folder also holds a license, a readme and image resources, so
-        //only files with the phyphox extension are parsed, including those in subfolders.
+        //The folder also holds a license, readme and images: parse only .phyphox files, subfolders included
         let enumerator = try FileManager.default.enumerator(at: experimentsBaseURL, includingPropertiesForKeys: nil).unwrap()
         let experiments = enumerator.compactMap({ $0 as? URL }).filter({ $0.pathExtension == "phyphox" })
 
@@ -107,11 +106,7 @@ final class DeserializerTests: XCTestCase {
         try expectParserResult(expectedResult: .failure, inputStream: invalidStream2, parser: DocumentParser(documentHandler: PhyphoxDocumentHandler()))
     }
 
-    /// This test case deserializes an experiment file that exercises the full element/attribute
-    /// surface of the format in one document. The original version compared the parsed result
-    /// against a hard-coded experiment, but that comparison was not maintained as the model types
-    /// evolved; successful parsing still pins the accepted surface, so any element or attribute
-    /// that stops being accepted makes this test fail.
+    /// Parses the file exercising the full element/attribute surface; anything that stops being accepted fails here.
     func testFullSkeleton() throws {
         let skeleton = try testBundle.path(forResource: "full-skeleton", ofType: "phyphox").unwrap()
 
@@ -121,6 +116,9 @@ final class DeserializerTests: XCTestCase {
     }
 
     /// This test case attempts to deserialize experiment files that are incorrectly formatted. This test ensures that PhyphoxDocumentHandler and child handlers properly handle incorrect files and throw an error when attempting to deserialize these incorrect files. Also tests that reusing the same parser and using a fresh parser produces the same result.
+    ///
+    /// Only `bluetooth-address-android-only` is left; the other 33 fixtures moved to phyphox-docs corpus/invalid.
+    /// The reuse assertion (reused and fresh parser agree) has no corpus counterpart yet
     func testIncorrectFilesAndReuse() throws {
         let experimentsURL = try testBundle.url(forResource: "incorrect-files", withExtension: nil).unwrap()
         let experiments = try FileManager.default.contentsOfDirectory(atPath: experimentsURL.path)
@@ -143,15 +141,10 @@ final class DeserializerTests: XCTestCase {
     }
 }
 
-//The decided translated-link semantics (specified in phyphox-docs): the label is
-//a required key, a matching translated link replaces the base link in place, an unmatched label
-//is appended, a label-only link removes the base link, the translation attribute holds the
-//displayed text and highlight is inherited where not explicitly set. The invalid forms (missing
-//label, duplicate labels, unmatched label without URL, translation attribute or empty URL at the
-//root) are covered by the incorrect-files fixtures.
+//Translated-link semantics as decided in phyphox-docs: label is the key, a match replaces the base link in place,
+//an unmatched label is appended, label-only removes, highlight is inherited unless set. Invalid forms: corpus/invalid.
 final class TranslatedLinkTests: XCTestCase {
-    //The conformance fixture from phyphox-docs (corpus/generated/translated-links.phyphox)
-    //exercises every form of a translated link in one document
+    //phyphox-docs corpus/generated/translated-links.phyphox exercises every form of a translated link
     private func parseFixture() throws -> Experiment {
         let path = try testBundle.path(forResource: "translated-links", ofType: "phyphox").unwrap()
         return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: InputStream(fileAtPath: path).unwrap())
@@ -169,9 +162,7 @@ final class TranslatedLinkTests: XCTestCase {
     }
 
     func testLinkLocalization() throws {
-        //Applying the fixture's de block to its base links (done manually here because the block
-        //selected at runtime depends on the test host's locale): full replacement in place,
-        //text-only change with inherited URL and highlight, removal, appended addition
+        //Apply the fixture's de block manually (the block selected at runtime depends on the host locale)
         let experiment = try parseFixture()
         let de = try (experiment.translation?.translations["de"]).unwrap()
         let base = [
@@ -185,8 +176,7 @@ final class TranslatedLinkTests: XCTestCase {
             ExperimentLink(label: "Impressum", url: URL(string: "https://example.org/impressum")!, highlighted: false)
         ])
 
-        //Without a translation the base links pass through unchanged - in particular the label
-        //is displayed as written, with no string-translation or [[...]] common-string expansion
+        //Without a translation the base links pass through unchanged, no [[...]] expansion of the label
         XCTAssertEqual(ExperimentLink.localizedLinks(base: base, translatedLinks: []), base)
     }
 
@@ -206,11 +196,8 @@ final class TranslatedLinkTests: XCTestCase {
     }
 }
 
-//The decided graph dataset pairing ("How the input tags form datasets" on the graph page of
-//phyphox-docs, docs/file-format/views/graph.md): equal x and y input counts pair 1-on-1 in order of appearance
-//regardless of interleaving; with fewer x than y inputs each y uses the most recent preceding x,
-//or an index axis if none preceded it. The invalid forms (a trailing or shadowed x that no y
-//uses) are covered by the incorrect-files fixtures.
+//Graph dataset pairing as decided in phyphox-docs (docs/file-format/views/graph.md): equal x/y counts pair 1-on-1
+//in order of appearance; with fewer x than y each y uses the most recent preceding x, or an index axis if none
 final class GraphInputPairingTests: XCTestCase {
     func testFixturePairings() throws {
         //The conformance fixture from phyphox-docs (corpus/valid/view-tests/graph-input-orders.phyphox)
@@ -235,12 +222,8 @@ final class GraphInputPairingTests: XCTestCase {
     }
 }
 
-//The container init list follows the number-invalid-value rule from phyphox-docs: the special
-//values NaN and [+-]Infinity fold case (NaN entries are the documented gap markers for graphs),
-//while an entry that does not parse as a number - including an empty entry and spellings like
-//"inf" that the format does not define - rejects the whole file instead of being silently
-//dropped, which would also shift every later entry one position forward. The invalid forms are
-//also covered by the incorrect-files fixtures.
+//Container init follows the number-invalid-value rule of phyphox-docs: NaN/[+-]Infinity fold case, any other
+//non-number (empty entry, "inf", ...) rejects the whole file rather than being dropped and shifting later entries
 final class ContainerInitValueTests: XCTestCase {
     private func parse(initAttribute: String) throws -> Experiment {
         let xml = """
@@ -289,11 +272,8 @@ final class ContainerInitValueTests: XCTestCase {
     }
 }
 
-//Numeric attributes share the same lexical space as the init entries (number-invalid-value rule
-//in phyphox-docs): the central readers must reject spellings Swift's Double(String) accepts but
-//the format does not define, on the Double, CGFloat and Float decode paths alike (the Float path
-//- the camera crop attributes - goes through the same guard). Integer decodes were already
-//sign-and-digits only.
+//Numeric attributes share the init entries' lexical space (number-invalid-value rule in phyphox-docs): the Double,
+//CGFloat and Float decode paths must reject spellings Double(String) accepts but the format does not define
 final class NumericAttributeLexicalSpaceTests: XCTestCase {
     //factor is a Double decode, the graph's lineWidth a CGFloat decode
     private func parse(factor: String, lineWidth: String = "1") throws -> Experiment {
@@ -338,10 +318,8 @@ final class NumericAttributeLexicalSpaceTests: XCTestCase {
     }
 }
 
-//Regression test for the analysis deadlock that broke the tone generator: input view
-//modules (sliders, edit fields) write their initial values with a user-input trigger while the
-//view is being built, i.e. before the experiment assigned the analysis queue. The triggered run
-//could then never execute and its busy flag blocked all analysis permanently.
+//Input view modules trigger a user-input analysis run while the view is built, before the analysis queue is
+//assigned; that early trigger must not leave the busy flag set and block all analysis (tone generator deadlock)
 final class AnalysisTriggerTests: XCTestCase {
     func testEarlyUserInputTriggerDoesNotDeadlockAnalysis() throws {
         let url = testBundle.url(forResource: "phyphox-experiments", withExtension: nil)!.appendingPathComponent("tone_generator.phyphox")
@@ -366,9 +344,8 @@ final class AnalysisTriggerTests: XCTestCase {
     }
 }
 
-//Verifies that every remote-access response carries the CORS header, matching the Android
-//implementation and the canonical decision in phyphox-docs (cors-header): the header must be
-//present without exception, including on error responses and the static web interface files.
+//Every remote-access response carries the CORS header, error responses and static files included
+//(phyphox-docs cors-header, matches Android)
 final class WebServerCORSTests: XCTestCase {
     private class StubDelegate: ExperimentWebServerDelegate {
         var timerRunning: Bool { return false }
@@ -393,7 +370,6 @@ final class WebServerCORSTests: XCTestCase {
         XCTAssertTrue(webServer.start(), "web server did not start")
         defer { webServer.stop() }
 
-        //Success paths (API, static file) and error paths (missing parameters, unknown path)
         for path in ["/", "/time", "/config", "/meta", "/get", "/res", "/doesnotexist"] {
             let requestURL = URL(string: "http://127.0.0.1:\(webServer.port)\(path)")!
             let expectation = self.expectation(description: path)
@@ -412,9 +388,8 @@ final class WebServerCORSTests: XCTestCase {
     }
 }
 
-//Pins the followX support of the remote interface: a graph with followX generates JS that
-//anchors the window end at the newest x value while keeping the width from minX/maxX,
-//mirroring the Android implementation (ExpView.dataCompleteHTML).
+//followX in the remote interface: the generated JS anchors the window end at the newest x while keeping the
+//minX/maxX width, mirroring Android's ExpView.dataCompleteHTML
 final class RemoteGraphFollowXTests: XCTestCase {
     func testFollowXGeneratesAnchoredRescale() throws {
         let skeleton = try testBundle.path(forResource: "full-skeleton", ofType: "phyphox").unwrap()
@@ -427,8 +402,7 @@ final class RemoteGraphFollowXTests: XCTestCase {
     }
 }
 
-//Foreign XML namespaces (i.e. editor metadata embedded in an experiment file) must be skipped
-//with their entire subtree instead of failing the whole file, matching the Android parser.
+//Foreign XML namespaces (e.g. editor metadata) are skipped with their subtree instead of failing the file, as on Android
 final class ForeignNamespaceTests: XCTestCase {
     func testForeignNamespaceElementsAreSkipped() throws {
         let xml = """
@@ -458,9 +432,7 @@ final class ForeignNamespaceTests: XCTestCase {
     }
 }
 
-//Pins the bundled-asset fallback: an externally loaded experiment that references an image
-//shipped with phyphox (hue.png) without delivering it alongside the file must resolve it from
-//the app bundle, matching the Android implementation.
+//A bundled image (hue.png) named by an external experiment that ships nothing resolves from the app bundle, as on Android
 final class ResourceFallbackTests: XCTestCase {
     func testBundledImageFallback() throws {
         let xml = """
@@ -499,18 +471,14 @@ final class ResourceFallbackTests: XCTestCase {
         """
         let stream = InputStream(data: xml.data(using: .utf8)!)
         let experiment = try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
-        //Even though the file declares it as a resource, traversal must not resolve - the
-        //target of the traversal (phyphox-experiments/hue.png relative to the bundled res
-        //folder... anything at all) must stay unreachable
+        //Traversal must not resolve even though the file declares it as a resource
         XCTAssertNil(experiment.resolveResource("../../hue.png"))
         XCTAssertNil(experiment.resolveResource("res/../../hue.png"))
     }
 }
 
-//Validates the xlsx export (which replaced the JXLS xls export): the file must be a valid zip
-//with the expected OOXML parts, all parts must be well-formed XML, and cell content must match
-//the Android implementation, including string escaping, the NaN filler for short columns and
-//sheet name sanitization.
+//xlsx export: a valid zip with the expected OOXML parts, all well-formed XML, cell content matching Android
+//(escaping, NaN filler for short columns, sheet name sanitization)
 import ZIPFoundation
 
 final class XlsxExportTests: XCTestCase {
@@ -518,7 +486,6 @@ final class XlsxExportTests: XCTestCase {
         let entry = try XCTUnwrap(archive[path], "missing entry \(path)")
         var data = Data()
         _ = try archive.extract(entry) { data.append($0) }
-        //Every part must be well-formed XML
         let parser = XMLParser(data: data)
         XCTAssertTrue(parser.parse(), "entry \(path) is not well-formed XML: \(String(describing: parser.parserError))")
         return try XCTUnwrap(String(data: data, encoding: .utf8))
@@ -567,8 +534,7 @@ final class XlsxExportTests: XCTestCase {
     }
 }
 
-//Pins the fix for sinh/cosh/tanh being mapped to the trigonometric modules: the classMap must
-//resolve the hyperbolic module names to the hyperbolic implementations.
+//sinh/cosh/tanh must resolve to the hyperbolic modules, not the trigonometric ones
 final class HyperbolicModuleTests: XCTestCase {
     func testHyperbolicNamesResolveToHyperbolicModules() {
         XCTAssertTrue(ExperimentAnalysisFactory.classMap["sinh"] == SinhAnalysis.self)
@@ -577,9 +543,8 @@ final class HyperbolicModuleTests: XCTestCase {
     }
 }
 
-//Pins the /export error handling: an out-of-range format index used to trap the app, a missing
-//or non-numeric format silently became Excel. Both must answer the documented error object with
-//the same messages as Android (export-invalid-format).
+//An out-of-range, missing or non-numeric /export format answers the documented error object with Android's
+//messages (phyphox-docs export-invalid-format)
 final class WebServerExportFormatTests: XCTestCase {
     private class StubDelegate: ExperimentWebServerDelegate {
         var timerRunning: Bool { return false }
@@ -617,10 +582,8 @@ final class WebServerExportFormatTests: XCTestCase {
         }
     }
 
-    //Pins the POST support (control-post): every endpoint accepts POST, the body may be JSON or
-    //form-encoded, values are coerced to strings, body parameters win over query parameters and
-    //a malformed JSON body answers 400. Uses the /export error surface to observe which
-    //parameter reached the handler.
+    //POST (control-post): every endpoint accepts POST, JSON or form body, values coerced to strings, body wins over
+    //query, malformed JSON answers 400. The /export errors show which parameter reached the handler.
     func testPostBodies() throws {
         let url = testBundle.url(forResource: "phyphox-experiments", withExtension: nil)!.appendingPathComponent("accelerometer.phyphox")
         let experiment = try ExperimentSerialization.readExperimentFromURL(url)
@@ -654,7 +617,6 @@ final class WebServerExportFormatTests: XCTestCase {
         var result = post("/export", body: "{\"format\": 99}", contentType: "application/json")
         XCTAssertEqual(result.json?["error"] as? String, "Format out of range.")
 
-        //Form body reaches the handler
         result = post("/export", body: "format=abc", contentType: "application/x-www-form-urlencoded")
         XCTAssertEqual(result.json?["error"] as? String, "Invalid format.")
 
@@ -674,11 +636,9 @@ final class WebServerExportFormatTests: XCTestCase {
     }
 }
 
-//Conformance of the /get, /control, /meta and /res endpoints with the canonical behaviour from
-//phyphox-docs: get-no-parameters, get-invalid-threshold, get-negative-threshold,
-//get-nonfinite-single-value, get-force-full-update, control-start-refused,
-//control-trigger-out-of-range, meta-missing-value-representation, res-content-type and
-//res-fallback.
+//Conformance of /get, /control, /meta and /res with phyphox-docs: get-no-parameters, get-invalid-threshold,
+//get-negative-threshold, get-nonfinite-single-value, get-force-full-update, control-start-refused,
+//control-trigger-out-of-range, meta-missing-value-representation, res-content-type and res-fallback
 final class WebServerConformanceTests: XCTestCase {
     private class StubDelegate: ExperimentWebServerDelegate {
         var timerRunning: Bool { return false }
@@ -765,9 +725,8 @@ final class WebServerConformanceTests: XCTestCase {
         XCTAssertEqual(buf["updateMode"] as? String, "full")
     }
 
-    //control-start-refused: cmd=start reports whether the measurement actually began, so a
-    //start the experiment refuses answers result:false. The other commands keep the weaker
-    //"was the command accepted" meaning.
+    //control-start-refused: cmd=start answers result:false when the experiment refuses to start; the other
+    //commands keep the weaker "command accepted" meaning
     func testControlStartReportsRefusal() throws {
         delegate.startResult = true
         var result = get("/control?cmd=start")
@@ -809,11 +768,8 @@ final class WebServerConformanceTests: XCTestCase {
     }
 }
 
-//The phyphox://asset= deep link (transferring-experiments.md in phyphox-docs): the url-encoded
-//path after asset= identifies an experiment within the bundled collection - the same
-//identifier as Android's assets/experiments/<path> - and must survive url-decoding with its
-//case and subfolders intact. Empty and absolute paths and any traversal are refused; the rest
-//of the pipeline is the app's normal experiment loading.
+//phyphox://asset=<url-encoded path> (phyphox-docs transferring-experiments.md) identifies an experiment in the bundled
+//collection, the same identifier as Android's assets/experiments/<path>; empty, absolute and traversing paths are refused
 final class AssetDeepLinkTests: XCTestCase {
     func testResolvesWithinBundledCollection() throws {
         let url = try ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "accelerometer.phyphox").unwrap()
@@ -831,9 +787,7 @@ final class AssetDeepLinkTests: XCTestCase {
     }
 
     func testUnknownPathFailsTheLoadInsteadOfCrashing() {
-        //An unknown asset path reaches readExperimentFromURL as a nonexistent file. Its failed
-        //stream read returns -1, which CRC32InputStream once handed to crc32() as an unsigned
-        //count - a trap on any unreadable file. It must surface as an ordinary error.
+        //A nonexistent file must surface as an ordinary error, not as a CRC32InputStream trap on the -1 stream read
         let url = ExperimentsCollectionViewController.bundledExperimentAssetURL(encodedPath: "doesnotexist.phyphox")!
         XCTAssertThrowsError(try ExperimentSerialization.readExperimentFromURL(url))
     }
@@ -851,10 +805,8 @@ final class AssetDeepLinkTests: XCTestCase {
     }
 }
 
-//The /set endpoint: bulk buffer writes from a JSON body, per the phyphox-docs specification
-//(openapi.yaml path /set, API 1.1.0) - JSON-body-only, the format's number lexical space for
-//string entries, null as NaN, atomic validation, replace/append modes. Behavior and error
-//messages mirror Android's RemoteServer.handleSet.
+//The /set endpoint per phyphox-docs openapi.yaml (API 1.1.0): JSON body only, the format's number lexical space for
+//string entries, null as NaN, atomic validation, replace/append; behaviour and errors mirror Android's handleSet
 final class WebServerSetEndpointTests: XCTestCase {
     private class StubDelegate: ExperimentWebServerDelegate {
         var timerRunning: Bool { return false }
@@ -914,8 +866,7 @@ final class WebServerSetEndpointTests: XCTestCase {
         let accX = try (experiment.buffers["accX"]).unwrap()
         accX.append(99.0) //replace mode must clear this out
 
-        //Numbers, null (the /get representation of non-finite values) and the format's number
-        //lexical space, several buffers in one atomic request
+        //Numbers, null (the /get form of non-finite values) and the format's number spellings, two buffers atomically
         var result = request(method: "POST", body: "{\"buffers\": {\"accX\": [1, 2.5, null, \"nan\", \"Infinity\", \"-infinity\"], \"accY\": [4]}}")
         XCTAssertEqual(result.status, 200)
         XCTAssertEqual(result.json?["result"] as? Bool, true)
@@ -944,9 +895,7 @@ final class WebServerSetEndpointTests: XCTestCase {
     }
 
     func testRequestsWithoutSuitableJSONBodyAreRejected() {
-        //GET carries no body of the documented shape...
         expectRejected(request(method: "GET"))
-        //...and neither does a form-encoded body
         expectRejected(request(method: "POST", body: "buffers=accX", contentType: "application/x-www-form-urlencoded"))
         //A JSON body without a buffers object is well-formed but not the documented shape
         expectRejected(request(method: "POST", body: "{\"mode\": \"replace\"}"))
@@ -959,9 +908,7 @@ final class WebServerSetEndpointTests: XCTestCase {
     func testInvalidEntriesRejectAtomically() throws {
         let accX = try (experiment.buffers["accX"]).unwrap()
 
-        //The valid accX write must NOT be applied when the accY entry is invalid - everything
-        //is validated before anything is written. Two-key JSON objects arrive in arbitrary
-        //dictionary order, so this also covers validation order independence.
+        //All entries are validated before any is written; the two keys arrive in arbitrary order, covering both orders
         expectRejected(request(method: "POST", body: "{\"buffers\": {\"accX\": [1], \"accY\": [\"inf\"]}}"))
         XCTAssertEqual(accX.toArray(), [], "an atomic request must write nothing on any error")
 
@@ -976,8 +923,7 @@ final class WebServerSetEndpointTests: XCTestCase {
     }
 }
 
-//The MQTT network services: the four service variants, their attributes and their validation,
-//matching the Android parser (see network-mqtts-unofficial in phyphox-docs).
+//The four MQTT service variants, their attributes and validation, matching Android (phyphox-docs network-mqtts-unofficial)
 final class MqttNetworkServiceTests: XCTestCase {
     private func parse(connectionAttributes: String) throws -> Experiment {
         let xml = """
@@ -1057,7 +1003,6 @@ final class MqttNetworkServiceTests: XCTestCase {
         XCTAssertThrowsError(try parse(connectionAttributes: "service=\"mqtts/json\" conversion=\"json\" sendTopic=\"s\" username=\"u\""))
         //a certificate name must not traverse out of the resource folder
         XCTAssertThrowsError(try parse(connectionAttributes: "service=\"mqtts/csv\" conversion=\"csv\" username=\"u\" password=\"p\" certificate=\"../../ca.pem\""))
-        //unknown services are still rejected
         XCTAssertThrowsError(try parse(connectionAttributes: "service=\"mqtt/xml\" conversion=\"csv\""))
     }
 }
@@ -1131,8 +1076,7 @@ final class MqttClientWireFormatTests: XCTestCase {
     }
 }
 
-//The custom CA certificate loader must accept both PEM and DER (Android's
-//CertificateFactory.generateCertificate does the same).
+//The CA certificate loader accepts PEM and DER, like Android's CertificateFactory.generateCertificate
 final class MqttCertificateLoadingTests: XCTestCase {
     private let pem = """
     -----BEGIN CERTIFICATE-----
@@ -1176,9 +1120,8 @@ final class MqttCertificateLoadingTests: XCTestCase {
     }
 }
 
-//Runs the from-scratch client against a minimal in-process broker on the loopback interface,
-//covering a full session: CONNECT/CONNACK, SUBSCRIBE/SUBACK, an incoming QoS 1 PUBLISH (which
-//the client must answer with PUBACK), and an outgoing QoS 1 publish.
+//The client against an in-process loopback broker: CONNECT/CONNACK, SUBSCRIBE/SUBACK, an incoming QoS 1 PUBLISH
+//(must be answered with PUBACK) and an outgoing QoS 1 publish
 final class MqttClientLoopbackTests: XCTestCase {
     private class Delegate: MqttClientDelegate {
         var onMessage: ((String, Data) -> Void)? = nil
@@ -1316,7 +1259,6 @@ final class MqttClientLoopbackTests: XCTestCase {
         wait(for: [messageReceived], timeout: 5)
         waitUntil("incoming QoS 1 publish acknowledged") { broker.receivedPubAcks().contains(42) }
 
-        //Client to broker, QoS 0 and QoS 1
         client.publish(topic: "tx", payload: Data("world".utf8), qos: 0)
         client.publish(topic: "tx1", payload: Data("world1".utf8), qos: 1)
         waitUntil("both publishes arrived") {
@@ -1377,21 +1319,17 @@ final class MqttClientLoopbackTests: XCTestCase {
     }
 }
 
-//On-device hardware test of the mqtts services against a real broker (mosquitto with a
-//self-signed certificate and password authentication). These tests are skipped unless the
-//broker is provided via TEST_RUNNER_ environment variables:
-//  PHYPHOX_MQTT_TEST_BROKER - broker host/IP, listening on the default mqtts port 8883
+//mqtts services against a real broker (mosquitto, self-signed certificate, credentials phyphox/testpass); skipped
+//unless the broker is configured via TEST_RUNNER_ environment variables:
+//  PHYPHOX_MQTT_TEST_BROKER - broker host/IP, default mqtts port 8883
 //  PHYPHOX_MQTT_TEST_CA     - the broker certificate, PEM, base64-encoded
-//The expected broker credentials are phyphox/testpass. Run against a device to exercise the
-//real network stack; the same test on the simulator is a dry run on the host.
 final class MqttHardwareTests: XCTestCase {
     private struct BrokerEnv {
         let host: String
         let ca: Data
     }
 
-    //The service holds its experiment weakly (in the app the experiment owns the connection), so
-    //the tests must keep the parsed experiments alive for certificate resolution to work
+    //The service holds its experiment weakly, so keep the parsed experiments alive for certificate resolution
     private var retainedExperiments: [Experiment] = []
 
     override func tearDown() {
@@ -1432,8 +1370,7 @@ final class MqttHardwareTests: XCTestCase {
         let stream = InputStream(data: xml.data(using: .utf8)!)
         let experiment = try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
 
-        //Deliver the certificate the way a zip container does: a res directory next to the
-        //experiment file, which is where resolveResource looks
+        //Deliver the certificate as a zip container would: a res directory next to the experiment file
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("mqtts-hw-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: dir.appendingPathComponent("res"), withIntermediateDirectories: true)
         try ca.write(to: dir.appendingPathComponent("res").appendingPathComponent("broker.pem"))
@@ -1456,8 +1393,7 @@ final class MqttHardwareTests: XCTestCase {
         defer { service.disconnect() }
         waitUntil("connected and subscribed over TLS") { service.getState() == .success }
 
-        //Write a value and execute: the JSON publish (QoS 1, persistence is set) goes to the
-        //broker, which routes it straight back via our subscription on the same topic
+        //The QoS 1 JSON publish goes to the broker, which routes it straight back via the subscription on the same topic
         let connection = try (experiment.networkConnections.first).unwrap()
         if case .Buffer(let buffer, _) = try (connection.send["value"]?.source).unwrap() {
             buffer.append(42.25)
@@ -1497,8 +1433,7 @@ final class MqttHardwareTests: XCTestCase {
             }
             return false
         }
-        //mosquitto answers a wrong password with return code 5 (not authorized); accept 4 too,
-        //which brokers may use instead
+        //mosquitto answers a wrong password with code 5 (not authorized); other brokers may use 4
         XCTAssertTrue(reported?.contains("not authorized") == true || reported?.contains("bad username or password") == true, reported ?? "nil")
     }
 
@@ -1515,21 +1450,15 @@ final class MqttHardwareTests: XCTestCase {
     }
 }
 
-//What an experiment computes must not depend on which page the user is looking at. An input
-//element's default is experiment data: an analysis module reading an edit field, or a bluetooth
-//output sending one to a device, has to see it whether or not that element's view has ever been
-//drawn. iOS used to seed these from the view module's render path, which runs only for the one
-//view collection that is active, so an element on any other page left its buffer empty
-//(input-defaults-on-hidden-view; Android seeds for every view, and that is canonical).
+//An input element's default is experiment data and must be in its buffer whether or not the element's view was ever
+//drawn (input-defaults-on-hidden-view; Android seeds for every view, which is canonical)
 final class InputDefaultsTests: XCTestCase {
     private func parse(_ xml: String) throws -> Experiment {
         let stream = InputStream(data: xml.data(using: .utf8)!)
         return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
     }
 
-    ///Two views, and every input element on the SECOND one - the page a running experiment need
-    ///never show. No view module exists at all here, which is the point: parsing the file is
-    ///enough for the values to be in their buffers.
+    ///Every input element sits on the second view; no view module exists here, parsing alone must fill the buffers
     private func twoViewExperiment() throws -> Experiment {
         return try parse("""
         <phyphox version="1.19">
@@ -1573,10 +1502,7 @@ final class InputDefaultsTests: XCTestCase {
                        "what the user set, or a restored state, is not overwritten by the default")
     }
 
-    ///How the value actually went missing on the bench: not an analysis or an output emptying it
-    ///- micropython/createExperiment has an empty analysis block and its output's input has no
-    ///keep attribute, which means keep="true" - but a plain clear. The lab issues
-    ////control?cmd=clear before every start, and "clear data" does the same, both landing here.
+    ///A plain clear (/control?cmd=clear before every start, or "clear data") must restore the default
     func testTheDefaultComesBackAfterAClear() throws {
         let experiment = try twoViewExperiment()
         experiment.buffers["editOut"]?.replaceValues([42.0])
@@ -1590,12 +1516,7 @@ final class InputDefaultsTests: XCTestCase {
                        "and so does a clear the user did not ask for, like closing the experiment")
     }
 
-    ///The other half of that: an output only empties what it sent if the file SAYS so. `keep`
-    ///defaults to true, and the experiment this was found with declares format 1.10, where the
-    ///attribute does not exist at all - so nothing about the bluetooth output was ever going to
-    ///clear that buffer. If this ever regressed, an input element would lose its value after the
-    ///first send on any page, and the comment on seedInputDefaults() would become true for the
-    ///wrong reason.
+    ///An output empties what it sent only if the file says so: `keep` defaults to true
     func testABluetoothOutputKeepsWhatItSentUnlessTheFileSaysOtherwise() throws {
         func experiment(keep: String) throws -> Experiment {
             return try parse("""
@@ -1631,9 +1552,7 @@ final class InputDefaultsTests: XCTestCase {
                      "keep=\"false\" is the one that empties it")
     }
 
-    ///The general case the per-cycle seeding is there for: an analysis input without keep="true",
-    ///or a bluetooth output whose input says keep="false", empties the buffer it read, and the
-    ///value has to be back for the next cycle wherever that element lives.
+    ///A buffer emptied by an analysis input or a keep="false" output must hold the default again for the next cycle
     func testAnEmptiedBufferIsBackBeforeTheNextAnalysisPass() throws {
         let experiment = try twoViewExperiment()
         experiment.buffers["editOut"]?.clear(reset: false)
@@ -1645,15 +1564,8 @@ final class InputDefaultsTests: XCTestCase {
                        "the next cycle sees the setting again, on whichever page it lives")
     }
 
-    ///After a clear an input element must come back to its DEFAULT, not to whatever its control
-    ///was showing (maintainer, 2026-08-29). Clearing is how a user deliberately returns an
-    ///experiment to its starting state, and clearGroup is how an author exempts a setting from
-    ///that - a control that remembered its position across a clear would leave clearGroup with
-    ///nothing to do. iOS satisfies this incidentally: the switch takes its state FROM the buffer
-    ///and never writes it back on its own. Nothing enforced it, and "remember where the user left
-    ///it" is a plausible-sounding change that would break the rule silently, which is what this
-    ///test is for. The rule lives on the `default` attribute of edit, toggle and dropdown in
-    ///phyphox-docs spec/views.yml.
+    ///After a clear a control returns to its `default`, not to the position it was showing (the rule lives on the
+    ///`default` attribute of edit, toggle and dropdown in phyphox-docs spec/views.yml; clearGroup exempts a setting)
     func testAControlDoesNotCarryItsPositionThroughAClear() throws {
         let experiment = try twoViewExperiment()
         let descriptor = try XCTUnwrap(experiment.viewDescriptors?
@@ -1680,19 +1592,24 @@ final class InputDefaultsTests: XCTestCase {
                        + "buffer, rather than writing the position it was showing back into it")
     }
 
-    ///The slider is deliberately left out of the seeding: the parser gives it its default when
-    ///the file is read, and Android never seeds a slider at all, so re-seeding it here would be a
-    ///new divergence in the other direction rather than the end of one
-    ///(slider-default-never-reaches-buffer, open).
-    func testTheSliderIsLeftAsItIs() throws {
+    ///The slider is seeded like every other input element (input-default-does-not-replace-nan); range mode seeds min/max
+    func testTheSliderIsSeededLikeTheRest() throws {
         let experiment = try parse("""
         <phyphox version="1.7">
             <title>t</title><category>c</category>
-            <data-containers><container size="1" init="">sliderOut</container></data-containers>
+            <data-containers>
+                <container size="1" init="">sliderOut</container>
+                <container size="1" init="">lower</container>
+                <container size="1" init="">upper</container>
+            </data-containers>
             <views>
                 <view label="only">
                     <slider label="s" minValue="0" maxValue="10" default="7">
                         <output value="value">sliderOut</output>
+                    </slider>
+                    <slider label="r" type="range" minValue="2" maxValue="8">
+                        <output value="lowerValue">lower</output>
+                        <output value="upperValue">upper</output>
                     </slider>
                 </view>
             </views>
@@ -1701,23 +1618,24 @@ final class InputDefaultsTests: XCTestCase {
         XCTAssertEqual(experiment.buffers["sliderOut"]?.last, 7.0,
                        "the parser seeds it while reading the file")
         experiment.buffers["sliderOut"]?.clear(reset: true)
+        experiment.buffers["lower"]?.replaceValues([Double.nan])
+        experiment.buffers["upper"]?.clear(reset: true)
         experiment.seedInputDefaults()
-        XCTAssertNil(experiment.buffers["sliderOut"]?.last,
-                     "and nothing here puts it back, which is today's behaviour on both platforms")
+        XCTAssertEqual(experiment.buffers["sliderOut"]?.last, 7.0, "the seeding puts it back")
+        XCTAssertEqual(experiment.buffers["lower"]?.last, 2.0, "a range slider's lower buffer starts at its min")
+        XCTAssertEqual(experiment.buffers["upper"]?.last, 8.0, "and the upper one at its max")
     }
 }
 
-//Enumerated values from an experiment file are matched case-insensitively across the whole
-//format, and an invalid value is an error rather than silently selecting the default
-//(enum-case-insensitive and enum-invalid-value in phyphox-docs, matching the Android parser).
+//Enumerated values fold case format-wide and an invalid value is an error rather than the default
+//(phyphox-docs enum-case-insensitive and enum-invalid-value, matching Android)
 final class EnumCaseFoldingTests: XCTestCase {
     private func parse(_ xml: String) throws -> Experiment {
         let stream = InputStream(data: xml.data(using: .utf8)!)
         return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: stream)
     }
 
-    ///The full skeleton exercises the accepted surface of the format in one document; upper-casing
-    ///every enumerated attribute value in it must not change that.
+    ///Upper-casing every enumerated attribute value in the full skeleton must not stop it from parsing
     func testCaseMangledSkeletonParses() throws {
         let skeleton = try testBundle.path(forResource: "full-skeleton", ofType: "phyphox").unwrap()
         var xml = try String(contentsOfFile: skeleton, encoding: .utf8)
@@ -1794,16 +1712,14 @@ final class EnumCaseFoldingTests: XCTestCase {
             </phyphox>
             """
         }
-        //The three offenders named by enum-invalid-value, which used to substitute their defaults:
+        //The three offenders named by enum-invalid-value
         XCTAssertThrowsError(try parse(sensorXML("type=\"accelerometer\" rateStrategy=\"bogus\"")))
         XCTAssertThrowsError(try parse(sensorXML("type=\"accelerometer\"", camera: "<camera feature=\"bogus\"><output component=\"luminance\">buffer</output></camera>")))
         XCTAssertThrowsError(try parse(sensorXML("type=\"accelerometer\"", camera: "<camera aeStrategy=\"bogus\"><output component=\"luminance\">buffer</output></camera>")))
-        //An unknown discovery method used to be silently ignored:
         XCTAssertThrowsError(try parse(sensorXML("type=\"accelerometer\"", network: "<network><connection address=\"a\" discovery=\"bogus\" discoveryAddress=\"b\" service=\"http/get\" conversion=\"none\"/></network>")))
-        //Folding must not have broken rejection in the long-standing throwing paths:
+        //Folding must not break the long-standing throwing paths
         XCTAssertThrowsError(try parse(sensorXML("type=\"bogus\"")))
 
-        //View and output elements whose invalid enumerated values used to be silently swallowed:
         func viewXML(_ viewBody: String, output: String = "") -> String {
             return """
             <phyphox version="1.20">
@@ -1822,20 +1738,16 @@ final class EnumCaseFoldingTests: XCTestCase {
             </phyphox>
             """
         }
-        //slider type used to silently produce a RANGE slider for anything but exactly "normal"
         XCTAssertThrowsError(try parse(viewXML("<slider label=\"s\" type=\"bogus\"><output>buffer</output></slider>")))
-        //value format used to silently fall back to the plain number display
         XCTAssertThrowsError(try parse(viewXML("<value label=\"l\" format=\"bogus\"><input>buffer</input></value>")))
-        //a per-set graph style used to be silently ignored (Android rejects it)
+        //a per-set graph style is rejected too, as on Android
         XCTAssertThrowsError(try parse(viewXML("<graph label=\"g\"><input axis=\"y\" style=\"bogus\">buffer</input></graph>")))
-        //the audio waveform used to silently fall back to sine
         XCTAssertThrowsError(try parse(viewXML("<value label=\"l\"><input>buffer</input></value>", output: "<output><audio><tone waveform=\"bogus\"><input parameter=\"frequency\" type=\"value\">440</input></tone></audio></output>")))
     }
 }
 
-//Metadata identifiers of network send elements and the camera locked setting names fold case
-//as well (maintainer decision 2026-08-10, extending enum-case-insensitive; Android still
-//matches both case-sensitively - see ANDROID-TODO).
+//Metadata identifiers of network send elements and camera locked setting names fold case too (extends
+//enum-case-insensitive; Android still matches both case-sensitively, see ANDROID-TODO)
 final class MetadataAndLockedFoldingTests: XCTestCase {
     private func parse(_ xml: String) throws -> Experiment {
         let stream = InputStream(data: xml.data(using: .utf8)!)
@@ -1901,9 +1813,7 @@ final class MetadataAndLockedFoldingTests: XCTestCase {
     }
 }
 
-//Format-wide case folding beyond the enumerated attribute values (maintainer decisions
-//2026-08-10): the datatype attribute, boolean attribute values and element names all fold,
-//and invalid values are rejected rather than silently defaulted.
+//Case folding beyond enumerated values: datatype, boolean values and element names fold; invalid values are rejected
 final class FormatWideCaseFoldingTests: XCTestCase {
     private func parse(_ xml: String) throws -> Experiment {
         let stream = InputStream(data: xml.data(using: .utf8)!)
@@ -1938,8 +1848,7 @@ final class FormatWideCaseFoldingTests: XCTestCase {
             </VIEWS>
         </PHYPHOX>
         """)
-        //Successful parsing is the assertion that matters: <Append> only parses if the folded
-        //module name reached the classMap, and <SENSOR>/<CONTAINER> only via the folded lookup
+        //Parsing is the assertion: <Append> only parses if the folded module name reached the classMap
         XCTAssertEqual(experiment.sensorInputs.count, 1)
         XCTAssertNotNil(experiment.buffers["buffer"])
     }
@@ -1974,8 +1883,7 @@ final class FormatWideCaseFoldingTests: XCTestCase {
         let graph = try ((experiment.viewDescriptors?.first?.views.first) as? GraphViewDescriptor).unwrap()
         XCTAssertTrue(graph.partialUpdate)
         XCTAssertFalse(graph.followX)
-        //Anything that is not true or false is an error - Android's silent false and the XSD-style
-        //"1"/"0" are not part of the format
+        //Anything but true/false is an error; Android's silent false and XSD-style "1"/"0" are not part of the format
         XCTAssertThrowsError(try parse(boolXML(sensor: "average=\"yes\"", graph: "")))
         XCTAssertThrowsError(try parse(boolXML(sensor: "", graph: "partialUpdate=\"1\"")))
     }
@@ -2013,9 +1921,8 @@ final class FormatWideCaseFoldingTests: XCTestCase {
     }
 }
 
-//The input/output mapping mechanism is validated against slot tables, mirroring Android's
-//ioBlockParser: components of input elements, and the as attribute of analysis inputs and
-//outputs, must name an allowed slot with its count and type restrictions respected.
+//Input/output mapping is validated against slot tables mirroring Android's ioBlockParser: components and `as`
+//names must name an allowed slot, respecting its count and type restrictions
 final class SlotMappingValidationTests: XCTestCase {
     private func parse(_ xml: String) throws -> Experiment {
         let stream = InputStream(data: xml.data(using: .utf8)!)
@@ -2088,8 +1995,7 @@ final class SlotMappingValidationTests: XCTestCase {
     }
 
     func testAverageMapsOutputsByName() throws {
-        //Writing stddev before average must not swap the two values: outputs map by the
-        //documented names, not by document order
+        //Outputs map by the documented names, not by document order
         let avgBuffer = try DataBuffer(name: "avg", size: 10, baseContents: [], static: false)
         let stddevBuffer = try DataBuffer(name: "stddev", size: 10, baseContents: [], static: false)
         let inputData = MutableDoubleArray(data: [1.0, 2.0, 3.0, 4.0])
@@ -2109,9 +2015,8 @@ final class SlotMappingValidationTests: XCTestCase {
     }
 }
 
-//average delivers single values, so its error states are intermediate NaN values: an empty or
-//all-non-finite input writes exactly one NaN to each connected output instead of nothing. A
-//single finite value yields its own value as the average and exactly one NaN as the stddev.
+//average's error states are intermediate NaNs: an empty or all-non-finite input writes exactly one NaN per output;
+//a single finite value yields itself as average and one NaN as stddev
 final class AverageDegenerateInputTests: XCTestCase {
     private func runAverage(input: [Double]) throws -> (average: [Double], stddev: [Double]) {
         let avgBuffer = try DataBuffer(name: "avg", size: 10, baseContents: [], static: false)
@@ -2154,11 +2059,8 @@ final class AverageDegenerateInputTests: XCTestCase {
     }
 }
 
-//threshold error states: when no crossing is found the output is NaN (not the last sample's x
-//or -1), and a NaN threshold value participates like any number - no comparison with it is ever
-//true, so no crossing is found. Only an absent threshold input or an empty threshold buffer
-//selects the documented default of 0. The sticky-side triggering (any value not on the trigger
-//side arms, NaN included; the next value on the trigger side fires) is the canonical behaviour.
+//threshold error states: no crossing outputs NaN (not the last x or -1); a NaN threshold participates like any number;
+//only an absent or empty threshold selects the default 0. Sticky-side triggering (NaN arms too) is canonical
 final class ThresholdNaNHandlingTests: XCTestCase {
     private func runThreshold(x: [Double]? = nil, y: [Double], threshold: ExperimentAnalysisDataInput? = nil) throws -> [Double] {
         var inputs: [ExperimentAnalysisDataInput] = []
@@ -2220,9 +2122,7 @@ final class ThresholdNaNHandlingTests: XCTestCase {
     }
 }
 
-//first pairs input i with output i, like Android: each output receives exactly the first value
-//of its own input; an empty input skips only its own pair, and outputs beyond the input count
-//stay empty. The first values must never be collected and broadcast to every output.
+//first pairs input i with output i like Android: an empty input skips only its own pair, extra outputs stay empty
 final class FirstPairingTests: XCTestCase {
     private func makeInput(_ data: [Double]) throws -> ExperimentAnalysisDataInput {
         let buffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
@@ -2260,8 +2160,7 @@ final class FirstPairingTests: XCTestCase {
     }
 }
 
-//match with more outputs than inputs must leave the extra outputs empty (matching Android)
-//instead of trapping on an index out of range.
+//match with more outputs than inputs leaves the extra outputs empty (as on Android) instead of trapping
 final class MatchExtraOutputsTests: XCTestCase {
     private func runMatch(inputs inputData: [[Double]], outputCount: Int) throws -> [[Double]] {
         let inputs: [ExperimentAnalysisDataInput] = try inputData.map {
@@ -2292,9 +2191,8 @@ final class MatchExtraOutputsTests: XCTestCase {
     }
 }
 
-//gcd/lcm operate on non-negative integers: fractional values are rounded half away from zero
-//(C rounding, not truncation), negative and non-finite inputs yield NaN, values or results
-//beyond UInt yield NaN instead of trapping, and lcm(0,x) = 0 including lcm(0,0).
+//gcd/lcm: fractional values round half away from zero, negative and non-finite inputs and UInt overflow yield NaN
+//instead of trapping, lcm(0,x) = 0
 final class GCDLCMDomainTests: XCTestCase {
     private func runGCD(_ a: Double, _ b: Double) throws -> [Double] {
         let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
@@ -2337,19 +2235,14 @@ final class GCDLCMDomainTests: XCTestCase {
 
 }
 
-//Buffers bound to interactive view elements (edit, switch, dropdown, slider) are not exempt
-//from clearing; the default is written back afterwards instead. For edit, switch and dropdown
-//that now happens in Experiment.seedInputDefaults() rather than in the view module, because a
-//view module only runs while its page is the one on screen - see InputDefaultsTests, which
-//covers all three. What is left here is the clearing itself, and the slider, which still seeds
-//from its own update().
+//Buffers bound to interactive view elements are cleared like any other; the default is written back afterwards (edit,
+//switch and dropdown via seedInputDefaults, see InputDefaultsTests; the slider still seeds from its own update())
 final class InteractiveElementReInitTests: XCTestCase {
     private func makeBuffer(_ name: String) throws -> DataBuffer {
         return try DataBuffer(name: name, size: 10, baseContents: [], static: false)
     }
 
     func testAnalysisInputClearNoLongerExemptsEditBuffers() throws {
-        //the attachedToTextField exemption is gone: keep=false clears any non-static buffer
         let buffer = try makeBuffer("edit")
         buffer.append(7)
         let input = ExperimentAnalysisDataInput.buffer(buffer: buffer, data: MutableDoubleArray(data: []), usedAs: "in", keep: false)
@@ -2376,11 +2269,8 @@ final class InteractiveElementReInitTests: XCTestCase {
     }
 }
 
-//The formula language uses conventional precedence: ^ is right-associative and binds tighter
-//than unary minus (-2^2 = -4, 2^3^2 = 512); unary minus applies to the immediately following
-//operand only (-2+3 = 1); then * / %, then + -, left-associative at each level. A missing or
-//empty formula and structurally broken formulas (wrong arity, dangling operands) reject the
-//file at load; 1e+5 parses as 100000.
+//Formula precedence: ^ is right-associative and binds tighter than unary minus (-2^2 = -4, 2^3^2 = 512); unary minus
+//applies to the next operand only; then * / %, then + -, left-associative. Broken or empty formulas reject the file at load
 final class FormulaParserTests: XCTestCase {
     private func eval(_ formula: String, buffers: [[Double]] = [[0]]) throws -> [Double] {
         return try FormulaParser(formula: formula).execute(buffers: buffers)
@@ -2434,8 +2324,7 @@ final class FormulaParserTests: XCTestCase {
     }
 }
 
-//A formula module without a formula attribute is rejected at load (matching Android) instead
-//of silently outputting nothing.
+//A formula module without a formula attribute is rejected at load (as on Android) instead of outputting nothing
 final class FormulaMissingAttributeTests: XCTestCase {
     private func parse(_ xml: String) throws -> Experiment {
         let stream = InputStream(data: xml.data(using: .utf8)!)
@@ -2474,10 +2363,8 @@ final class FormulaMissingAttributeTests: XCTestCase {
     }
 }
 
-//subtract/divide/power/atan2 consume the validated slot mapping: operands follow the as
-//attributes matched case-insensitively, and unnamed inputs fill the remaining slots in
-//declaration order - never document order (which silently swapped operands when only the
-//second operand was named or the first slot's name was written in different case).
+//subtract/divide/power/atan2 use the validated slot mapping: `as` matches case-insensitively and unnamed inputs
+//fill the remaining slots in declaration order, never document order
 final class ComplexModuleOperandOrderTests: XCTestCase {
     private func run<T: ExperimentComplexUpdateValueAnalysis>(_ type: T.Type, inputs: [ExperimentAnalysisDataInput], outputName: String) throws -> [Double] {
         let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
@@ -2534,9 +2421,8 @@ final class ComplexModuleOperandOrderTests: XCTestCase {
     }
 }
 
-//requireFill: the first analysis run after opening or starting is exempt from the gate, so the
-//initialization pass runs while the required container is still empty (Android's model, decided
-//2026-08-24).
+//requireFill: the first analysis run after opening or starting is exempt from the gate, so the initialization pass
+//runs while the required container is still empty (Android's model)
 final class RequireFillFirstRunTests: XCTestCase {
     private final class Delegate: ExperimentAnalysisDelegate {
         var onUpdate: (() -> Void)?
@@ -2594,9 +2480,7 @@ final class RequireFillFirstRunTests: XCTestCase {
         let requireFill = try DataBuffer(name: "fill", size: 0, baseContents: [], static: false)
         let analysis = try makeAnalysis(output: output, requireFill: requireFill)
 
-        //The pass an experiment makes when it is opened, before it is ever started, consumes
-        //the exemption - so the very first START after opening has to re-arm it, or an
-        //experiment whose initialisation depends on that pass never gets one
+        //The opening pass consumes the exemption, so the first start after opening must re-arm it
         runOnce(analysis, expectingExecution: true)
         runOnce(analysis, expectingExecution: false)
 
@@ -2606,10 +2490,8 @@ final class RequireFillFirstRunTests: XCTestCase {
     }
 
     func testStoppingDoesNotExemptAPass() throws {
-        //A stopped experiment still runs passes (a remote cmd=set, an edit view), and those run
-        //with the inputs the last measuring pass consumed. Exempting them from the gate is how
-        //Android lost the results a user had stopped on - ruled 2026-08-26: the exemption
-        //belongs to opening and starting, and a run after stopping is neither.
+        //A pass after stopping (remote cmd=set, an edit view) is neither opening nor starting and stays gated;
+        //exempting it is how Android lost the results a user had stopped on
         let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
         let requireFill = try DataBuffer(name: "fill", size: 0, baseContents: [], static: false)
         let analysis = try makeAnalysis(output: output, requireFill: requireFill)
@@ -2623,11 +2505,8 @@ final class RequireFillFirstRunTests: XCTestCase {
     }
 }
 
-//What the gate protects while an experiment sits stopped (Android: StopKeepsResultsTest). The
-//shape is audio_scope's: an analysis whose input is consumed by the pass that reads it and whose
-//result is written to a non-append output. A pass that runs after the stop - a remote cmd=set or
-//an edit view is enough to schedule one - then computes from an empty input and overwrites the
-//result with it, which is what the user's export is taken from.
+//What the gate protects while an experiment is stopped (Android: StopKeepsResultsTest): a pass after the stop must
+//not recompute audio_scope's non-append result from the input the measuring pass emptied
 final class StopKeepsResultsTests: XCTestCase {
     private final class Delegate: ExperimentAnalysisDelegate {
         var onUpdate: (() -> Void)?
@@ -2640,8 +2519,7 @@ final class StopKeepsResultsTests: XCTestCase {
 
     private let delegate = Delegate()
 
-    ///Writes what the input holds into a non-append output, and does not run before the input
-    ///has three values - the requireFill container is the input itself, as in audio_scope
+    ///Writes the input into a non-append output; the requireFill container is the input itself, as in audio_scope
     private func makeAnalysis(input: DataBuffer, output: DataBuffer) throws -> ExperimentAnalysis {
         let module = try AdditionAnalysis(
             inputs: [.buffer(buffer: input, data: MutableDoubleArray(data: []), usedAs: "", keep: true)],
@@ -2687,14 +2565,8 @@ final class StopKeepsResultsTests: XCTestCase {
     }
 }
 
-//A request that arrives while an analysis pass is busy is remembered and rescheduled when that
-//pass finishes - but the pre-run, the pass an experiment makes when it is opened, used to
-//discard what it had absorbed. Experiment.start() sets analysis.running and calls
-//setNeedsUpdate() immediately, so a remote cmd=start milliseconds after the experiment was
-//opened landed exactly there: the start was recorded as "requested while busy" and then thrown
-//away, and the measuring chain never began although the sensors and the audio output were
-//running. Only the next start by hand revived it. Found by the device lab's audio suite
-//(random, 1-2 of 3 devices per run, always the run right after a fresh fixture load).
+//A request arriving while a pass is busy is rescheduled when that pass finishes, the pre-run included: Experiment.start()
+//calls setNeedsUpdate() right away, so a remote cmd=start just after opening lands exactly there
 final class QueuedUpdateDuringPreRunTests: XCTestCase {
     private final class Delegate: ExperimentAnalysisDelegate {
         private(set) var willUpdates = 0
@@ -2742,8 +2614,7 @@ final class QueuedUpdateDuringPreRunTests: XCTestCase {
         delegate.onUpdate = { count in
             if count == 2 { ran.fulfill() }
         }
-        //The start lands while the open-time pre-run is still in flight - what Experiment.start()
-        //does when the remote API sends cmd=start right after the experiment was opened
+        //The start lands while the open-time pre-run is in flight, as a remote cmd=start right after opening does
         delegate.onWillUpdate = { count in
             guard count == 1 else { return }
             analysis.running = true
@@ -2757,9 +2628,7 @@ final class QueuedUpdateDuringPreRunTests: XCTestCase {
     }
 
     func testAStartQueuedDuringThePreRunStartsTheFreeRunningChain() throws {
-        //The lab's case: an analysis without onUserInput keeps rescheduling itself, and that
-        //chain has to begin. Dropping the queued start left it never begun, so the tone played
-        //and the microphone recorded with nothing computing.
+        //An analysis without onUserInput keeps rescheduling itself; that chain must begin from the queued start
         let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
         let analysis = try makeAnalysis(output: output, onUserInput: false)
 
@@ -2781,11 +2650,8 @@ final class QueuedUpdateDuringPreRunTests: XCTestCase {
     }
 
     func testAUserInputQueuedWhileStoppedRunsAsAPreRun() throws {
-        //A value written while the experiment is stopped schedules a pre-run
-        //(userInputTriggered: isPreRun = !running), and a pre-run resets the cycle counter.
-        //Rescheduling the queued request as a plain one would hand it to the guard that keeps a
-        //stopped experiment from overwriting what it is showing, and it would end there - so
-        //what the request was has to be remembered along with it.
+        //A value written while stopped schedules a pre-run (isPreRun = !running), which resets the cycle counter;
+        //rescheduled as a plain request it would end at the stopped-experiment guard, so its kind is remembered with it
         let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
         let analysis = try makeAnalysis(output: output, onUserInput: true)
 
@@ -2805,8 +2671,7 @@ final class QueuedUpdateDuringPreRunTests: XCTestCase {
     }
 
     func testThePreRunAloneDoesNotStartTheFreeRunningChain() throws {
-        //The other side of the fix: with nothing queued behind it, the pre-run is still a single
-        //pass and does not start the loop of an analysis that has no onUserInput
+        //With nothing queued behind it, the pre-run stays a single pass and does not start the loop
         let output = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
         let analysis = try makeAnalysis(output: output, onUserInput: false)
 
@@ -2827,12 +2692,8 @@ final class QueuedUpdateDuringPreRunTests: XCTestCase {
 }
 
 
-//The container forms of the phyphox format, through the intake route the app itself runs
-//(test-matrix row containers-load): the zip sniffing of detectFileType, the unpacking of
-//handleZipFile and the header synthesis of handlePartialZipFile, with the fixtures from
-//phyphox-docs/fixtures/containers. Deliberately not a lenient unzip of the fixture - what is
-//pinned is what an incoming file actually goes through, including the guard that keeps an
-//archive from writing outside the extraction directory.
+//The container forms of the phyphox format through the app's own intake route (test-matrix row containers-load):
+//detectFileType, handleZipFile and handlePartialZipFile over the fixtures in phyphox-docs/fixtures/containers
 final class ContainerIntakeTests: XCTestCase {
     private var extractionDirectory: URL!
 
@@ -2887,8 +2748,7 @@ final class ContainerIntakeTests: XCTestCase {
         let experiment = try ExperimentSerialization.readExperimentFromURL(files[0])
         XCTAssertEqual(experiment.resources, ["pic.png"], "the resource list is derived from the image element")
 
-        //Resolved the way the image element and the /res endpoint resolve it, against the res
-        //folder next to the experiment file the archive was unpacked into
+        //Resolved as the image element and /res do: against the res folder next to the unpacked experiment file
         let resource = experiment.resolveResource("pic.png")
         XCTAssertNotNil(resource, "the image the experiment references came out of the archive")
         XCTAssertEqual(resource?.deletingLastPathComponent().lastPathComponent, "res")
@@ -2898,10 +2758,8 @@ final class ContainerIntakeTests: XCTestCase {
 
     // phyphox-test: containers-load
     func testAnEntryPointingOutsideTheExtractionDirectoryRefusesTheArchive() throws {
-        //A container is untrusted input, and an entry like "../evil.phyphox" is evidence that
-        //the file was tampered with: nothing in it is trustworthy, so the whole archive is
-        //refused rather than unpacked minus the bad entry (ruled 2026-08-26, Android does the
-        //same in its ZipIntentHandler). Security pin.
+        //A traversal entry is evidence of tampering: the whole archive is refused, not unpacked minus the entry
+        //(ruled 2026-08-26, Android's ZipIntentHandler does the same). Security pin.
         let url = try fixture("traversal.zip")
 
         XCTAssertThrowsError(try ExperimentsCollectionViewController.extractContainer(at: url, to: extractionDirectory),
@@ -2918,10 +2776,8 @@ final class ContainerIntakeTests: XCTestCase {
 
     // phyphox-test: containers-load
     func testTheIntakeRouteOfEachFileForm() throws {
-        //What the app does with a sniffed file, per route. A bare phyphox file and an ordinary
-        //zip go the same way whatever the route is; the partial (headerless) form is accepted
-        //only from the QR scanner and the Bluetooth transfer and is refused everywhere else -
-        //where it is refused it becomes .unknown, which is the app's could-not-load path.
+        //Per route: a bare file and an ordinary zip go the same way everywhere; the partial form is accepted only
+        //from the QR scanner and the Bluetooth transfer, becoming .unknown (the could-not-load path) elsewhere
         typealias Intake = ExperimentsCollectionViewController
         for accepted in [true, false] {
             XCTAssertEqual(Intake.intakeRoute(for: .phyphox, acceptPartialZip: accepted), .phyphox)
@@ -2936,9 +2792,7 @@ final class ContainerIntakeTests: XCTestCase {
 
     // phyphox-test: containers-load
     func testWhatEachContainerFormIsSniffedAs() throws {
-        //The switch the routing is fed from, over the real fixtures: the zip by its leading
-        //signature, the partial zip by its trailing data descriptor, a bare experiment by its
-        //root element, and something that is none of them
+        //The sniffing switch over the real fixtures: leading signature, trailing data descriptor, root element, none
         XCTAssertEqual(try detectedType(of: try fixture("two-experiments.zip")), .zip)
         XCTAssertEqual(try detectedType(of: try fixture("with-resource.zip")), .zip)
         XCTAssertEqual(try detectedType(of: try fixture("partial.bin")), .partialZip)
@@ -2950,9 +2804,7 @@ final class ContainerIntakeTests: XCTestCase {
 
     // phyphox-test: containers-load
     func testWhatTheAppDoesWithWhatAnArchiveHeld() throws {
-        //The branch handleZipFile takes: one experiment is opened right away, several are
-        //offered for picking, and an archive carrying none is refused rather than opening an
-        //empty picker
+        //One experiment opens right away, several are offered for picking, none is refused rather than an empty picker
         let single = try ExperimentsCollectionViewController.extractContainer(
             at: try fixture("with-resource.zip"), to: extractionDirectory)
         XCTAssertEqual(try ExperimentsCollectionViewController.containerDispatch(for: single),
@@ -2970,8 +2822,7 @@ final class ContainerIntakeTests: XCTestCase {
 
     // phyphox-test: containers-load
     func testAnExperimentFromAnArchiveIsNotPartOfTheCollection() throws {
-        //What makes the app offer to save it: unpacked into the scratch directory, it is neither
-        //a local experiment nor one the collection already holds
+        //Unpacked into the scratch directory it is neither local nor in the collection, so the app offers to save it
         let files = try ExperimentsCollectionViewController.extractContainer(
             at: try fixture("with-resource.zip"), to: extractionDirectory)
         let experiment = try ExperimentSerialization.readExperimentFromURL(files[0])
@@ -2984,9 +2835,7 @@ final class ContainerIntakeTests: XCTestCase {
 
     // phyphox-test: containers-load
     func testTheResourceFolderIsNamedByTheHexCRC32OfTheExperimentFile() throws {
-        //The contract spells the naming out, and the web server, the image element and saving
-        //all resolve through it - so the scheme itself is pinned, not just that two callers
-        //happen to agree
+        //The web server, the image element and saving all resolve through this naming, so the scheme itself is pinned
         let files = try ExperimentsCollectionViewController.extractContainer(
             at: try fixture("with-resource.zip"), to: extractionDirectory)
         let experiment = try ExperimentSerialization.readExperimentFromURL(files[0])
@@ -2995,23 +2844,19 @@ final class ContainerIntakeTests: XCTestCase {
         let folder = try XCTUnwrap(experiment.localResourceFolder)
         XCTAssertEqual(folder.lastPathComponent, String(crc32, radix: 16), "hex, unpadded")
         XCTAssertEqual(folder.lastPathComponent, "a843768e", "the CRC32 of this very fixture")
-        //Compared as paths: whether a file URL carries a trailing slash depends on whether the
-        //directory exists on the machine running the test
+        //Compared as paths: a file URL's trailing slash depends on whether the directory exists on this machine
         XCTAssertEqual(folder.deletingLastPathComponent().standardizedFileURL.path,
                        customExperimentsURL.standardizedFileURL.path, "next to the saved experiments")
     }
 
     // phyphox-test: containers-load
     func testTheImageElementRendersTheImageTheArchiveDelivered() throws {
-        //Not just "an image is there": the pixels the image element ends up showing are the
-        //pixels of the file the archive carried, so neither a placeholder nor the bundled
-        //fallback image can pass this
+        //The pixels shown are the pixels the archive carried, so neither a placeholder nor the bundled fallback passes
         let files = try ExperimentsCollectionViewController.extractContainer(
             at: try fixture("with-resource.zip"), to: extractionDirectory)
         let experiment = try ExperimentSerialization.readExperimentFromURL(files[0])
 
-        //The app renders with its own light/dark setting, and the image element applies a filter
-        //per mode - pinned to light, like the golden suite does
+        //The image element applies a filter per light/dark mode - pinned to light, like the golden suite
         let appMode = SettingBundleHelper.UserDefaultKeys.APP_MODE.rawValue
         let previousMode = UserDefaults.standard.object(forKey: appMode)
         UserDefaults.standard.set(Utility.LIGHT_MODE, forKey: appMode)
@@ -3027,8 +2872,7 @@ final class ContainerIntakeTests: XCTestCase {
         XCTAssertEqual(ContainerIntakeTests.pixels(of: rendered), ContainerIntakeTests.pixels(of: delivered),
                        "pixel for pixel the image the archive delivered")
 
-        //The negative control: without the resource folder there is no image at all, so the
-        //assertion above cannot be satisfied by an element that quietly fell back to something
+        //Negative control: without the resource folder there is no image, so a quiet fallback cannot pass the above
         let withoutResources = ExperimentViewModuleFactory.createViews(collection, resourceFolder: nil)
         let placeholder = try XCTUnwrap(withoutResources.compactMap { $0.view as? ExperimentImageView }.first)
         XCTAssertNil(placeholder.image, "no resource folder, no image")
@@ -3053,27 +2897,22 @@ final class ContainerIntakeTests: XCTestCase {
         XCTAssertNil(ExperimentsCollectionViewController.containerEntryDestination("../evil.phyphox", in: directory))
         XCTAssertNil(ExperimentsCollectionViewController.containerEntryDestination("res/../../evil.png", in: directory))
         XCTAssertNil(ExperimentsCollectionViewController.containerEntryDestination("..", in: directory))
-        //A sibling directory whose name merely starts with the extraction directory's name is
-        //outside it as well
+        //A sibling directory whose name merely starts with the extraction directory's name is outside it too
         XCTAssertNil(ExperimentsCollectionViewController.containerEntryDestination("../extracted-evil/x.phyphox", in: directory))
 
         XCTAssertNotNil(ExperimentsCollectionViewController.containerEntryDestination("a.phyphox", in: directory))
         XCTAssertNotNil(ExperimentsCollectionViewController.containerEntryDestination("res/pic.png", in: directory))
-        //Harmless as long as it stays inside: an absolute-looking entry lands under the
-        //extraction directory rather than at the root
+        //An absolute-looking entry lands under the extraction directory rather than at the root
         XCTAssertNotNil(ExperimentsCollectionViewController.containerEntryDestination("/res/pic.png", in: directory))
     }
 
     // phyphox-test: containers-load
     func testThePartialZipOfAQRCodeOrBluetoothTransfer() throws {
-        //No local file header and no central directory, only the entry and its trailing data
-        //descriptor - the form a QR code or a Bluetooth transfer carries, and the only two
-        //routes allowed to hand it over (see testTheIntakeRouteOfEachFileForm)
+        //Only the entry and its trailing data descriptor - the form a QR code or a Bluetooth transfer carries
         let payload = try Data(contentsOf: try fixture("partial.bin"))
         XCTAssertEqual(ExperimentsCollectionViewController.detectFileType(data: payload), .partialZip,
                        "no zip signature at the front, a data descriptor at the end")
 
-        //The intake rebuilds the local file header and the central directory around it
         let rebuilt = ExperimentsCollectionViewController.rebuiltPartialZipData(from: payload)
         XCTAssertEqual(ExperimentsCollectionViewController.detectFileType(data: rebuilt), .zip,
                        "what comes out is an ordinary zip")
@@ -3089,12 +2928,8 @@ final class ContainerIntakeTests: XCTestCase {
 }
 
 
-//Saving an experiment whose resource folder is already there. The folder is named after the
-//CRC32 of the experiment file, so it can only be left over from a save or a delete that did not
-//run to the end - and insisting on creating it threw AFTER the experiment file had been copied,
-//which saved the experiment without its resources and reported nothing to the user (the caller
-//only prints the error). Found while building the save-to-collection suite, where an interrupted
-//run left exactly that state behind.
+//Saving an experiment whose resource folder is left over from an interrupted save or delete: insisting on creating
+//it threw after the experiment file had been copied, saving it without resources and telling the user nothing
 final class SaveLocallyResourceFolderTests: XCTestCase {
     private var extractionDirectory: URL!
     private var saved: [URL] = []
@@ -3155,16 +2990,8 @@ final class SaveLocallyResourceFolderTests: XCTestCase {
 }
 
 
-//The Bluetooth seam the compatibility suite drives (-phyphoxBleConnect, see
-//AutomationLaunchOptions and ExperimentsCollectionViewController): the app opens a scan, takes
-//the experiment the NAMED device offers, loads it and leaves it for the host to start.
-//
-//What can be tested without a board is the part that decides WHICH device: the suite runs the
-//boards side by side and has one of them advertise under a different name on purpose, so a
-//device that merely contains the requested name is the wrong device. BluetoothScan's own filter
-//is a substring match - right for a user picking from a list, not enough here - and this is the
-//exact match that follows it. Everything after the connection is asserted by the host over the
-//remote API (phyphox-docs/tools/lab/ble.py).
+//The -phyphoxBleConnect seam (see AutomationLaunchOptions): the exact-name match that follows BluetoothScan's substring
+//filter, since the suite's boards advertise side by side; the rest is asserted by phyphox-docs/tools/lab/ble.py
 final class BluetoothAutomationSeamTests: XCTestCase {
     private func matches(advertised: String?, peripheral: String?, requested: String) -> Bool {
         return ExperimentsCollectionViewController.automationBluetoothMatch(advertisedName: advertised,
@@ -3199,11 +3026,8 @@ final class BluetoothAutomationSeamTests: XCTestCase {
     }
 }
 
-//An export set is as long as its LONGEST column, and a missing cell of a shorter column is
-//padded NaN in every format (both ruled 2026-08-25). Sizing a set by its first column silently
-//dropped every value a later column held beyond that length - and dropped the whole set when
-//the first container was empty, which is data loss rather than formatting; the CSV writer left
-//an empty string where every other writer, on both platforms, writes NaN.
+//An export set is as long as its LONGEST column and a missing cell is padded NaN in every format (both ruled 2026-08-25);
+//sizing by the first column dropped every later value beyond its length, and the whole set when it was empty
 final class ExportSetRowCountTests: XCTestCase {
     private func makeSet(_ columns: [(String, [Double])]) throws -> ExperimentExportSet {
         let data: [(name: String, buffer: DataBuffer)] = try columns.map { column in
@@ -3244,27 +3068,20 @@ final class ExportSetRowCountTests: XCTestCase {
         XCTAssertEqual(lines.count, 4, "a header and one line per row of the longest column")
         XCTAssertTrue(lines[3].hasPrefix("NaN,"), "a missing cell is padded NaN, like every other writer")
 
-        //The long column's values survive to the last row; the writer formats them in scientific
-        //notation, which Double parses back
+        //The long column survives to the last row; the writer's scientific notation parses back as Double
         let exported = lines.dropFirst().map { Double($0.components(separatedBy: ",")[1]) }
         XCTAssertEqual(exported, [10, 20, 30])
     }
 }
 
 
-//An export of a RUNNING experiment reads containers that the analysis and the sensor threads keep
-//writing. An analysis cycle clears a container before it refills it, so an export landing inside
-//one used to write a set with nothing but its header - the device lab caught it twice on
-//camera_stopwatch_luma on an iPad, each time in exactly one of the six formats of a sweep, with
-//the buffers demonstrably still full afterwards. The fix takes one copy of every set under the
-//experiment's data lock; these tests run an exporter against a writer doing what a cycle does,
-//and fail if the copy is taken without it.
+//An export of a RUNNING experiment reads containers an analysis cycle clears before refilling; every set is copied
+//under the experiment's data lock, and these tests fail if the copy is taken without it
 final class ExportUnderWritesTests: XCTestCase {
     private let rowCount = 200
     private let iterations = 200
 
-    ///A writer thread doing what an analysis cycle does: clear every container and write it again,
-    ///all inside one barrier on the experiment's data lock (ExperimentAnalysis.writeLocked)
+    ///A writer thread doing what an analysis cycle does: clear and rewrite every container inside one barrier on the lock
     private func writeCycles(lock: BufferLock, buffers: [(DataBuffer, [Double])], until stopped: @escaping () -> Bool) -> Thread {
         let thread = Thread {
             while !stopped() {
@@ -3272,9 +3089,7 @@ final class ExportUnderWritesTests: XCTestCase {
                     for (buffer, _) in buffers {
                         buffer.clear(reset: false)
                     }
-                    //A real cycle computes between emptying its containers and writing them
-                    //again; the pause makes that window as observable in a test as it is on a
-                    //phone, where the modules take milliseconds
+                    //A real cycle computes between emptying and rewriting; the pause makes that window observable
                     usleep(100)
                     for (buffer, values) in buffers {
                         buffer.appendFromArray(values)
@@ -3357,8 +3172,7 @@ final class ExportUnderWritesTests: XCTestCase {
             try? FileManager.default.removeItem(at: url)
         }
     }
-    //The saved state writes the same containers and got the same treatment: a state saved while
-    //the experiment runs must not hold a container the analysis had just emptied
+    //A state saved while the experiment runs must not hold a container the analysis had just emptied
     func testASavedStateHoldsEveryValueWhileTheExperimentKeepsWriting() throws {
         let directory = try DocsCorpus.docsDirectory("fixtures/containers", notTestedNotice: "saving a state under writes")
         let experiment = try ExperimentSerialization.readExperimentFromURL(
@@ -3385,11 +3199,8 @@ final class ExportUnderWritesTests: XCTestCase {
     }
 }
 
-//static data containers follow Android's model (decided 2026-08-24): the module writing them
-//executes a single time and is skipped from then on - so it also stops clearing its keep=false
-//input buffers - a static output locks once the module has run even if it wrote nothing, and the
-//user's clear-data action resets the buffer and re-arms the module: static data does not survive
-//a clear.
+//Static containers follow Android's model (decided 2026-08-24): the writing module runs once and is skipped after (so
+//it stops clearing keep=false inputs), a static output locks even if nothing was written, and a user clear re-arms it
 final class StaticBufferLifecycleTests: XCTestCase {
     private func makeModule(input: DataBuffer, output: DataBuffer) throws -> ExperimentAnalysisModule {
         return try AdditionAnalysis(
@@ -3516,9 +3327,7 @@ final class StaticBufferLifecycleTests: XCTestCase {
     }
 }
 
-//atan2 with a fixed value as one operand is element-wise like every other multi-input module:
-//the value repeats for every element of the other operand and the result has the length of the
-//longest input. It used to collapse to a single value computed from the buffer's first element.
+//atan2 with a fixed-value operand is element-wise like every multi-input module: the value repeats over the other operand
 final class Atan2FixedValueOperandTests: XCTestCase {
     private func run(y: ExperimentAnalysisDataInput, x: ExperimentAnalysisDataInput, deg: Bool = false) throws -> [Double] {
         let out = try DataBuffer(name: "out", size: 0, baseContents: [], static: false)
@@ -3563,10 +3372,8 @@ final class Atan2FixedValueOperandTests: XCTestCase {
     }
 }
 
-//rangefilter: strictly row-wise filtering like Android - a row is dropped for all outputs when
-//any input's value falls outside its range, keeping outputs aligned; non-finite values are
-//compared like any number (infinities can be filtered, NaN never triggers); extra outputs are
-//ignored; a min/max before the first in binds to the first group.
+//rangefilter is row-wise like Android: a row outside any input's range is dropped for all outputs; non-finite values
+//compare like numbers (NaN never triggers); extra outputs are ignored; min/max before the first in bind to the first group
 final class RangefilterRowAlignmentTests: XCTestCase {
     private func makeIn(_ data: [Double]) throws -> ExperimentAnalysisDataInput {
         let buffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
@@ -3584,8 +3391,7 @@ final class RangefilterRowAlignmentTests: XCTestCase {
     }
 
     func testRowAlignmentWithMultipleFilteredInputs() throws {
-        //row 0 is filtered by input 2, row 1 by input 1, row 2 passes - the old global
-        //deleteCount misaligned exactly this pattern
+        //row 0 is filtered by input 2, row 1 by input 1, row 2 passes - the pattern a global deleteCount misaligned
         let result = try run(inputs: [
             try makeIn([1, 100, 3]), .value(value: 0, usedAs: "min"), .value(value: 10, usedAs: "max"),
             try makeIn([100, 2, 3]), .value(value: 0, usedAs: "min"), .value(value: 10, usedAs: "max")
@@ -3635,9 +3441,8 @@ final class RangefilterRowAlignmentTests: XCTestCase {
     }
 }
 
-//map: x/y/z accept value-type inputs as one-element buffers; a degenerate range (minX equal to
-//maxX) clamps the bin index instead of trapping (NaN ratio -> bin 0, infinite ratios fall
-//outside the bounds check); a missing z input with zMode sum/average rejects the file at load.
+//map: x/y/z accept value-type inputs; a degenerate range (minX == maxX) clamps the bin index instead of trapping;
+//a missing z with zMode sum/average rejects the file at load
 final class MapAnalysisTests: XCTestCase {
     private func runMap(x: ExperimentAnalysisDataInput, y: ExperimentAnalysisDataInput, z: ExperimentAnalysisDataInput,
                         minX: Double = 0, maxX: Double = 1, minY: Double = 0, maxY: Double = 1) throws -> (x: [Double], y: [Double], z: [Double]) {
@@ -3686,8 +3491,7 @@ final class MapAnalysisTests: XCTestCase {
     }
 }
 
-//The z input of map is required at load when zMode is sum or average (the default) - running
-//without it would silently produce a zero grid. Only zMode="count" works without z.
+//map's z input is required at load for zMode sum/average (the default); only zMode="count" works without it
 final class MapMissingZTests: XCTestCase {
     private func parse(_ xml: String) throws -> Experiment {
         let stream = InputStream(data: xml.data(using: .utf8)!)
@@ -3748,9 +3552,8 @@ final class MapMissingZTests: XCTestCase {
     }
 }
 
-//interpolate/loess: xi accepts a value-type input as a one-element buffer (matching Android);
-//a non-positive or non-finite loess d yields empty outputs instead of NaN fills; the out slots
-//no longer accept repeats (max 1).
+//interpolate/loess: xi accepts a value-type input (matching Android); a non-positive or non-finite loess d yields
+//empty outputs; the out slots accept no repeats (max 1)
 final class InterpolateLoessTests: XCTestCase {
     private func makeBuffer(_ name: String, _ data: [Double]) throws -> ExperimentAnalysisDataInput {
         let buffer = try DataBuffer(name: name, size: 0, baseContents: [], static: false)
@@ -3813,9 +3616,7 @@ final class InterpolateLoessTests: XCTestCase {
     }
 }
 
-//crosscorrelation: raw correlation sums without normalization (matching numpy/scipy/MATLAB
-//defaults), and an empty input yields an empty output instead of zeros. The reference test
-//compares the vDSP result against plain sums computed independently.
+//crosscorrelation: raw sums without normalization (numpy/scipy/MATLAB defaults); an empty input yields an empty output
 final class CrosscorrelationTests: XCTestCase {
     private func runCrosscorrelation(_ a: [Double], _ b: [Double]) throws -> [Double] {
         let bufferA = try DataBuffer(name: "a", size: 0, baseContents: [], static: false)
@@ -3864,10 +3665,8 @@ final class CrosscorrelationTests: XCTestCase {
     }
 }
 
-//periodicity: an invalid dx (non-positive, non-finite, empty buffer) yields empty outputs
-//instead of running at dx=1; min is floored and max is ceiled (a fractional max includes the
-//boundary period); NaN bounds yield empty outputs; x shorter than y processes the common
-//length instead of trapping.
+//periodicity: an invalid dx yields empty outputs instead of running at dx=1; min is floored and max ceiled; NaN
+//bounds yield empty outputs; x shorter than y processes the common length instead of trapping
 final class PeriodicityEdgeCaseTests: XCTestCase {
     private func runPeriodicity(x: [Double], y: [Double], dx: ExperimentAnalysisDataInput, extra: [ExperimentAnalysisDataInput] = []) throws -> (time: [Double], period: [Double]) {
         let xBuffer = try DataBuffer(name: "x", size: 0, baseContents: [], static: false)
@@ -3909,9 +3708,8 @@ final class PeriodicityEdgeCaseTests: XCTestCase {
     }
 
     func testFractionalMaxIsCeiled() throws {
-        //Period-8 cosine, search range min=6, max=9.5: the peak at 8 needs its right neighbour
-        //at 9 evaluated for the parabolic fit, so a ceiled max (10) finds the period while a
-        //truncated max (9) would report NaN.
+        //Period-8 cosine, min=6, max=9.5: the parabolic fit at 8 needs its neighbour at 9, so a ceiled max (10) finds
+        //the period while a truncated max (9) would report NaN
         let x = (0..<64).map(Double.init)
         let result = try runPeriodicity(x: x, y: cosineSignal, dx: .value(value: 64, usedAs: "dx"), extra: [
             .value(value: 6, usedAs: "min"),
@@ -3938,9 +3736,7 @@ final class PeriodicityEdgeCaseTests: XCTestCase {
     }
 }
 
-//sort: all buffers are truncated to the shortest input before sorting (matching Android, no
-//NaN substitution for shorter co-buffers), and NaN sorts deterministically as the largest
-//value like Java's Double.compareTo.
+//sort: buffers truncate to the shortest input (matching Android) and NaN sorts as the largest value, like Java's compareTo
 final class SortUnequalLengthTests: XCTestCase {
     private func runSort(_ inputData: [[Double]], descending: Bool = false) throws -> [[Double]] {
         let inputs: [ExperimentAnalysisDataInput] = try inputData.map {
@@ -3991,9 +3787,8 @@ final class SortUnequalLengthTests: XCTestCase {
     }
 }
 
-//reduce: processing truncates to the shortest present buffer (only an absent y keeps
-//processing all of x with 0 contributions); the incomplete final chunk is averaged over the
-//values actually summed, not the nominal factor; a non-finite factor yields empty outputs.
+//reduce: truncates to the shortest present buffer (only an absent y keeps all of x); the incomplete final chunk
+//averages over the values actually summed; a non-finite factor yields empty outputs
 final class ReduceEdgeCaseTests: XCTestCase {
     private func runReduce(factor: Double, x: [Double], y: [Double]? = nil, averageX: Bool = false, averageY: Bool = false, sumY: Bool = false) throws -> (x: [Double], y: [Double]) {
         var inputs: [ExperimentAnalysisDataInput] = [.value(value: factor, usedAs: "factor")]
@@ -4055,11 +3850,8 @@ final class ReduceEdgeCaseTests: XCTestCase {
     }
 }
 
-//const/ramp: an explicit length of 0, an empty length buffer and a non-finite or negative
-//length yield empty output; only an absent length input falls back to the output buffer's
-//size. Empty value/start/stop buffers and non-finite ramp start/stop yield empty output. A
-//present NaN const value is a permitted deliberate NaN fill. A single-point ramp outputs its
-//start value.
+//const/ramp: a length of 0, an empty length buffer or a non-finite/negative length yields empty output - only an
+//absent length falls back to the buffer size; a present NaN const value is a deliberate fill; a one-point ramp emits start
 final class ConstRampEdgeCaseTests: XCTestCase {
     private func runConst(value: ExperimentAnalysisDataInput? = nil, length: ExperimentAnalysisDataInput? = nil, bufferSize: Int = 0) throws -> [Double] {
         var inputs: [ExperimentAnalysisDataInput] = []
@@ -4140,9 +3932,7 @@ final class ConstRampEdgeCaseTests: XCTestCase {
     }
 }
 
-//split: a present but non-finite index/overlap yields empty outputs; finite indices are
-//clamped into range (negative index: out1 empty, out2 receives everything; huge index: no
-//trap). Absent inputs keep the defaults (index = input length, overlap = 0).
+//split: a non-finite index/overlap yields empty outputs; finite indices clamp into range; absent inputs keep the defaults
 final class SplitEdgeCaseTests: XCTestCase {
     private func runSplit(data: [Double], index: Double? = nil, overlap: Double? = nil) throws -> (out1: [Double], out2: [Double]) {
         let inBuffer = try DataBuffer(name: "data", size: 0, baseContents: [], static: false)
@@ -4200,10 +3990,8 @@ final class SplitEdgeCaseTests: XCTestCase {
     }
 }
 
-//eventstream: a NaN threshold participates in the comparisons (nothing triggers); index/skip/
-//last keep their documented start defaults (0/0/NaN) when absent or empty; a non-finite value
-//reaching the distance/index/skip conversions yields empty outputs instead of trapping, which
-//resets the state loop on the next run.
+//eventstream: a NaN threshold never triggers; index/skip/last default to 0/0/NaN when absent or empty; a non-finite
+//value in the distance/index/skip conversions yields empty outputs (resetting the state loop) instead of trapping
 final class EventStreamEdgeCaseTests: XCTestCase {
     private func runEventStream(data: [Double], parameters: [ExperimentAnalysisDataInput] = []) throws -> (events: [Double], index: [Double], skip: [Double], last: [Double]) {
         let inBuffer = try DataBuffer(name: "data", size: 0, baseContents: [], static: false)
@@ -4274,10 +4062,8 @@ final class EventStreamEdgeCaseTests: XCTestCase {
     }
 }
 
-//movingaverage: non-finite values inside the window are skipped (aligning with average and
-//binning; a window without any finite value yields NaN). A present but invalid width
-//(non-finite or negative) yields empty output; an absent width input or an empty width buffer
-//selects the documented default of 10.
+//movingaverage: non-finite values in the window are skipped (a window without one yields NaN); an invalid width
+//yields empty output; an absent width or an empty width buffer selects the default of 10
 final class MovingAverageEdgeCaseTests: XCTestCase {
     private func runMovingAverage(data: [Double], width: ExperimentAnalysisDataInput? = nil) throws -> [Double] {
         let inBuffer = try DataBuffer(name: "data", size: 0, baseContents: [], static: false)
@@ -4325,10 +4111,8 @@ final class MovingAverageEdgeCaseTests: XCTestCase {
     }
 }
 
-//binning: invalid dx (zero, negative, non-finite) and non-finite x0 yield empty outputs (no
-//silent dx=1 substitution); absent inputs or empty parameter buffers keep the defaults x0=0,
-//dx=1. Bins are lower-edge inclusive with floor semantics - truncation toward zero would give
-//bin 0 double width.
+//binning: invalid dx or non-finite x0 yields empty outputs (no dx=1 substitution); absent inputs keep x0=0, dx=1;
+//bins are lower-edge inclusive with floor semantics
 final class BinningEdgeCaseTests: XCTestCase {
     private func runBinning(data: [Double], x0: Double? = nil, dx: Double? = nil, dxBuffer: [Double]? = nil) throws -> (starts: [Double], counts: [Double]) {
         let inBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
@@ -4398,10 +4182,8 @@ final class BinningEdgeCaseTests: XCTestCase {
     }
 }
 
-//max/min: one comparison loop like Android - NaN values never win a comparison, an x buffer
-//shorter than y truncates to the common length, the final open set in multiple mode is flushed,
-//and an empty/all-invalid input yields NaN per connected output (single mode) or empty outputs
-//(multiple mode).
+//max/min: one comparison loop like Android - NaN never wins, x shorter than y truncates, the final open set in
+//multiple mode is flushed, and an empty/all-invalid input yields NaN per output (single) or empty outputs (multiple)
 final class MaxMinAnalysisTests: XCTestCase {
     private func run(_ isMax: Bool, x: [Double]? = nil, y: [Double], threshold: Double? = nil, multiple: Bool = false) throws -> (values: [Double], positions: [Double]) {
         var inputs: [ExperimentAnalysisDataInput] = []
@@ -4493,9 +4275,7 @@ final class MaxMinAnalysisTests: XCTestCase {
     }
 }
 
-//round in default mode: ties round half away from zero (C rounding, like the formula
-//language's round) and non-finite values pass through unchanged. vvnint was replaced because
-//it rounds ties to even.
+//round in default mode: ties round half away from zero (like the formula language's round), non-finite passes through
 final class RoundTiesTests: XCTestCase {
     func testTiesRoundHalfAwayFromZeroAndNonFinitePassesThrough() throws {
         let inputBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
@@ -4516,9 +4296,8 @@ final class RoundTiesTests: XCTestCase {
     }
 }
 
-//An empty sigma attribute on gausssmooth is treated like an absent one and selects the default
-//of 3, consistent with the format-wide empty-equals-omitted convention (matching Android). A
-//present non-positive or unparseable sigma still rejects the file.
+//An empty sigma on gausssmooth selects the default of 3 like an absent one (empty-equals-omitted, matching Android);
+//a non-positive or unparseable sigma still rejects the file
 final class GaussSmoothEmptySigmaTests: XCTestCase {
     private func parse(_ xml: String) throws -> Experiment {
         let stream = InputStream(data: xml.data(using: .utf8)!)
@@ -4569,9 +4348,7 @@ final class GaussSmoothEmptySigmaTests: XCTestCase {
     }
 }
 
-//subrange error states: a present but non-finite from/to/length yields empty outputs (matching
-//Android); only an absent input or an empty parameter buffer keeps the defaults (from 0, to the
-//full input range).
+//subrange: a non-finite from/to/length yields empty outputs (matching Android); absent or empty parameters keep defaults
 final class SubrangeNonfiniteParameterTests: XCTestCase {
     private func runSubrange(data: [Double], parameters: [ExperimentAnalysisDataInput]) throws -> [Double] {
         let inBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
@@ -4639,10 +4416,8 @@ final class GCDVectorTests: XCTestCase {
     }
 }
 
-//Every analysis module must declare the slot table its inputs and outputs are validated
-//against (ExperimentAnalysisModule.ioMapping) - without this, a module would silently skip
-//validation. Also guards the folding rule: no table may hold two slot names differing only
-//in case, or the case-insensitive match would silently pick the first.
+//Every module must declare its ioMapping slot table or validation is silently skipped; no table may hold two slot
+//names differing only in case, or the case-insensitive match would pick the first
 final class AnalysisIOMappingCoverageTests: XCTestCase {
     func testEveryModuleDeclaresItsIOMapping() {
         for (key, moduleClass) in ExperimentAnalysisFactory.classMap {
@@ -4658,10 +4433,8 @@ final class AnalysisIOMappingCoverageTests: XCTestCase {
     }
 }
 
-//The four small strictness fixes: unbounded map colour scales, rejection of the Android-only
-//bluetooth address attribute, container type validation and gausssmooth's sigma check
-//(views-map-color-limit, ble-address-ios-must-reject, container-type-unvalidated and
-//gausssmooth-nonpositive-sigma in phyphox-docs).
+//The strictness fixes views-map-color-limit, ble-address-ios-must-reject, container-type-unvalidated and
+//gausssmooth-nonpositive-sigma (phyphox-docs)
 final class StrictnessFixesTests: XCTestCase {
     private func parse(_ xml: String) throws -> Experiment {
         let stream = InputStream(data: xml.data(using: .utf8)!)
@@ -4693,9 +4466,8 @@ final class StrictnessFixesTests: XCTestCase {
     }
 
     func testColorAttributesAreStrict() throws {
-        //A colour is a named phyphox colour (case-insensitive) or exactly six hex digits with
-        //an optional "#"; anything else rejects the file instead of silently falling back to
-        //the element's default (color-invalid-value in phyphox-docs)
+        //A named phyphox colour (case-insensitive) or exactly six hex digits with optional "#"; anything else rejects
+        //the file (color-invalid-value in phyphox-docs)
         func value(color: String) -> String {
             return xml(view: "<value label=\"l\" color=\"\(color)\"><input>buffer</input></value>")
         }
@@ -4704,8 +4476,7 @@ final class StrictnessFixesTests: XCTestCase {
         _ = try parse(value(color: "fF00Aa"))
         _ = try parse(value(color: "#ff00aa"))
 
-        //"abc" and "12zz34" would pass the old NSScanner hex path (any digit count, trailing
-        //garbage ignored); Android accepts exactly six digits, nothing else
+        //"abc" and "12zz34" passed the old NSScanner hex path; Android accepts exactly six digits, nothing else
         for bad in ["bogus", "abc", "#abc", "12zz34", "ff00aab", "#ff00aabb"] {
             assertRejects(value(color: bad), message: "Could not parse color \"\(bad)\" of attribute \"color\".")
         }
@@ -4754,14 +4525,12 @@ final class StrictnessFixesTests: XCTestCase {
     }
 
     func testBluetoothAddressIsRejected() {
-        //An experiment pinned to a hardware address cannot be honoured on iOS and must not
-        //silently connect to whatever matches the remaining criteria
+        //A hardware address cannot be honoured on iOS and must not silently connect to whatever else matches
         XCTAssertThrowsError(try parse(xml(input: """
             <bluetooth name="d" mode="notification" address="00:11:22:33:44:55">
                 <output char="cddf1002-30f7-4671-8b43-5e40ba53514a" conversion="float32LittleEndian">buffer</output>
             </bluetooth>
         """)))
-        //Without the attribute the same block parses
         XCTAssertNoThrow(try parse(xml(input: """
             <bluetooth name="d" mode="notification">
                 <output char="cddf1002-30f7-4671-8b43-5e40ba53514a" conversion="float32LittleEndian">buffer</output>
@@ -4786,11 +4555,8 @@ final class StrictnessFixesTests: XCTestCase {
     }
 }
 
-//Guard rail for the case folding of enumerated attribute values: no allowed set may contain two
-//values differing only in case, or the folding scan would silently pick the first
-//(enum-case-insensitive in phyphox-docs). Walks every CaseInsensitiveAttributeDecodable enum
-//reachable from tests; the two file-private ones (icon Format, GraphAxis) hold trivially distinct
-//values. The analysis slot tables get the same check in AnalysisIOMappingCoverageTests.
+//No allowed set may contain two values differing only in case (enum-case-insensitive in phyphox-docs). Walks every
+//CaseInsensitiveAttributeDecodable enum reachable from tests; slot tables: AnalysisIOMappingCoverageTests
 final class CaseFoldingGuardRailTests: XCTestCase {
     func testNoEnumHasCaseFoldedRawValueCollisions() {
         func check<T: CaseIterable & RawRepresentable>(_ type: T.Type) where T.RawValue == String {
@@ -4822,9 +4588,7 @@ final class CaseFoldingGuardRailTests: XCTestCase {
     }
 }
 
-//Regression test for GitHub issue 22: a remote /get read must see a consistent length across
-//buffers that are written together, even while a measurement keeps writing. The shared BufferLock
-//makes a multi-buffer write group atomic with respect to a read snapshot.
+//GitHub issue 22: a remote /get read must see a consistent length across buffers written together as one group
 final class BufferSnapshotConsistencyTests: XCTestCase {
     func testGroupedWritesAreAtomicAgainstReads() throws {
         let lock = BufferLock()
@@ -4847,8 +4611,7 @@ final class BufferSnapshotConsistencyTests: XCTestCase {
             writerDone.fulfill()
         }
 
-        //Reader: snapshot both buffers under the same lock, as /get does. Their lengths must always
-        //match; without the lock the writer could land between the two reads and they would differ.
+        //Reader: snapshot both under the same lock, as /get does; without it the writer could land between the reads
         var reads = 0
         while reads < 20000 {
             lock.read {
@@ -4865,10 +4628,8 @@ final class BufferSnapshotConsistencyTests: XCTestCase {
     }
 }
 
-//The file format version attribute is strictly major.minor. A newer version is refused, and a
-//string that is not major.minor is rejected rather than silently reinterpreted - in particular a
-//three-part app version like "1.2.0" used by mistake, which used to load (matching Android, which
-//requires a plain integer after the dot).
+//The version attribute is strictly major.minor: a newer version is refused and any other shape is rejected, in
+//particular a three-part app version like "1.2.0" (matching Android)
 final class FileVersionValidationTests: XCTestCase {
     private func parse(version: String) throws -> Experiment {
         let xml = """
@@ -4883,14 +4644,17 @@ final class FileVersionValidationTests: XCTestCase {
         return try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: InputStream(data: xml.data(using: .utf8)!))
     }
 
+    private var supported: String { "\(latestSupportedFileVersion.major).\(latestSupportedFileVersion.minor)" }
+    private var newer: String { "\(latestSupportedFileVersion.major).\(latestSupportedFileVersion.minor + 1)" }
+
     func testSupportedVersionsLoad() throws {
-        _ = try parse(version: "1.20")     //the latest supported version
+        _ = try parse(version: supported)  //the latest supported version
         _ = try parse(version: "1.7")      //an older version
         _ = try parse(version: "1.0")
     }
 
     func testNewerVersionIsRejected() {
-        XCTAssertThrowsError(try parse(version: "1.21"))
+        XCTAssertThrowsError(try parse(version: newer))
         XCTAssertThrowsError(try parse(version: "2.0"))
         XCTAssertThrowsError(try parse(version: "1.100"), "the minor version must compare numerically, not lexically")
     }
@@ -4908,10 +4672,7 @@ final class FileVersionValidationTests: XCTestCase {
     }
 }
 
-//Confirms iOS is not affected by two dropdown bugs fixed on Android: a <map> before the <output>
-//being dropped, and the default attribute not taking effect. iOS collects maps and the output in
-//independent child handlers (order-independent) and applies the default by seeding the output
-//buffer, so both work.
+//iOS is unaffected by two Android dropdown bugs: a <map> before <output> being dropped, and default not taking effect
 final class DropdownViewTests: XCTestCase {
     private func parse(_ dropdown: String) throws -> Experiment {
         let xml = """
@@ -4957,8 +4718,7 @@ final class DropdownViewTests: XCTestCase {
     }
 }
 
-//An FFT with a real input only (no imaginary input) treats the imaginary part as zero and returns
-//the full complex spectrum, not the unique first half - matching Android.
+//An FFT with a real input only returns the full complex spectrum, not the unique first half - matching Android
 final class FFTRealInputTests: XCTestCase {
     func testRealOnlyFFTReturnsFullLength() throws {
         let inputBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
@@ -4983,8 +4743,7 @@ final class FFTRealInputTests: XCTestCase {
     }
 
     func testTinyInputDoesNotCrash() throws {
-        //vDSP_DFT documents a minimum length of 8 but handles N = 1, 2 and 4; this pins that
-        //inputs below 8 samples produce a correct transform (and never a crash)
+        //vDSP_DFT documents a minimum length of 8 but handles N = 1, 2 and 4; inputs below 8 must transform, never crash
         let inputBuffer = try DataBuffer(name: "in", size: 0, baseContents: [], static: false)
         let inputData = MutableDoubleArray(data: [1, 2])
         let reOut = try DataBuffer(name: "re", size: 0, baseContents: [], static: false)
@@ -5010,9 +4769,7 @@ final class FFTRealInputTests: XCTestCase {
     }
 }
 
-//The x output of autocorrelation is optional and omitting it must simply skip it, like on
-//Android - it used to trap on a forced unwrap as soon as data arrived. min/max filtering has
-//to keep working without an x output, applied to the implicit 0,1,2,... displacement ramp.
+//The x output of autocorrelation is optional like on Android; min/max without it filter the implicit 0,1,2,... ramp
 final class AutocorrelationOmittedXOutputTests: XCTestCase {
     //Autocorrelation of [1,2,3,4]: displacement i yields sum(y[j]*y[j+i])/(count-i)
     private let expectedY = [7.5, 20.0/3.0, 5.5, 4.0]
@@ -5058,12 +4815,8 @@ final class AutocorrelationOmittedXOutputTests: XCTestCase {
     }
 }
 
-//The duplicate-metadata-last-wins rule from phyphox-docs (ruled 2026-08-24, matching Android):
-//a repeated metadata child of the ROOT element - title, state-title, category, icon, color,
-//description - does not reject the file; the parser uses the last occurrence. Files with such
-//duplicates exist in the wild: old Android versions appended a fresh state-title on every
-//re-save of a saved state. The tolerance is for readers and for these six elements only -
-//elsewhere a duplicate element stays an error.
+//Duplicate-metadata-last-wins (phyphox-docs, ruled 2026-08-24, matching Android): a repeated title, state-title,
+//category, icon, color or description under the ROOT uses the last occurrence; elsewhere a duplicate stays an error
 final class DuplicateRootMetadataTests: XCTestCase {
     private func parse(_ xml: String) throws -> Experiment {
         let stream = InputStream(data: xml.data(using: .utf8)!)
@@ -5104,8 +4857,7 @@ final class DuplicateRootMetadataTests: XCTestCase {
     }
 
     func testDuplicatesElsewhereStillReject() {
-        //The tolerance is scoped to the root's metadata children: a duplicated structural
-        //child of the root...
+        //Scoped to the root's metadata children: a duplicated structural child of the root...
         XCTAssertThrowsError(try parse("""
         <phyphox version="1.6">
             <title>t</title>
@@ -5144,19 +4896,65 @@ final class DuplicateRootMetadataTests: XCTestCase {
     }
 }
 
-//The conformance-corpus runner, implementing the contract in phyphox-docs corpus/README.md
-//("The app test suites") and the corpus-* rows of test-matrix.yml. The corpus is read from a
-//phyphox-docs checkout NEXT TO this repository - the same sibling convention the docs build
-//uses for the shipped collection, in reverse - never copied into the test bundle, where it
-//would drift. Without the sibling the corpus tests skip with a notice (a plain clone must
-//still build and test); CI checks the sibling out explicitly, so there they always run.
-//The phyphox-docs checkout NEXT TO this repository, shared by the runners fed from it (the
-//conformance corpus and the analysis golden vectors). Nothing is copied into the test bundle,
-//where it would drift; without the sibling those tests skip with a notice (a plain clone must
-//still build and test) and CI checks it out explicitly.
+//The starting state of an input element's buffer over the phyphox-docs fixtures/views fixtures: the rule at its
+//source, Experiment.seedInputDefaults; ViewBehaviorTests asserts the same through the remote API
+final class InputDefaultSeedingTests: XCTestCase {
+    private func load(_ fixture: String) throws -> Experiment {
+        let directory = try DocsCorpus.docsDirectory("fixtures/views", notTestedNotice: "input defaults")
+        return try ExperimentSerialization.readExperimentFromURL(directory.appendingPathComponent("\(fixture).phyphox"))
+    }
+
+    private func assertBuffers(_ experiment: Experiment, _ expected: [(String, Double)],
+                               file: StaticString = #filePath, line: UInt = #line) throws {
+        for (name, value) in expected {
+            let values = try experiment.buffers[name].unwrap().toArray()
+            XCTAssertEqual(values, [value], name, file: file, line: line)
+        }
+    }
+
+    //A default fills an EMPTY buffer and never overwrites one that is not
+    func testContainerInitBeatsAControlsDefault() throws {
+        try assertBuffers(try load("init-vs-default"), [
+            ("toggle_init", 1), ("dropdown_init", 2), ("edit_init", 42), ("slider_init", 4),
+            ("toggle_default", 1), ("dropdown_default", 1), ("edit_default", 7), ("slider_default", 3),
+        ])
+    }
+
+    //A NaN is replaced by the default as written (the edit's default lies above its max on purpose), slider included
+    func testANaNIsReplacedByTheDefault() throws {
+        try assertBuffers(try load("nan-vs-default"), [
+            ("toggle_nan", 1), ("dropdown_nan", 2), ("edit_nan", 12), ("slider_nan", 3),
+        ])
+    }
+
+    //The replacement happens on every seeding: an analysis writing NaN into the buffer gets the default back before
+    //the next cycle, and the write never reports as user input
+    func testANaNWrittenLaterIsReplacedAgain() throws {
+        let experiment = try load("nan-vs-default")
+        let buffer = try experiment.buffers["edit_nan"].unwrap()
+        let observer = UserInputCounter()
+        buffer.addObserver(observer)
+
+        buffer.replaceValues([Double.nan])
+        experiment.seedInputDefaults()
+        XCTAssertEqual(buffer.toArray(), [12])
+        //User input is reported asynchronously on the main queue, so give it the chance
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.2))
+        XCTAssertEqual(observer.userInputs, 0, "replacing a NaN must not read as user input")
+        withExtendedLifetime(observer) {}
+    }
+
+    private final class UserInputCounter: DataBufferObserver {
+        var userInputs = 0
+        func dataBufferUpdated(_ buffer: DataBuffer) {}
+        func userInputTriggered(_ buffer: DataBuffer) { userInputs += 1 }
+    }
+}
+
+//The phyphox-docs checkout NEXT TO this repository, never copied into the test bundle: the runners fed from it skip
+//with a notice without it (a plain clone must still build and test), and CI checks it out explicitly
 enum DocsCorpus {
-    //#filePath is resolvable at test time because the suite builds and runs on the same
-    //machine, locally as well as on CI
+    //#filePath is resolvable because the suite builds and runs on the same machine, locally and on CI
     static let repositoryRoot: URL = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()  // phyphoxTests
         .deletingLastPathComponent()  // phyphox-iOS
@@ -5219,6 +5017,7 @@ enum DocsCorpus {
     }
 }
 
+//The conformance-corpus runner (phyphox-docs corpus/README.md "The app test suites", corpus-* rows of test-matrix.yml)
 final class CorpusConformanceTests: XCTestCase {
     private func corpus() throws -> URL {
         guard let corpus = DocsCorpus.url else {
@@ -5235,9 +5034,8 @@ final class CorpusConformanceTests: XCTestCase {
         return try DocsCorpus.phyphoxFiles(in: directory)
     }
 
-    //The parser classification of the invalid corpus files, from expected.yml: file name to
-    //"rejects" or "accepts". Read with a minimal line-based reader instead of a YAML
-    //dependency; the file's shape is pinned by its header and by the Android runner.
+    //The classification of the invalid corpus files from expected.yml (file name to "rejects"/"accepts"), read with a
+    //minimal line-based reader; the file's shape is pinned by its header and by the Android runner
     private func invalidFileExpectations(corpus: URL) throws -> [String: String] {
         let text = try String(contentsOf: corpus.appendingPathComponent("invalid/expected.yml"), encoding: .utf8)
         var expectations: [String: String] = [:]
@@ -5255,10 +5053,8 @@ final class CorpusConformanceTests: XCTestCase {
         return expectations
     }
 
-    //A valid/generated file exercising a construct with a recorded platform difference
-    //carries an entry in an expected.yml next to it, mapping each platform to accepts or
-    //rejects (nested shape, unlike the flat one of invalid/expected.yml). Returns what iOS
-    //must do with each annotated file; files without an entry must simply load.
+    //What iOS must do with each file annotated in the directory's expected.yml (nested per-platform shape); files
+    //without an entry must simply load
     private func platformExpectations(in directory: URL) throws -> [String: String] {
         guard let text = try? String(contentsOf: directory.appendingPathComponent("expected.yml"), encoding: .utf8) else { return [:] }
         var expectations: [String: String] = [:]
@@ -5276,10 +5072,8 @@ final class CorpusConformanceTests: XCTestCase {
         return expectations
     }
 
-    //Every corpus file of a supported format version loads through the app's real
-    //experiment-loading path; files declaring a newer version exist for future format
-    //versions and are skipped, not failed. A file whose platform annotation maps ios to
-    //rejects must instead be REFUSED - the deliberate platform difference is itself contract.
+    //Every corpus file of a supported version loads through the real path; newer versions are skipped, not failed;
+    //a file whose annotation maps ios to rejects must be REFUSED - the platform difference is itself contract
     // phyphox-test: corpus-valid-load
     func testValidAndGeneratedCorpusFilesLoad() throws {
         let corpus = try corpus()
@@ -5313,9 +5107,7 @@ final class CorpusConformanceTests: XCTestCase {
         XCTAssertGreaterThan(loaded, 0, "no supported corpus file was found - corpus layout changed?")
     }
 
-    //Structural defects, invalid enum values and the other parser: rejects files must fail on
-    //the real loading path. Any error counts; error messages are platform wording and are
-    //never asserted.
+    //Any error counts; error messages are platform wording and never asserted
     // phyphox-test: corpus-invalid-reject
     func testInvalidCorpusFilesReject() throws {
         let corpus = try corpus()
@@ -5325,9 +5117,7 @@ final class CorpusConformanceTests: XCTestCase {
         }
     }
 
-    //The parser: accepts files carry only unknown or misapplied attributes, which the parsers
-    //ignore per the unknown-attribute-ignored rule (phyphox-docs spec/rules.yml). Their
-    //loading pins that compatibility guarantee.
+    //accepts files carry only unknown or misapplied attributes, ignored per unknown-attribute-ignored (spec/rules.yml)
     // phyphox-test: corpus-tolerated-attributes-load
     func testToleratedAttributeFilesLoad() throws {
         let corpus = try corpus()
@@ -5342,8 +5132,7 @@ final class CorpusConformanceTests: XCTestCase {
         }
     }
 
-    //Guards the runner itself: the classification and the directory must not drift apart, and
-    //the minimal expected.yml reader must keep understanding the file.
+    //Guards the runner itself: the classification and the directory must not drift apart
     func testExpectationsMatchInvalidDirectory() throws {
         let corpus = try corpus()
         let expectations = try invalidFileExpectations(corpus: corpus)
@@ -5354,10 +5143,8 @@ final class CorpusConformanceTests: XCTestCase {
         }
     }
 
-    //The version gate all feature rollout relies on: a file declaring a newer format version
-    //than the app supports is refused, the exact supported version loads. Built from a
-    //supported file at test time, not a corpus fixture, so it stays correct as the supported
-    //version moves - and independent of the corpus checkout, so it never skips.
+    //The version gate: a newer format version is refused, the exact supported version loads. Built at test time from
+    //the supported version, so it stays correct as that moves and never skips for a missing corpus
     // phyphox-test: corpus-version-gate
     func testVersionGate() throws {
         func minimalExperiment(version: String) -> String {
@@ -5394,17 +5181,58 @@ final class CorpusConformanceTests: XCTestCase {
     }
 }
 
-//The analysis golden-vector runner, implementing the contract in phyphox-docs
-//corpus/analysis/README.md ("The runner contract") and the analysis-golden-vectors row of
-//test-matrix.yml. Every case is a miniature experiment carrying its input data in container init
-//values plus an expected.json stating what the buffers must hold after a given number of analysis
-//cycles. The files are loaded through the real parser and the analysis kernel is driven directly,
-//cycle by cycle; the experiment is NEVER started (the timer case pins the experiment time before
-//the first start, which is exactly 0).
-//
-//A mismatch is a finding to report to the docs session, not something to code around: the
-//expectations come from a plain-Python restatement of the semantics, so either it or both apps
-//are wrong, and which one is a documentation decision.
+//preferUncalibrated (format 1.21) reaches the sensor input as its starting version: absent or false starts calibrated,
+//true starts uncalibrated. The corpus fixture sets it on a magnetometer and a gyroscope; the default is checked inline
+final class SensorPreferUncalibratedTests: XCTestCase {
+    private func inputs(of experiment: Experiment) -> [SensorType: Bool] {
+        var calibrated = [SensorType: Bool]()
+        for sensor in experiment.sensorInputs {
+            calibrated[sensor.sensorType] = sensor.calibrated
+        }
+        return calibrated
+    }
+
+    // phyphox-test: sensor-prefer-uncalibrated
+    func testAttributeSelectsStartingVersion() throws {
+        guard let corpus = DocsCorpus.url else {
+            throw XCTSkip("phyphox-docs is not checked out next to this repository - preferUncalibrated fixture not tested")
+        }
+        let url = corpus.appendingPathComponent("generated/sensor-prefer-uncalibrated.phyphox")
+        let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+        XCTAssertEqual(inputs(of: experiment), [.magneticField: false, .gyroscope: true])
+    }
+
+    func testAbsentAttributeStartsCalibrated() throws {
+        let document = """
+        <phyphox version="1.21">
+            <title>default</title>
+            <category>test</category>
+            <description>d</description>
+            <data-containers>
+                <container>magX</container>
+                <container>gyrX</container>
+            </data-containers>
+            <input>
+                <sensor type="magnetic_field"><output component="x">magX</output></sensor>
+                <sensor type="gyroscope"><output component="x">gyrX</output></sensor>
+            </input>
+            <views>
+                <view label="v">
+                    <value label="l"><input>magX</input></value>
+                </view>
+            </views>
+        </phyphox>
+        """
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("prefer-uncalibrated-\(UUID().uuidString).phyphox")
+        try document.write(to: url, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+        XCTAssertEqual(inputs(of: experiment), [.magneticField: true, .gyroscope: true])
+    }
+}
+
+//The analysis golden-vector runner (phyphox-docs corpus/analysis/README.md "The runner contract"): the kernel is driven
+//cycle by cycle and the experiment NEVER started; a mismatch is a finding for the docs session, never coded around
 final class AnalysisGoldenVectorTests: XCTestCase {
     private struct Tolerance {
         let abs: Double
@@ -5445,10 +5273,8 @@ final class AnalysisGoldenVectorTests: XCTestCase {
         let files = try DocsCorpus.phyphoxFiles(in: vectors)
         XCTAssertGreaterThan(files.count, 0, "no golden vector was found - corpus layout changed?")
 
-        //A cycle is the app's own analysis pass (ExperimentAnalysis.runCycle wraps update()):
-        //it runs the modules on the experiment's analysis queue and reports back on the main
-        //thread, so the cycles are driven from a third queue while the test waits for each -
-        //which also keeps every comparison here, on the main thread, between two cycles.
+        //runCycle runs the modules on the analysis queue and reports on the main thread, so the cycles are driven from a
+        //third queue while the test waits for each - keeping every comparison on the main thread between two cycles
         let analysisQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.test.goldenvectors.analysis")
         let driverQueue = DispatchQueue(label: "de.rwth-aachen.phyphox.test.goldenvectors.driver")
         var ran = 0
@@ -5484,10 +5310,8 @@ final class AnalysisGoldenVectorTests: XCTestCase {
 
             experiment.analysis.queue = analysisQueue
 
-            //One analysis pass per cycle, cycle numbers 0..<cycles. The experiment is never
-            //started, so the pass sees the experiment time of a never-started experiment, and
-            //the scheduling around update() - which reschedules itself - is not involved: the
-            //runner decides when a cycle runs.
+            //One pass per cycle, numbered 0..<cycles; the experiment is never started and the self-rescheduling around
+            //update() is not involved - the runner decides when a cycle runs
             for cycle in 0..<cycles {
                 let cycleFinished = expectation(description: "\(name) cycle \(cycle)")
                 driverQueue.async {

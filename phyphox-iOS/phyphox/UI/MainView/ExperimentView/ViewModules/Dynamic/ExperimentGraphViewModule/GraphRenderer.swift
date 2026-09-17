@@ -46,6 +46,13 @@ class GraphRenderer {
     }
     
     private func setupRenderer() {
+        //The plot announces itself with the graph's label and reports the visible axis ranges as its value
+        //(set on every data update); direct interaction keeps the tools usable under VoiceOver
+        plotView.isAccessibilityElement = true
+        plotView.accessibilityIdentifier = "graph.plot"
+        plotView.accessibilityLabel = descriptor.localizedLabel
+        plotView.accessibilityTraits = [.image, .allowsDirectInteraction]
+
         // Setup GL graph configuration
         plotView.style = descriptor.style
         plotView.historyLength = descriptor.history

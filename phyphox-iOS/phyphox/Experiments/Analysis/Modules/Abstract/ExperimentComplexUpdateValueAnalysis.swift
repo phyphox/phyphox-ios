@@ -41,11 +41,8 @@ final class ValueSource: CustomStringConvertible {
 
 class ExperimentComplexUpdateValueAnalysis: AutoClearingExperimentAnalysisModule {
     func updateAllWithMethod(_ method: ([ValueSource]) -> ValueSource) {
-        //Operands follow the validated slot mapping: as attributes are matched
-        //case-insensitively and unnamed inputs fill the remaining slots in declaration order,
-        //matching Android's ioBlockParser. Consuming document order with an exact-match
-        //priority key used to silently swap operands for files that name only the second
-        //operand or write the first slot's name with different case.
+        //Operands follow the validated slot mapping - case-insensitive as names, unnamed inputs fill the remaining
+        //slots in declaration order - matching Android's ioBlockParser
         let orderedInputs: [ExperimentAnalysisDataInput]
         if let mapping = type(of: self).ioMapping, let mapped = try? type(of: self).mapIO(inputs: inputs, outputs: outputs) {
             orderedInputs = mapping.inputs.flatMap { mapped.inputs($0) }

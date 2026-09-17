@@ -40,8 +40,7 @@ final class CrosscorrelationAnalysis: AutoClearingExperimentAnalysisModule {
             return
         }
         
-        //An empty input is an error state yielding an empty output (matching Android) - the
-        //convolution below would otherwise emit zeros
+        //An empty input yields empty output (matching Android) - the convolution would otherwise emit zeros
         guard !firstBuffer.isEmpty && !secondBuffer.isEmpty else {
             return
         }
@@ -62,8 +61,7 @@ final class CrosscorrelationAnalysis: AutoClearingExperimentAnalysisModule {
             debug_noteInputs(["a" : a, "b" : b])
         #endif
 
-        //Raw correlation sums, without any normalization - matching the default of
-        //numpy.correlate, scipy.signal.correlate and MATLAB xcorr
+        //Raw correlation sums without normalization, matching numpy.correlate, scipy.signal.correlate and MATLAB xcorr
         var result = [Double](repeating: 0.0, count: compRange)
 
         vDSP_convD(a, 1, b, 1, &result, 1, vDSP_Length(compRange), vDSP_Length(b.count))

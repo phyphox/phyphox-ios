@@ -25,9 +25,8 @@ final class phyphoxTests: XCTestCase {
         //The highlight colour is deliberately passed through unchanged
         XCTAssertEqual(colorHelper.adjustColorForLightTheme(colorName: kHighlightColor), kHighlightColor)
 
-        //The default graph blue keeps its hue but flips its luminance, so it stays readable on
-        //the white background. The exact values pin the current implementation; the previous
-        //expectation dated from an older algorithm and had failed ever since.
+        //The default graph blue keeps its hue but flips its luminance for the white background; the values
+        //pin the current implementation
         let input = UIColor(red: (57.0/255.0), green: (162.0/255.0), blue: (255.0/255.0), alpha: 1.0)
         let adjusted = colorHelper.adjustColorForLightTheme(colorName: input)
         XCTAssertEqual(adjusted.red, 0.0, accuracy: 1e-6)

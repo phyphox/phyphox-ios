@@ -6,7 +6,6 @@
 //  Copyright © 2025 RWTH Aachen. All rights reserved.
 //
 
-@available(iOS 14.0, *)
 class ExposureAnalyzer : AnalyzingModule {
     
     var lumaAnalysisPipelineState : MTLComputePipelineState?

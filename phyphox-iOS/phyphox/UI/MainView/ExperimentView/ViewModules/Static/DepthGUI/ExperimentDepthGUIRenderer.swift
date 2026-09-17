@@ -27,7 +27,6 @@ let kImagePlaneVertexData: [Float] = [
     1.0, 1.0, 1.0, 0.0
 ]
 
-@available(iOS 14.0, *)
 class ExperimentDepthGUIRenderer {
     var frame: ARFrame?
     

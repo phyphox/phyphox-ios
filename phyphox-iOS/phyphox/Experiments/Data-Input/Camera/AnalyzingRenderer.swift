@@ -15,7 +15,6 @@ protocol ExposureStatisticsListener {
     func newExposureStatistics(minRGB: Double, maxRGB: Double, meanLuma: Double)
 }
 
-@available(iOS 14.0, *)
 class AnalyzingRenderer {
     
     var cameraModelOwner: CameraModelOwner? = nil
@@ -125,9 +124,7 @@ class AnalyzingRenderer {
             queue?.async {
                 autoreleasepool(invoking: {
                     let b = self.cameraBuffers
-                    //One camera frame's outputs (t, exposure settings and the analyzer results such
-                    //as hue/saturation/value) are written as one atomic group so a remote /get read
-                    //never sees some of them advanced and others not (GitHub issue 22, see BufferLock)
+                    //One frame's outputs update atomically so a remote /get never sees them half-advanced (issue 22)
                     synchronizedBufferWrite([b?.tBuffer, b?.shutterSpeedBuffer, b?.isoBuffer, b?.apertureBuffer, b?.luminanceBuffer, b?.lumaBuffer, b?.hueBuffer, b?.saturationBuffer, b?.valueBuffer, b?.pixelPosition]) {
                         if let tBuffer = b?.tBuffer {
                             tBuffer.append(t)

@@ -53,8 +53,7 @@ final class SortAnalysis: AutoClearingExperimentAnalysisModule {
             return
         }
         
-        //All buffers are truncated to the shortest input before sorting (matching Android) -
-        //no NaN substitution for shorter co-buffers
+        //All buffers are truncated to the shortest input before sorting (matching Android), no NaN substitution
         var count = mainArray.count
         for input in ins {
             switch input {
@@ -65,9 +64,7 @@ final class SortAnalysis: AutoClearingExperimentAnalysisModule {
             }
         }
 
-        //NaN sorts deterministically as the largest value, like Java's Double.compareTo on
-        //Android. The plain </> closures violate strict weak ordering when NaN is present,
-        //leaving the NaN placement unspecified.
+        //NaN sorts as the largest value (Java's Double.compareTo on Android); plain </> leave NaN's placement unspecified
         func sortsBefore(_ a: Double, _ b: Double) -> Bool {
             if a.isNaN {
                 return false

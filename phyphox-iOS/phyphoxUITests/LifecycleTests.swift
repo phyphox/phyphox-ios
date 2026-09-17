@@ -7,12 +7,7 @@
 
 import XCTest
 
-//What happens to a running experiment when the app is interrupted (test-matrix row lifecycle):
-//rotation while measuring, leaving and coming back, a kill and relaunch, rapid start/stop,
-//opening a second experiment, and remote access toggled in the middle of a run.
-//
-//The remote API is the oracle wherever the screen cannot say it: it reports whether the
-//experiment is measuring, which is what "still running" actually means.
+//A running experiment under interruptions (test-matrix row lifecycle); the remote API reports whether it still measures
 final class LifecycleTests: XCTestCase {
     private let port = 8082
     private var base: String { "http://127.0.0.1:\(port)" }
@@ -41,10 +36,7 @@ final class LifecycleTests: XCTestCase {
             }
             done.fulfill()
         }.resume()
-        //XCTWaiter, not wait(for:): the reply not arriving is an ANSWER here, not a test
-        //failure. XCTestCase.wait(for:) records one, so a request that simply found no server -
-        //which is exactly what several of these checks are looking for - failed the test on a
-        //runner where the connection attempt took longer than the wait
+        //XCTWaiter, not wait(for:): no reply is an answer here, and wait(for:) would record a failure
         _ = XCTWaiter().wait(for: [done], timeout: timeout)
         return result
     }
@@ -90,9 +82,7 @@ final class LifecycleTests: XCTestCase {
         XCUIDevice.shared.press(.home)
         Thread.sleep(forTimeInterval: 2)
 
-        //Leaving the app stops the measurement and takes the remote server down with it - the
-        //deliberate behaviour ruled 2026-08-25, and the reason a headless run pre-grants
-        //everything that could interrupt it
+        //Leaving the app stops the measurement and takes the remote server down with it (ruled 2026-08-25)
         XCTAssertFalse(apiAnswers(within: 3), "remote access goes down with the app")
 
         app.activate()
@@ -138,8 +128,12 @@ final class LifecycleTests: XCTestCase {
         app.buttons["Play"].tap()
         waitForMeasuring(true, "the first experiment runs")
 
-        //Back to the collection and into another experiment
         app.buttons["‹"].tap()
+        //After 10 s of measuring, leaving asks for confirmation - a slow runner can push the run past that
+        let leave = app.alerts["Leave experiment"].buttons["Leave"]
+        if leave.waitForExistence(timeout: 3) {
+            leave.tap()
+        }
         XCTAssertTrue(app.staticTexts["Raw Sensors"].waitForExistence(timeout: 15), "the collection is back")
 
         let second = app.staticTexts["Audio Scope"]
@@ -166,7 +160,6 @@ final class LifecycleTests: XCTestCase {
         XCTAssertTrue(app.buttons["Enable remote access"].waitForExistence(timeout: 5))
         app.buttons["Enable remote access"].tap()
 
-        //The warning about what remote access exposes comes first
         let warning = app.alerts.firstMatch
         XCTAssertTrue(warning.waitForExistence(timeout: 5), "enabling warns before it opens the server")
         warning.buttons["OK"].tap()
@@ -177,7 +170,6 @@ final class LifecycleTests: XCTestCase {
             .firstMatch
         XCTAssertTrue(banner.waitForExistence(timeout: 10), "the address to connect to is shown")
 
-        //And off again
         app.buttons["Actions"].tap()
         XCTAssertTrue(app.buttons["Disable remote access"].waitForExistence(timeout: 5),
                       "the menu now offers to switch it off")

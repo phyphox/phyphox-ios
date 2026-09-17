@@ -32,10 +32,8 @@ enum FlashlightParameter: Equatable {
     }
 }
 
-//Drives the torch as an experiment output, matching the Android implementation: an intensity of
-//zero or less turns it off, a frequency of zero or less keeps it constantly on and anything
-//else strobes it, with the fraction of each period spent on given by the dutycycle. The
-//parameters are re-read at start and after every analysis cycle.
+//Torch as experiment output, as on Android: intensity <= 0 is off, frequency <= 0 constantly on, else a strobe with
+//the given dutycycle. Parameters are re-read at start and after every analysis cycle.
 final class ExperimentFlashlightOutput {
     let intensity: FlashlightParameter
     let frequency: FlashlightParameter
@@ -47,8 +45,7 @@ final class ExperimentFlashlightOutput {
 
     private let engine = FlashlightEngine()
 
-    //Decides whether the photosensitivity warning is needed, like on Android: a strobe is
-    //possible if the frequency is buffer-driven or a fixed value above zero.
+    //Whether the photosensitivity warning is needed (as on Android): buffer-driven or fixed positive frequency
     var usesStrobe: Bool {
         switch frequency {
         case .buffer:
@@ -63,8 +60,7 @@ final class ExperimentFlashlightOutput {
         self.frequency = frequency
         self.dutycycle = dutycycle
 
-        //Android watches the battery temperature, which iOS does not expose, so the system
-        //thermal state serves as the equivalent safeguard.
+        //Equivalent of Android's battery temperature watch, which iOS does not expose
         NotificationCenter.default.addObserver(self, selector: #selector(thermalStateDidChange), name: ProcessInfo.thermalStateDidChangeNotification, object: nil)
     }
 
@@ -81,10 +77,7 @@ final class ExperimentFlashlightOutput {
 
     func updateState() {
         guard !isOverheated else { return }
-        //Missing inputs carry their defaults as literal values, so getValue() only returns nil
-        //for an empty buffer. Android reads an empty buffer as NaN, which its state update
-        //zeroes - so an empty intensity buffer means "off", not the missing-input default.
-        //setState applies the same zeroing to non-finite values here.
+        //nil only for an empty buffer, which Android reads as NaN and zeroes ("off"); setState zeroes non-finite values too
         engine.setState(intensity: intensity.getValue() ?? Double.nan,
                         frequency: frequency.getValue() ?? Double.nan,
                         dutycycle: dutycycle.getValue() ?? Double.nan)
@@ -110,16 +103,14 @@ final class ExperimentFlashlightOutput {
                 }
             }
         } else {
-            //Once the device cooled down, the next updateState (i.e. the next analysis cycle)
-            //turns the light back on, like the cooldown threshold does on Android.
+            //The next updateState turns the light back on, like Android's cooldown threshold
             isOverheated = false
         }
     }
 }
 
-//Drives the torch hardware from its own thread. Like the Android implementation, the strobe
-//follows an absolute cycle schedule, so it does not drift and keeps its phase within the cycle
-//when the frequency changes. State changes wake the thread immediately.
+//Drives the torch from its own thread on an absolute, drift-free cycle schedule that keeps its phase across frequency
+//changes (as on Android). State changes wake the thread immediately.
 private final class FlashlightEngine {
 
     private struct State: Equatable {
@@ -162,8 +153,7 @@ private final class FlashlightEngine {
             let thread = Thread {
                 self.run()
             }
-            //At default priority the scheduler may defer the thread's wakeups long enough to
-            //miss entire strobe phases, so it runs at the highest user-facing quality of service
+            //At default priority deferred wakeups miss entire strobe phases
             thread.qualityOfService = .userInteractive
             thread.name = "phyphox flashlight"
             thread.start()
@@ -205,8 +195,7 @@ private final class FlashlightEngine {
             let currentState = state
 
             if currentState.intensity <= 0.0 || currentState.dutycycle <= 0.0 || currentState.interval <= 0.0 || currentState.dutycycle >= 1.0 {
-                //Off or constantly on: apply and wait for the next change. The dutycycle
-                //extremes are steady states as well, so the hardware is not toggled for them.
+                //Off or constantly on (dutycycle extremes included): apply and wait for the next change
                 let on = currentState.intensity > 0.0 && currentState.dutycycle > 0.0
                 condition.unlock()
                 applyTorch(on: on, level: Float(currentState.intensity))
@@ -217,8 +206,7 @@ private final class FlashlightEngine {
                 continue
             }
 
-            //Strobe mode. Align the schedule with the phase of the previous one if the
-            //interval changed, like the Android implementation does.
+            //Strobe mode: keep the phase of the previous schedule if the interval changed, as on Android
             var currentCycle = currentInterval > 0.0 ? 1.0 - (nextCycleStart - ProcessInfo.processInfo.systemUptime) / currentInterval : 1.0
             if currentCycle > 1.0 {
                 currentCycle -= 1.0
@@ -236,8 +224,7 @@ private final class FlashlightEngine {
             while running && !terminated && state == currentState {
                 var now = ProcessInfo.processInfo.systemUptime
 
-                //If the loop fell behind by a whole cycle (scheduling under load or a slow
-                //torch call), skip the missed cycles but keep the phase of the schedule
+                //Fell behind by whole cycles: skip them but keep the phase
                 if now - nextCycleStart >= currentState.interval {
                     let missedCycles = ((now - nextCycleStart) / currentState.interval).rounded(.down)
                     nextCycleStart += missedCycles * currentState.interval
@@ -249,8 +236,7 @@ private final class FlashlightEngine {
                     }
                 }
 
-                //Turn on as long as any part of the on phase remains: arriving late shortens
-                //the flash instead of dropping it entirely
+                //Arriving late shortens the flash instead of dropping it
                 let dutyEnd = nextCycleStart + currentState.interval * currentState.dutycycle
                 now = ProcessInfo.processInfo.systemUptime
                 if now < dutyEnd {
@@ -275,8 +261,7 @@ private final class FlashlightEngine {
         applyTorch(on: false, level: 0.0)
     }
 
-    //Waits under the held lock until the given duration passed. Returns true if the state or
-    //the running flag changed before that, so the caller can react immediately.
+    //Waits under the held lock; true if the state or the running flag changed before the duration passed
     private func waitInterrupted(duration: TimeInterval, unless referenceState: State) -> Bool {
         let deadline = Date().addingTimeInterval(duration)
         while running && !terminated && state == referenceState {
@@ -294,8 +279,7 @@ private final class FlashlightEngine {
         let safeLevel = max(0.01, min(level, 1.0))
         let targetOn = on && level > 0.0
 
-        //Skip if the hardware is already in the requested state to avoid needless
-        //configuration locks
+        //Already in the requested state: avoid a needless configuration lock
         if targetOn && lastAppliedOn && abs(safeLevel - lastAppliedLevel) < 0.001 {
             return
         }

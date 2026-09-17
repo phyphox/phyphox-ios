@@ -42,8 +42,7 @@ def main(argv):
             patched += 1
 
     if patched == 0:
-        # A silently unset variable would run the whole sweep in every shard, which looks like a
-        # slow but green run rather than the mistake it is
+        # A silently unset variable runs the whole sweep in every shard - slow but green, not visibly wrong
         print(f"no test target named {target} in {path}", file=sys.stderr)
         return 1
 

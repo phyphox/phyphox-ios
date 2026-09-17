@@ -8,7 +8,6 @@
 
 import Foundation
 
-@available(iOS 14.0, *)
 class HSVAnalyzer: AnalyzingModule {
     
     var svPipeLineState: MTLComputePipelineState?

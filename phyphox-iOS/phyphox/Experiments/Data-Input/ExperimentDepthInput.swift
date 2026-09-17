@@ -38,7 +38,7 @@ final class ExperimentDepthInput {
     let zBuffer: DataBuffer?
     let tBuffer: DataBuffer?
     
-    lazy var session: Any? = nil
+    let session: ExperimentDepthInputSession
     
     private var queue: DispatchQueue?
     
@@ -53,27 +53,19 @@ final class ExperimentDepthInput {
         self.smooth = smooth
         self.timeReference = timeReference
         
-        if #available(iOS 14.0, *) {
-            session = ExperimentDepthInputSession()
-            guard let session = session as? ExperimentDepthInputSession else {
-                return
-            }
-            session.mode = mode
-            session.x1 = x1
-            session.x2 = x2
-            session.y1 = y1 
-            session.y2 = y2
-            session.zBuffer = zBuffer
-            session.tBuffer = tBuffer
-            session.timeReference = timeReference
-            session.smooth = smooth
-        }
+        session = ExperimentDepthInputSession()
+        session.mode = mode
+        session.x1 = x1
+        session.x2 = x2
+        session.y1 = y1 
+        session.y2 = y2
+        session.zBuffer = zBuffer
+        session.tBuffer = tBuffer
+        session.timeReference = timeReference
+        session.smooth = smooth
     }
     
     static func verifySensorAvailibility(cameraOrientation: CameraOrientation?) throws {
-        guard #available(iOS 14.0, *) else {
-            throw DepthInputError.sensorUnavailable
-        }
         if cameraOrientation == nil || cameraOrientation == .back {
             if ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
                 return
@@ -88,32 +80,14 @@ final class ExperimentDepthInput {
     }
     
     func start(queue: DispatchQueue) throws {
-        guard #available(iOS 14.0, *) else {
-            return
-        }
-        guard let session = session as? ExperimentDepthInputSession else {
-            return
-        }
         try session.start(queue: queue)
     }
     
     func stop() {
-        guard #available(iOS 14.0, *) else {
-            return
-        }
-        guard let session = session as? ExperimentDepthInputSession else {
-            return
-        }
         session.stop()
     }
     
     func clear() {
-        guard #available(iOS 14.0, *) else {
-            return
-        }
-        guard let session = session as? ExperimentDepthInputSession else {
-            return
-        }
         session.clear()
     }
     

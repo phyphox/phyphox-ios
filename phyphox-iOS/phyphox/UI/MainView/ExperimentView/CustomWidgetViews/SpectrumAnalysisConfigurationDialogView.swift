@@ -8,9 +8,7 @@
 
 import UIKit
 
-//Accessory view for the spectrum analysis settings dialog: an image illustrating the currently
-//selected option above a description and a row of toggle buttons. A change of the selection is
-//reported (and applied) immediately, like on Android; the dialog's OK button only dismisses.
+//Accessory view for the spectrum analysis settings dialog; a selection is applied immediately like on Android, OK only dismisses
 class SpectrumAnalysisConfigurationDialogView: UIView {
 
     private let scrollView = UIScrollView()
@@ -64,8 +62,7 @@ class SpectrumAnalysisConfigurationDialogView: UIView {
     }
 
     override var intrinsicContentSize: CGSize {
-        //The alert controller sizes its accessory to this height. Its actual width is not known
-        //at this point, so the typical alert content width is assumed for the label wrapping.
+        //The alert sizes its accessory to this height; the actual width is unknown here, so assume the typical alert content width
         let assumedWidth: CGFloat = 270
         let descHeight = descLabel.sizeThatFits(CGSize(width: assumedWidth - 48, height: .greatestFiniteMagnitude)).height
         return CGSize(width: UIView.noIntrinsicMetric, height: 16 + 100 + 20 + descHeight + 12 + 45 + 16)

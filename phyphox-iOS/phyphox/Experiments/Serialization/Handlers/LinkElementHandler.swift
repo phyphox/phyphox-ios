@@ -8,10 +8,8 @@
 
 import Foundation
 
-/// Element handler for the `link` child elements of the `phyphox` root element. The label is
-/// required and acts as the key a translated link is matched on; the translation attribute and an
-/// empty URL are only meaningful on a link inside a translation block (see
-/// `TranslatedLinkElementHandler`) and are errors here (translation-link-matching in phyphox-docs).
+/// Handler for the root's link children. The label is required, a translated link is matched on it; the translation
+/// attribute and an empty URL are only valid inside a translation block (translation-link-matching in phyphox-docs)
 final class LinkElementHandler: ResultElementHandler, ChildlessElementHandler {
     var results = [ExperimentLink]()
 

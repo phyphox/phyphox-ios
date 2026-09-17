@@ -12,6 +12,23 @@ protocol InputConversion {
     func convert(data: Data) -> [Double]
 }
 
+//The byte ranges an offset/repeating/length triple selects from data, each clamped to the remaining bytes
+func byteChunks(of data: Data, offset: Int, repeating: Int, length: Int?) -> [Data] {
+    guard offset >= 0 else { return [] }
+    var chunks: [Data] = []
+    var index = offset
+    while index < data.count {
+        var actualLength = data.count - index
+        if let length = length, length > 0, length < actualLength {
+            actualLength = length
+        }
+        chunks.append(data.subdata(in: index..<index+actualLength))
+        guard repeating > 0 else { break }
+        index += repeating
+    }
+    return chunks
+}
+
 class SimpleInputConversion: InputConversion {
     enum ConversionFunction: String, CaseInsensitiveAttributeDecodable, CaseIterable {
         case uInt8
@@ -47,18 +64,8 @@ class SimpleInputConversion: InputConversion {
     }
     
     func convert(data: Data) -> [Double] {
-        if offset < 0 {
-            return []
-        }
-        var index = offset
         var out: [Double] = []
-        while index < data.count {
-            //Clamp to the remaining bytes so a fixed length cannot overrun on the last repetition
-            var actualLength = data.count - index
-            if let length = self.length, length > 0, length < actualLength {
-                actualLength = length
-            }
-            let subdata = data.subdata(in: (index..<index+actualLength))
+        for subdata in byteChunks(of: data, offset: offset, repeating: repeating, length: length) {
             switch function {
             case .uInt8:
                 if subdata.count >= 1 {
@@ -171,11 +178,6 @@ class SimpleInputConversion: InputConversion {
                     out.append(Double(result))
                 }
             }
-            if repeating > 0 {
-                index += repeating
-            } else {
-                break
-            }
         }
         return out
     }
@@ -195,18 +197,8 @@ class StringInputConversion: InputConversion {
     }
     
     func convert(data: Data) -> [Double] {
-        if offset < 0 {
-            return []
-        }
-        var index = offset
         var out: [Double] = []
-        while index < data.count {
-            //Clamp to the remaining bytes so a fixed length cannot overrun on the last repetition
-            var actualLength = data.count - index
-            if let length = self.length, length > 0, length < actualLength {
-                actualLength = length
-            }
-            let subdata = data.subdata(in: (index..<index+actualLength))
+        for subdata in byteChunks(of: data, offset: offset, repeating: repeating, length: length) {
             guard var str: String = String(data: subdata, encoding: .utf8) else {
                 return out
             }
@@ -218,11 +210,6 @@ class StringInputConversion: InputConversion {
                 out.append(v)
             } else {
                 return out
-            }
-            if repeating > 0 {
-                index += repeating
-            } else {
-                break
             }
         }
         return out

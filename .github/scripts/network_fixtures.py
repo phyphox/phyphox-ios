@@ -143,9 +143,7 @@ def check_http_get_receive(data):
     problems = []
     if not seq:
         return ["seq is empty - no poll produced data"]
-    # Strictly increasing positive integers, but NOT gap-free: a completed request parks its
-    # result until the next analysis pass copies it into the buffers, so a busy device
-    # legitimately drops values at the fixture's 0.2 s interval (see the fixtures README).
+    # Strictly increasing, but NOT gap-free: a busy device legitimately drops values (see the fixtures README).
     if any(n is None or n <= 0 or n != int(n) for n in seq):
         problems.append(f"seq must hold positive integers, got {seq}")
     elif any(b <= a for a, b in zip(seq, seq[1:])):
@@ -256,8 +254,7 @@ def main():
     served = serve_directory(directory)
     os.makedirs(args.log_dir, exist_ok=True)
     fixture_log = open(os.path.join(args.log_dir, "network_fixture.log"), "w+")
-    #-u: the child prints one startup line and then serves forever, so a buffered stdout would
-    #keep that line (and any later output) invisible for the whole run
+    # -u: the child prints one startup line and serves forever; buffered, it would stay invisible all run
     fixture_server = subprocess.Popen(
         [sys.executable, "-u", os.path.join(tools, "network_fixture.py"), str(args.fixture_port)],
         stdout=fixture_log, stderr=subprocess.STDOUT)
@@ -275,13 +272,9 @@ def main():
             ["mosquitto", "-c", os.path.join(fixtures, "mosquitto.conf")],
             stdout=broker_log, stderr=subprocess.STDOUT)
 
-    #A fixture that cannot reach its server produces empty buffers, which reads like an app
-    #failure - so the server has to prove it is serving before a single experiment is launched
+    # The server has to prove it is serving first: an unreachable server reads like an app failure
     fixture_base = f"http://{HOST}:{args.fixture_port}"
-    #Generous, because http.server's HTTPServer.server_bind does a reverse DNS lookup of the
-    #bind address (socket.getfqdn) between binding and listening, and that lookup takes tens of
-    #seconds on a CI runner - the port is then bound but not yet listening, so a connection
-    #attempt neither succeeds nor is refused. Instant on a development machine.
+    # Generous: HTTPServer.server_bind's reverse DNS lookup between bind and listen takes tens of seconds on CI.
     started = time.time()
     if not wait_for(lambda: api(fixture_base, "/reset", timeout=2).get("result") is True, 120):
         fixture_log.seek(0)

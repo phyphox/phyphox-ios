@@ -8,7 +8,6 @@
 
 import Foundation
 
-@available(iOS 14.0, *)
 extension CameraService{
     
     enum SessionSetupResult {

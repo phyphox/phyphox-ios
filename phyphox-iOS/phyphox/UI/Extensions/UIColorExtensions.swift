@@ -10,9 +10,6 @@ import Foundation
 
 extension UIColor {
     func autoLightColor() -> UIColor {
-        guard #available(iOS 13.0, *) else {
-            return ColorConverterHelper().adjustColorForLightTheme(colorName: self)
-        }
         if SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE {
             return ColorConverterHelper().adjustColorForLightTheme(colorName: self)
         } else if SettingBundleHelper.getAppMode() == Utility.DARK_MODE {

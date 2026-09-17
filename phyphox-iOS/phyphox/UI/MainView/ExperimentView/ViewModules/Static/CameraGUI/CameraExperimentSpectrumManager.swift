@@ -8,20 +8,15 @@
 
 import UIKit
 
-//Orientation of the device relative to the dispersion direction of the spectrum, selected by the
-//user in the camera GUI of a spectroscopy experiment. The direction of the dispersion (i.e.
-//whether blue is on the left or on the right) is deliberately not part of this: the calibration
-//takes care of it. Matches Android's SpectroscopyAnalyzer.SpectrumOrientation.
+//User-picked device orientation relative to the dispersion axis; the dispersion direction (blue left or right) is
+//deliberately left to the calibration. Matches Android's SpectroscopyAnalyzer.SpectrumOrientation.
 enum SpectrumOrientation {
     case landscape
     case portrait
 }
 
-//Draws the icons illustrating the two orientations: a spectrum with its dispersion axis marked by
-//a double-headed arrow, next to a device in landscape or portrait orientation. The artwork
-//replicates the Android vector drawables spectrometer_orientation_landscape/portrait, with the
-//monochrome parts drawn in a configurable color instead of white so they work on light and dark
-//backgrounds.
+//Icons for the two orientations, replicating Android's spectrometer_orientation_landscape/portrait drawables with
+//the monochrome parts in a configurable color instead of white
 struct SpectrumOrientationIcon {
 
     //Viewport size of the original artwork

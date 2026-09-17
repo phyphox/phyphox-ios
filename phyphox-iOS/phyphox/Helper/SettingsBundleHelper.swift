@@ -42,30 +42,22 @@ class SettingBundleHelper {
     
     
     static func setAppMode(window: UIWindow?){
-        if #available(iOS 13.0, *) {
-            if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
-                window?.overrideUserInterfaceStyle = .light
-            } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
-                window?.overrideUserInterfaceStyle = .dark
-            } else {
-                window?.overrideUserInterfaceStyle = .unspecified
-            }
+        if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
+            window?.overrideUserInterfaceStyle = .light
+        } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
+            window?.overrideUserInterfaceStyle = .dark
         } else {
-            // Fallback on earlier versions
+            window?.overrideUserInterfaceStyle = .unspecified
         }
     }
     
     static func setAppModeInView(view: UIView?){
-        if #available(iOS 13.0, *) {
-            if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
-                view?.overrideUserInterfaceStyle = .light
-            } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
-                view?.overrideUserInterfaceStyle = .dark
-            } else {
-                view?.overrideUserInterfaceStyle = .unspecified
-            }
+        if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
+            view?.overrideUserInterfaceStyle = .light
+        } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){
+            view?.overrideUserInterfaceStyle = .dark
         } else {
-            // Fallback on earlier versions
+            view?.overrideUserInterfaceStyle = .unspecified
         }
     }
     
@@ -75,9 +67,6 @@ class SettingBundleHelper {
     
     
     static func getTextColorWhenDarkModeNotSupported() -> UIColor{
-        guard #available(iOS 13.0, *) else {
-            return UIColor(white: 0.0, alpha: 1.0)
-        }
         let white = UIColor(white: 1.0, alpha: 1.0)
         let black = UIColor(white: 0.0, alpha: 1.0)
         if(getAppMode() == Utility.LIGHT_MODE){
@@ -94,9 +83,6 @@ class SettingBundleHelper {
     }
     
     static func getLightBackgroundColorWhenDarkModeNotSupported() -> UIColor{
-        guard #available(iOS 13.0, *) else {
-            return kLightBackgroundColorForLight
-        }
         if(SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE){
             return kLightBackgroundColorForLight
         } else if(SettingBundleHelper.getAppMode() == Utility.DARK_MODE){

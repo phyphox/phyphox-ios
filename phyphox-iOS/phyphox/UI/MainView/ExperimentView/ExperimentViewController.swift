@@ -85,10 +85,7 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
 
         let spacing = ((module.view as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? (indexPath.row > 0 ? intercellSpacing : insetTop) : 0
         let height = size.height + spacing
-        //A non-finite or negative height from a misbehaving module's sizeThatFits (a corrupt image
-        //resource, a graph with a zero aspect ratio, ...) would make UITableView raise an exception
-        //and abort the app during reloadData. Clamp to a valid height so a bad view element degrades
-        //gracefully instead of crashing the whole experiment.
+        //A non-finite or negative height (corrupt image, zero-aspect graph) would make UITableView throw in reloadData
         return height.isFinite ? Swift.max(height, 0) : 0
     }
 
@@ -149,8 +146,7 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         tableView.alwaysBounceVertical = false
         tableView.estimatedRowHeight = min(view.frame.width, view.frame.height)
 
-        //Apply the initial state of the visibility buffers, which may already hide elements
-        //before the first write to any of them arrives (base contents, defaults of view elements)
+        //Visibility buffers may already hide elements before their first write (base contents, defaults)
         updateModuleVisibilities()
 
     }
@@ -218,10 +214,7 @@ extension ExperimentViewController: DataBufferObserver {
     func dataBufferUpdated(_ buffer: DataBuffer) {
         // Only update visibilities if not in exclusive mode
         guard exclusiveView == nil else { return }
-        // Visibility buffers may be rewritten with an unchanged value on every analysis cycle.
-        // Only reload the table if a visibility actually changed - a reload cancels running
-        // touch interactions (dragging a slider, scrolling) and is far too heavy to run per
-        // analysis cycle.
+        // Reload only if a visibility actually changed: a reload cancels touch interactions and is too heavy per analysis cycle
         var visibilityChanged = false
         for (index, module) in modules.enumerated() {
             if let vcm = module.view as? VisibilityControllableViewModule, vcm.visibilityBuffer === buffer {

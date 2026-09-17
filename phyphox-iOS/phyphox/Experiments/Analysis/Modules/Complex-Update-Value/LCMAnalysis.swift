@@ -8,11 +8,8 @@
 
 import Foundation
 
-//The domain of lcm is non-negative integers: fractional values are rounded half away from zero
-//like the formula language's round, while negative inputs, non-finite inputs and values beyond
-//UInt.max yield NaN instead of trapping in the UInt conversion. lcm(0,x) is 0 by the usual
-//convention, including lcm(0,0) (formerly a 0/0 trap), and a product overflowing UInt yields
-//NaN instead of trapping.
+//lcm over non-negative integers: fractions round half away from zero (like the formula language's round); negative,
+//non-finite or > UInt.max inputs and an overflowing product yield NaN instead of trapping. lcm(0,x) = 0, incl. lcm(0,0).
 func lcmOfDoubles(_ a: Double, _ b: Double) -> Double {
     guard a.isFinite && b.isFinite && a >= 0 && b >= 0 else { return Double.nan }
     let ra = a.rounded(.toNearestOrAwayFromZero)
@@ -23,8 +20,7 @@ func lcmOfDoubles(_ a: Double, _ b: Double) -> Double {
     if u == 0 || v == 0 {
         return 0.0
     }
-    //u/gcd is exact, so this is the smallest intermediate; overflow here means the lcm itself
-    //does not fit
+    //u/gcd is exact, so this is the smallest intermediate; overflow here means the lcm does not fit
     let (result, overflow) = (u / gcd(u, v)).multipliedReportingOverflow(by: v)
     return overflow ? Double.nan : Double(result)
 }

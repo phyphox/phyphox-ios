@@ -58,11 +58,8 @@ final class GaussSmoothAnalysis: AutoClearingExperimentAnalysisModule {
             throw SerializationError.genericError(message: "Input must be a buffer")
         }
 
-        //A present sigma must be a positive width; omitting the attribute keeps the default of 3,
-        //and an empty sigma attribute is treated like an absent one (matching Android and the
-        //format-wide empty-equals-omitted convention). Zero or less is rejected rather than
-        //used, which would divide the kernel normalisation by zero and produce NaN for every
-        //value (gausssmooth-nonpositive-sigma in phyphox-docs, matching Android)
+        //A present sigma must be positive; an omitted or empty attribute keeps the default 3. Zero or less would divide
+        //the kernel normalisation by zero (gausssmooth-nonpositive-sigma in phyphox-docs, matching Android)
         let sigmaValue: Double
         if attributes.optionalString(for: "sigma")?.isEmpty ?? true {
             sigmaValue = 3.0
@@ -98,9 +95,7 @@ final class GaussSmoothAnalysis: AutoClearingExperimentAnalysisModule {
             
             let convolveError = vImageConvolve_PlanarF(&inImg, &outImg, nil, 0, 0, kernel, 1, UInt32(kernel.count), Pixel_F(0.0), vImage_Flags(kvImageTruncateKernel))
 
-            //On failure outputData stays uninitialized - treat it as an intermediate error
-            //state with empty output. (kvImageTruncateKernel handles inputs shorter than the
-            //kernel without error, so this does not trigger for short inputs.)
+            //On failure outputData stays uninitialized: empty output (kvImageTruncateKernel handles short inputs without error)
             guard convolveError == kvImageNoError else { return [] }
 
             return Array(UnsafeBufferPointer(start: unsafeBitCast(outImg.data, to: UnsafeMutablePointer<Float>.self), count: count)).map(Double.init)

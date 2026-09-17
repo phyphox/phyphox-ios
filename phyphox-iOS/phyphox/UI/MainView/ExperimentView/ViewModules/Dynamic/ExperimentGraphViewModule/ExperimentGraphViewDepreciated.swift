@@ -174,17 +174,11 @@ final class ExperimentGraphViewDepreciated: UIView, DynamicViewModule, Descripto
         } else {
             zLabel = nil
         }
-        if #available(iOS 13.0, *) {
-            let config = UIImage.SymbolConfiguration(
-                pointSize: 25, weight: .regular, scale: .default)
-            unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: config))
-            unfoldMoreImageView = UIImageView(image: UIImage(systemName: "arrow.up.left.and.arrow.down.right",
-                                                             withConfiguration: config))
-        } else {
-            unfoldLessImageView = UIImageView(image: UIImage(named: "unfold_less"))
-            unfoldMoreImageView = UIImageView(image: UIImage(named: "unfold_more"))
-            // Fallback on earlier versions
-        }
+        let config = UIImage.SymbolConfiguration(
+            pointSize: 25, weight: .regular, scale: .default)
+        unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: config))
+        unfoldMoreImageView = UIImageView(image: UIImage(systemName: "arrow.up.left.and.arrow.down.right",
+                                                         withConfiguration: config))
         
         timeReference = descriptor.timeReference
         systemTime = descriptor.systemTime
@@ -1327,9 +1321,7 @@ final class ExperimentGraphViewDepreciated: UIView, DynamicViewModule, Descripto
         graphTools.backgroundImage = UIImage()
         graphTools.backgroundColor = UIColor(named: "mainBackground")!
         graphTools.tintColor = kHighlightColor
-        if #available(iOS 10, *) {
-            graphTools.unselectedItemTintColor = UIColor(named: "textColor")
-        }
+        graphTools.unselectedItemTintColor = UIColor(named: "textColor")
         
         graphTools.delegate = self
         
@@ -1593,11 +1585,9 @@ final class ExperimentGraphViewDepreciated: UIView, DynamicViewModule, Descripto
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
-        if #available(iOS 13.0, *) {
-            if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-                refreshView()
-                refreshMarkers()
-            }
+        if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            refreshView()
+            refreshMarkers()
         }
     }
     
@@ -1609,7 +1599,7 @@ extension ExperimentGraphViewDepreciated {
     
     private func refreshMarkers(){
         let markerData = collectMarkerData()
-        let numberFormatter = createNumberFormatter()
+        let numberFormatter = GraphMarkerLabels.makeFormatter()
         
         switch markerData.count {
         case 1:
@@ -1633,7 +1623,7 @@ extension ExperimentGraphViewDepreciated {
         self.markerOverlayView.showMarkers = true
         self.markerOverlayView.markers = markerData.relativeCoordinates
         
-        let labelText = buildSinglePointLabel(
+        let labelText = markerLabels.singlePoint(
                 x: markerData.xValues[0],
                 y: markerData.yValues[0],
                 z: markerData.zValues[0],
@@ -1647,7 +1637,7 @@ extension ExperimentGraphViewDepreciated {
         markerOverlayView.showMarkers = true
         markerOverlayView.markers = markerData.relativeCoordinates
         
-        let labelText = buildDifferenceLabel(
+        let labelText = markerLabels.difference(
                 x1: markerData.xValues[0], x2: markerData.xValues[1],
                 y1: markerData.yValues[0], y2: markerData.yValues[1],
                 z1: markerData.zValues[0], z2: markerData.zValues[1],
@@ -1670,7 +1660,7 @@ extension ExperimentGraphViewDepreciated {
         self.markerOverlayView.showMarkers = false
         self.markerOverlayView.markers = fitMarkerData.relativeCoordinates
         
-        let labelText = buildLinearFitLabel(slope: slope, intercept: intercept, formatter: formatter)
+        let labelText = markerLabels.linearFit(slope: slope, intercept: intercept, formatter: formatter)
         setMarkerLabel(labelText)
         
         positionMarkerLabel(markerData: fitMarkerData)
@@ -1784,78 +1774,10 @@ extension ExperimentGraphViewDepreciated {
         
     }
     
-    private func createNumberFormatter() -> NumberFormatter {
-        let formatter = NumberFormatter()
-        formatter.usesSignificantDigits = true
-        formatter.minimumSignificantDigits = 4
-        formatter.maximumSignificantDigits = 8
-        return formatter
-    }
-    
-    private func buildSinglePointLabel(x: GLfloat, y: GLfloat, z: GLfloat, formatter: NumberFormatter) -> String {
-        var labelText = localize("graph_point_label")
-        
-        let convertedX = convertValue(x, isLogarithmic: logX)
-        labelText += "\n    " + formatValue(convertedX, formatter: formatter) + formatUnit(descriptor.localizedXUnit)
-        
-        let convertedY = convertValue(y, isLogarithmic: logY)
-            labelText += "\n    " + formatValue(convertedY, formatter: formatter) + formatUnit(descriptor.localizedYUnit)
-            
-        if hasZData {
-            let convertedZ = convertValue(z, isLogarithmic: logZ)
-            labelText += "\n    " + formatValue(convertedZ, formatter: formatter) + formatUnit(descriptor.localizedZUnit)
-        }
-            
-        return labelText
-        
-    }
-    
-    private func buildDifferenceLabel(x1: GLfloat, x2: GLfloat, y1: GLfloat, y2: GLfloat, z1: GLfloat, z2: GLfloat, formatter: NumberFormatter) -> String {
-        var labelText = localize("graph_difference_label")
-        
-        let convertedX1 = convertValue(x1, isLogarithmic: logX)
-        let convertedX2 = convertValue(x2, isLogarithmic: logX)
-        let dx = abs(convertedX1 - convertedX2)
-        labelText += "\n    " + formatValue(dx, formatter: formatter) + formatUnit(descriptor.localizedXUnit)
-        
-        let convertedY1 = convertValue(y1, isLogarithmic: logY)
-        let convertedY2 = convertValue(y2, isLogarithmic: logY)
-        let dy = abs(convertedY1 - convertedY2)
-        labelText += "\n    " + formatValue(dy, formatter: formatter) + formatUnit(descriptor.localizedYUnit)
-        
-        if hasZData {
-            let convertedZ1 = convertValue(z1, isLogarithmic: logZ)
-            let convertedZ2 = convertValue(z2, isLogarithmic: logZ)
-            let dz = abs(convertedZ1 - convertedZ2)
-            labelText += "\n    " + formatValue(dz, formatter: formatter) + formatUnit(descriptor.localizedZUnit)
-        }
-        
-        labelText += "\n" + localize("graph_slope_label")
-        let slope = (convertedY1 - convertedY2) / (convertedX1 - convertedX2)
-        labelText += "\n    " + formatValue(slope, formatter: formatter) + " " + descriptor.localizedYXUnit
-        
-        return labelText
-    }
-    
-    private func buildLinearFitLabel(slope: GLfloat, intercept: GLfloat, formatter: NumberFormatter) -> String {
-        var labelText = localize("graph_fit_label")
-        labelText += "\na = " + formatValue(slope, formatter: formatter) + " " + descriptor.localizedYXUnit
-        labelText += "\nb = " + formatValue(intercept, formatter: formatter) + formatUnit(descriptor.localizedYUnit)
-        return labelText
-    }
-    
-    private func convertValue(_ value: GLfloat, isLogarithmic: Bool) -> GLfloat {
-        return isLogarithmic ? exp(value) : value
+    private var markerLabels: GraphMarkerLabels {
+        return GraphMarkerLabels(descriptor: descriptor, logX: logX, logY: logY, logZ: logZ, hasZData: hasZData)
     }
 
-    private func formatValue(_ value: GLfloat, formatter: NumberFormatter) -> String {
-        return formatter.string(from: value as NSNumber) ?? "N/A"
-    }
-
-    private func formatUnit(_ unit: String) -> String {
-        return unit.isEmpty ? "" : " " + unit
-    }
-    
     private func createLinearFitMarkerData(slope: GLfloat, intercept: GLfloat) -> MarkerData {
         let minPoint = self.min
         let maxPoint = self.max

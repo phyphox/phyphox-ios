@@ -12,10 +12,8 @@ import QuartzCore
 
 private let spacing: CGFloat = 10.0
 
-//Like the RangeSlider below, a touch on the slider must never start a scroll or the swipe to the
-//next tab, which would otherwise claim a horizontal drag of the thumb. Unlike the RangeSlider,
-//UISlider may use internal gesture recognizers for its own tracking, so only recognizers of
-//other views are blocked.
+//A touch on the slider must not start a scroll or the tab swipe; unlike the RangeSlider, UISlider has internal recognizers
+//of its own, so only recognizers of other views are blocked
 private final class PhyphoxSlider: UISlider {
     override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         if gestureRecognizer.view === self {
@@ -242,11 +240,10 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     }
     
     func update(){
-        //If a buffer was cleared, write the default back while the slider is not being
-        //dragged, so the setting is not lost for subsequent analysis cycles (matching
-        //Android's re-init)
+        //A cleared buffer gets the default back while not dragging (matching Android's re-init; Experiment.seedInputDefaults() does
+        //the same per page at the moments that matter). NaN counts as no value: the slider cannot show it
         if(SliderType.Normal == descriptor.type){
-            if let buffer = sliderBuffer, buffer.last == nil, !uiSlider.isTracking {
+            if let buffer = sliderBuffer, buffer.last?.isNaN ?? true, !uiSlider.isTracking {
                 buffer.replaceValues([descriptor.defaultValue])
             }
             uiSlider.value = Float(sliderBuffer?.last ?? descriptor.defaultValue)
@@ -255,10 +252,10 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
 
         if(SliderType.Range == descriptor.type){
             if !rangeSlider.isTracking {
-                if let buffer = rangeSliderLowerBuffer, buffer.last == nil {
+                if let buffer = rangeSliderLowerBuffer, buffer.last?.isNaN ?? true {
                     buffer.replaceValues([descriptor.minValue])
                 }
-                if let buffer = rangeSliderUpperBuffer, buffer.last == nil {
+                if let buffer = rangeSliderUpperBuffer, buffer.last?.isNaN ?? true {
                     buffer.replaceValues([descriptor.maxValue])
                 }
             }
@@ -521,11 +518,8 @@ class RangeSlider: UIControl{
 
     // MARK: - Accessibility
 
-    //The thumbs are CALayers of a custom UIControl, which carries no accessibility semantics of
-    //its own: without these elements VoiceOver and Switch Control cannot reach either end of the
-    //range (and neither can a UI test). Each thumb is an adjustable element that moves by the
-    //slider's step, or by a twentieth of the range where no step is given, and stays bounded by
-    //the other thumb exactly as dragging does.
+    //The thumbs are CALayers of a custom UIControl with no accessibility semantics; each is an adjustable element moving by the
+    //step (or a twentieth of the range), bounded by the other thumb as dragging is
     private lazy var thumbElements: [RangeSliderThumbAccessibilityElement] = [
         RangeSliderThumbAccessibilityElement(slider: self, isLower: true),
         RangeSliderThumbAccessibilityElement(slider: self, isLower: false)
@@ -545,8 +539,7 @@ class RangeSlider: UIControl{
     }
 
     private func updateAccessibilityFrames() {
-        //A thumb is small; the touchable area around it is what a user aims at, so that is what
-        //the accessibility frame describes
+        //The touchable area around the small thumb is what the accessibility frame describes
         for element in thumbElements {
             let layer = element.isLower ? lowerThumbLayer : upperThumbLayer
             element.accessibilityFrameInContainerSpace = layer.frame.insetBy(dx: -thumbWidth / 2, dy: -thumbWidth / 2)
@@ -573,8 +566,7 @@ class RangeSlider: UIControl{
     }
 }
 
-//One end of a RangeSlider, as assistive technology sees it: an adjustable element reporting the
-//value it stands for and moving that end by one step per adjustment.
+//One end of a RangeSlider as assistive technology sees it: an adjustable element moving that end by one step
 private final class RangeSliderThumbAccessibilityElement: UIAccessibilityElement {
     private weak var slider: RangeSlider?
     let isLower: Bool

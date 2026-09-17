@@ -175,8 +175,7 @@ final class WebServerUtilities {
         
         viewLayout += "];\n"
 
-        //The clear dialog of the web interface offers these groups for selection; without any,
-        //it falls back to the plain clear-all dialog.
+        //The web interface's clear dialog offers these groups; without any it falls back to the plain clear-all dialog
         let escapedClearGroups = experiment.clearGroups.map {
             "\"" + $0.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\""
         }

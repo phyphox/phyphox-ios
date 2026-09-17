@@ -10,7 +10,6 @@ import Foundation
 import MetalKit
 import AVFoundation
 
-@available(iOS 14.0, *)
 class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     
     var cameraModelOwner: CameraModelOwner?
@@ -151,10 +150,8 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
             return false
         }
         
-        //Resolve the (weakly held) camera model before creating the encoder. If both were checked
-        //in one guard and only the model were nil - which happens while leaving the experiment, as
-        //the model is torn down but the MTKView fires one last draw - the encoder would already be
-        //created and then released without endEncoding(), which aborts with a Metal assertion.
+        //Resolved before creating the encoder: the model is nil during the last draw when leaving the experiment, and
+        //an encoder released without endEncoding() trips a Metal assertion
         guard let cameraModel = cameraModelOwner?.cameraModel else {
             return false
         }
@@ -235,8 +232,7 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
    
     // Updates any app state.
     func updateAppState() {
-        // Update the destination-rendering vertex info if the size of the screen, the interface
-        // orientation or the camera changed.
+        //Update the destination vertex info if the screen size, interface orientation or camera changed
         if drawableSizeDidChange || cameraOrientation != cameraModelOwner?.cameraModel?.cameraSettingsModel.cameraPosition || interfaceOrientation != currentInterfaceOrientation() {
             drawableSizeDidChange = false
             updateImagePlane()
@@ -264,12 +260,8 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
         }
     }
     
-    //The interface orientation of the window this view is shown in. This must be the same source
-    //that the layout code uses to pick the aspect ratio of the metal view: the transform below
-    //and the layout have to agree or the preview gets distorted. In particular, the physical
-    //device orientation (UIDevice.current.orientation) is not suitable, as it reports
-    //faceUp/faceDown when the device is tilted flat - typical when pointing the camera at a
-    //spectroscopy setup - while the interface keeps its last orientation.
+    //Must be the same source the layout code uses for the metal view's aspect ratio, or the preview gets distorted.
+    //UIDevice.current.orientation is unsuitable: it reports faceUp/faceDown when the device is tilted flat.
     func currentInterfaceOrientation() -> UIInterfaceOrientation {
         return renderDestination.window?.windowScene?.interfaceOrientation
             ?? UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.windowScene?.interfaceOrientation
