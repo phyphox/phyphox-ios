@@ -168,6 +168,9 @@
 "graph_slope_label" = "Slope";
 "graph_difference_label" = "Difference";
 "graph_fit_label" = "Linear fit: y = a x + b";
+"graph_no_data" = "No data";
+"graph_no_valid_data" = "No valid data";
+"graph_no_data_in_range" = "No data in range";
 
 
 "remoteColorMapWarning" = "The color plot in the remote interface is only an approximation. In contrast to the in-app plot, at the moment it cannot handle non-equidistant data or logarithmic scaling on the x and y axis. So, data at varying intervals may appear at the wrong location.";

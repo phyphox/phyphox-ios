@@ -32,6 +32,13 @@ class GraphDataManager {
     private var zoomMin: GraphPoint3D<Double>?
     private var zoomMax: GraphPoint3D<Double>?
     private var zoomFollows: Bool = false
+
+    //Size of the plot area in points, set by the graph view on layout; only used to measure which out-of-range point
+    //is closest to the plot (a distance in view coordinates) and where the arrow towards it points
+    var plotSize: CGSize = .zero
+
+    //The range actually shown in the last update: headroom and the opened zero range included
+    private var displayedBounds: GraphBounds? = nil
     
     var wantsUpdate = false
     var active = false
@@ -88,11 +95,15 @@ class GraphDataManager {
             var count: [Int] = []
             var points2D: [[GraphPoint2D<GLfloat>]] = []
             var points3D: [[GraphPoint3D<GLfloat>]] = []
+            var anyData = false //Any curve delivered a value on any axis
 
             // Process input buffers
             for i in 0..<descriptor.yInputBuffers.count {
                 yValues.insert(descriptor.yInputBuffers[i].toArray(), at: i)
                 count.append(yValues[i].count)
+                if count[i] > 0 || (descriptor.xInputBuffers[i]?.count ?? 0) > 0 {
+                    anyData = true
+                }
 
                 if count[i] < 1 {
                     xValues.append([])
@@ -122,9 +133,7 @@ class GraphDataManager {
                     }
 
                     if lastIndexXArray == nil {
-                        DispatchQueue.main.async { [weak self] in
-                            self?.delegate?.dataManagerDidClearData()
-                        }
+                        deliverEmpty(anyData ? .noValidData : .noData)
                         return
                     }
                     xValues.append(lastIndexXArray!)
@@ -165,9 +174,8 @@ class GraphDataManager {
             }
             
             if count.reduce(0, Swift.max) < 1 {
-                DispatchQueue.main.async { [weak self] in
-                    self?.delegate?.dataManagerDidClearData()
-                }
+                //Values on one axis only (or none at all) leave nothing to draw; the note in the plot says which
+                deliverEmpty(anyData ? .noValidData : .noData)
                 return
             }
 
@@ -352,18 +360,46 @@ class GraphDataManager {
             // Add to data sets with history management
             addDataSets(processedDataSets)
 
-            // Generate grid and pause markers
-            let grid = generateGrid(logX: logX, logY: logY, logZ: logZ)
-            let pauseMarkers = descriptor.hideTimeMarkers ? nil : generatePauseMarkers()
-            
-            // Prepare final data for main thread
-            let finalMin = self.min
-            let finalMax = self.max
+            //All values on an axis identical (or a fixed range with min = max) leaves a zero range and nothing could be
+            //drawn. Open it up around the value and mark it with a single tic at that value. This only touches the range
+            //of this frame: the data sets (and the extend history) keep their data-derived bounds.
+            var finalMin = self.min
+            var finalMax = self.max
+            var singleTics: (x: GraphGridLine?, y: GraphGridLine?, z: GraphGridLine?) = (nil, nil, nil)
+            if finalMin.x.isFinite && finalMin.x == finalMax.x {
+                let range = GraphDataManager.openZeroRange(finalMin.x, log: logX)
+                singleTics.x = GraphDataManager.singleTic(finalMin.x, log: logX)
+                finalMin = GraphPoint3D(x: range.min, y: finalMin.y, z: finalMin.z)
+                finalMax = GraphPoint3D(x: range.max, y: finalMax.y, z: finalMax.z)
+            }
+            if finalMin.y.isFinite && finalMin.y == finalMax.y {
+                let range = GraphDataManager.openZeroRange(finalMin.y, log: logY)
+                singleTics.y = GraphDataManager.singleTic(finalMin.y, log: logY)
+                finalMin = GraphPoint3D(x: finalMin.x, y: range.min, z: finalMin.z)
+                finalMax = GraphPoint3D(x: finalMax.x, y: range.max, z: finalMax.z)
+            }
+            if hasZData && finalMin.z.isFinite && finalMin.z == finalMax.z {
+                let range = GraphDataManager.openZeroRange(finalMin.z, log: logZ)
+                singleTics.z = GraphDataManager.singleTic(finalMin.z, log: logZ)
+                finalMin = GraphPoint3D(x: finalMin.x, y: finalMin.y, z: range.min)
+                finalMax = GraphPoint3D(x: finalMax.x, y: finalMax.y, z: range.max)
+            }
             let finalBounds = GraphBounds(min: finalMin, max: finalMax)
+            displayedBounds = finalBounds
+
+            // Generate grid and pause markers
+            let grid = generateGrid(min: finalMin, max: finalMax, singleTics: singleTics)
+            let pauseMarkers = descriptor.hideTimeMarkers ? nil : generatePauseMarkers(min: finalMin, max: finalMax)
+
+            let status = classifyData(xValues: xValues, yValues: yValues, count: count, bounds: finalBounds)
+
+            // Prepare final data for main thread
             let result = GraphDataResult(
                 dataSets: currentGraphDataSets,
                 bounds: finalBounds,
-                grid: grid
+                grid: grid,
+                dataStatus: status.status,
+                arrowAngle: status.arrowAngle
             )
 
             // Update UI on main thread
@@ -371,6 +407,115 @@ class GraphDataManager {
                 guard let self = self else { return }
                 self.delegate?.dataManager(self, didUpdateData: result, pauseMarkers: pauseMarkers)
             }
+        }
+
+        private func deliverEmpty(_ status: GraphDataStatus) {
+            displayedBounds = nil
+            DispatchQueue.main.async { [weak self] in
+                self?.delegate?.dataManagerDidClearData(status: status)
+            }
+        }
+
+        //Symmetric range around a single value v: 5 % of its magnitude, one unit if v is zero, a factor of 1.05 on a
+        //log axis (v is log(value) there, so the factor becomes an offset)
+        static func openZeroRange(_ v: Double, log isLog: Bool) -> (min: Double, max: Double) {
+            if isLog {
+                return (v - log(1.05), v + log(1.05))
+            }
+            let half = v == 0 ? 1.0 : abs(v) * 0.05
+            return (v - half, v + half)
+        }
+
+        //The tic marking a single value, centered in the opened range, with as many decimals as needed to show it exactly (at most four)
+        static func singleTic(_ v: Double, log isLog: Bool) -> GraphGridLine {
+            var value = isLog ? exp(v) : v
+            var precision = 4
+            for p in 0..<4 {
+                let scaled = value * pow(10.0, Double(p))
+                if abs(scaled - scaled.rounded()) < 1e-6 {
+                    precision = p
+                    value = scaled.rounded() / pow(10.0, Double(p)) //exp(log(100)) is not quite 100
+                    break
+                }
+            }
+            return GraphGridLine(absoluteValue: value, relativeValue: 0.5, precision: precision)
+        }
+
+        //Classify the current buffers against the range that is shown, so an empty plot can say why it is empty. Scans
+        //newest points first and stops at the first visible one, so a graph that shows data pays almost nothing.
+        //A time axis compares the point at the displayed time, like the plot and the marker do.
+        private func classifyData(xValues: [[Double]], yValues: [[Double]], count: [Int], bounds: GraphBounds) -> (status: GraphDataStatus, arrowAngle: Double?) {
+            var anyData = false
+            var anyValid = false
+            //The plot in view coordinates: width w, height h, origin top left. Without a layout yet, a unit square.
+            let w = plotSize.width > 0 ? Double(plotSize.width) : 1.0
+            let h = plotSize.height > 0 ? Double(plotSize.height) : 1.0
+            let xRange = bounds.max.x - bounds.min.x
+            let yRange = bounds.max.y - bounds.min.y
+            var nearestD = Double.infinity
+            var nearest: (x: Double, y: Double)? = nil
+
+            for i in stride(from: count.count - 1, through: 0, by: -1) {
+                if xValues[i].count > 0 || yValues[i].count > 0 {
+                    anyData = true
+                }
+                for j in stride(from: count[i] - 1, through: 0, by: -1) {
+                    let rawX = xValues[i][j]
+                    let rawY = yValues[i][j]
+                    if !rawX.isFinite || !rawY.isFinite {
+                        continue
+                    }
+                    anyValid = true
+                    var x = logX ? log(rawX) : rawX
+                    var y = logY ? log(rawY) : rawY
+                    if descriptor.timeOnX {
+                        x += timeOffset(experimentTime: x)
+                    }
+                    if descriptor.timeOnY {
+                        y += timeOffset(experimentTime: y)
+                    }
+                    //Non-positive values on a log axis are not invalid, they lie beyond the negative end of the axis
+                    let belowLogX = logX && rawX <= 0
+                    let belowLogY = logY && rawY <= 0
+                    if !belowLogX && !belowLogY && x >= bounds.min.x && x <= bounds.max.x && y >= bounds.min.y && y <= bounds.max.y {
+                        return (.ok, nil)
+                    }
+                    //Not visible. Remember it if it is the one closest to the plot area, so an arrow can point there.
+                    let vx = belowLogX ? -1e6 : (x - bounds.min.x) / xRange * w
+                    let vy = belowLogY ? h + 1e6 : (bounds.max.y - y) / yRange * h
+                    if !vx.isFinite || !vy.isFinite {
+                        continue
+                    }
+                    let dx = vx < 0 ? -vx : Swift.max(vx - w, 0)
+                    let dy = vy < 0 ? -vy : Swift.max(vy - h, 0)
+                    let d = dx * dx + dy * dy
+                    if d < nearestD {
+                        nearestD = d
+                        nearest = (vx, vy)
+                    }
+                }
+            }
+
+            if !anyData {
+                return (.noData, nil)
+            } else if !anyValid {
+                return (.noValidData, nil)
+            } else if let nearest = nearest {
+                //Screen angle from the plot centre towards the nearest point (view y grows downwards)
+                return (.noDataInRange, atan2(nearest.y - h / 2.0, nearest.x - w / 2.0))
+            } else {
+                return (.noDataInRange, nil)
+            }
+        }
+
+        //Experiment time to displayed time on a time axis, as the plot's shader and the marker apply it
+        private func timeOffset(experimentTime t: Double) -> Double {
+            if systemTime && !descriptor.linearTime {
+                return timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromExperimentTime: t))
+            } else if !systemTime && descriptor.linearTime {
+                return -timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromLinearTime: t))
+            }
+            return 0.0
         }
     
     private func updateBounds(
@@ -493,10 +638,12 @@ class GraphDataManager {
             } else if !systemTime && descriptor.linearTime && descriptor.timeOnX && !xMinStrict && !xMaxStrict && !hasZData {
                 minX -= timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromLinearTime: minX))
                 maxX -= timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromLinearTime: maxX))
-            } else if !logX && !xMinStrict && !xMaxStrict && !hasZData && !descriptor.timeOnX {
+            } else if !logX && !hasZData && !descriptor.timeOnX {
+                //Stretch slightly to give a little headroom, but only at ends the data determines: a fixed or zoomed
+                //end is shown exactly (decided 2026-09-20; Android still pads those, see the handoff)
                 let extraX = (maxX - minX) * 0.05
-                maxX += extraX
-                minX -= extraX
+                if !xMaxStrict { maxX += extraX }
+                if !xMinStrict { minX -= extraX }
             }
             
             if systemTime && !descriptor.linearTime && descriptor.timeOnY && !yMinStrict && !yMaxStrict && !hasZData {
@@ -505,10 +652,10 @@ class GraphDataManager {
             } else if !systemTime && descriptor.linearTime && descriptor.timeOnY && !yMinStrict && !yMaxStrict && !hasZData {
                 minY -= timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromExperimentTime: minY))
                 maxY -= timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromExperimentTime: maxY))
-            } else if !logY && !yMinStrict && !yMaxStrict && !hasZData && !descriptor.timeOnY {
+            } else if !logY && !hasZData && !descriptor.timeOnY {
                 let extraY = (maxY - minY) * 0.05
-                maxY += extraY
-                minY -= extraY
+                if !yMaxStrict { maxY += extraY }
+                if !yMinStrict { minY -= extraY }
             }
             
             if descriptor.timeOnX && !descriptor.linearTime && !xMinStrict && !xMaxStrict && !hasZData {
@@ -527,9 +674,7 @@ class GraphDataManager {
             }
         }
         
-        private func generateGrid(logX: Bool, logY: Bool, logZ: Bool) -> GraphGrid {
-            let minValue = self.min
-            let maxValue = self.max
+        private func generateGrid(min minValue: GraphPoint3D<Double>, max maxValue: GraphPoint3D<Double>, singleTics: (x: GraphGridLine?, y: GraphGridLine?, z: GraphGridLine?)) -> GraphGrid {
             let minX = minValue.x
             let maxX = maxValue.x
             let minY = minValue.y
@@ -562,7 +707,7 @@ class GraphDataManager {
                 systemTimeOffset: 0.0
             )
 
-            let mappedXTicks = xTicks.map { tick in
+            let mappedXTicks = singleTics.x.map { [$0] } ?? xTicks.map { tick in
                 GraphGridLine(
                     absoluteValue: tick.value,
                     relativeValue: CGFloat(((logX ? log(tick.value) : tick.value) - minX) / xRange),
@@ -570,7 +715,7 @@ class GraphDataManager {
                 )
             }
 
-            let mappedYTicks = yTicks.map { tick in
+            let mappedYTicks = singleTics.y.map { [$0] } ?? yTicks.map { tick in
                 GraphGridLine(
                     absoluteValue: tick.value,
                     relativeValue: CGFloat(((logY ? log(tick.value) : tick.value) - minY) / yRange),
@@ -578,7 +723,7 @@ class GraphDataManager {
                 )
             }
             
-            let mappedZTicks = zTicks.map { tick in
+            let mappedZTicks = singleTics.z.map { [$0] } ?? zTicks.map { tick in
                 GraphGridLine(
                     absoluteValue: tick.value,
                     relativeValue: CGFloat(((logZ ? log(tick.value) : tick.value) - minZ) / zRange),
@@ -596,9 +741,7 @@ class GraphDataManager {
             )
         }
         
-        private func generatePauseMarkers() -> PauseRanges {
-            let minValue = self.min
-            let maxValue = self.max
+        private func generatePauseMarkers(min minValue: GraphPoint3D<Double>, max maxValue: GraphPoint3D<Double>) -> PauseRanges {
             let minX = minValue.x
             let maxX = maxValue.x
             let minY = minValue.y
@@ -690,9 +833,10 @@ class GraphDataManager {
             historicMaxY = -Double.infinity
             historicMinZ = +Double.infinity
             historicMaxZ = -Double.infinity
+            displayedBounds = nil
             
             DispatchQueue.main.async { [weak self] in
-                self?.delegate?.dataManagerDidClearData()
+                self?.delegate?.dataManagerDidClearData(status: .noData)
             }
         }
     
@@ -717,8 +861,9 @@ class GraphDataManager {
             }
         }
     
+    //The range on screen, which gestures and the marker work in
     var currentBounds: GraphBounds {
-        return GraphBounds(min: min, max: max)
+        return displayedBounds ?? GraphBounds(min: min, max: max)
     }
     
     var points2D: [[GraphPoint2D<GLfloat>]] {
@@ -771,14 +916,20 @@ class GraphDataManager {
 
 protocol GraphDataManagerDelegate: AnyObject {
     func dataManager(_ manager: GraphDataManager, didUpdateData data: GraphDataResult, pauseMarkers: PauseRanges?)
-    func dataManagerDidClearData()
+    func dataManagerDidClearData(status: GraphDataStatus)
 }
 
+//Why the plot area is empty, shown as a small note instead of leaving it blank
+enum GraphDataStatus {
+    case ok, noData, noValidData, noDataInRange
+}
 
 struct GraphDataResult {
     let dataSets: [GraphDataSet]
     let bounds: GraphBounds
     let grid: GraphGrid
+    let dataStatus: GraphDataStatus
+    let arrowAngle: Double? //Screen angle in radians from the plot centre towards the nearest valid point, for noDataInRange
 }
 
 struct GraphDataSet {
@@ -822,6 +973,7 @@ extension ExperimentGraphView: GraphDataManagerDelegate {
         syncPickDataFromBuffers()
 
         graphRenderer.plotView.accessibilityValue = axisRangesDescription(data.bounds)
+        graphRenderer.statusView.show(data.dataStatus, arrowAngle: data.arrowAngle)
     }
 
     //"x from -0.4 to 8.4, y from 0.2 to 17.8" in the axes' own units (log axes converted back)
@@ -833,8 +985,9 @@ extension ExperimentGraphView: GraphDataManagerDelegate {
 
 
 
-    func dataManagerDidClearData() {
+    func dataManagerDidClearData(status: GraphDataStatus) {
         graphRenderer.clearGraph()
+        graphRenderer.statusView.show(status, arrowAngle: nil)
         markerSystem.clearMarkers()
         graphRenderer.plotView.accessibilityValue = nil
 

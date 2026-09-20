@@ -95,6 +95,7 @@ class GraphLayoutManager {
         graphArea.addSubview(label)
         graphArea.addSubview(renderer.plotView)
         graphArea.addSubview(renderer.gridView)
+        graphArea.addSubview(renderer.statusView)
         graphArea.addSubview(xLabel)
         graphArea.addSubview(yLabel)
         

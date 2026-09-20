@@ -100,6 +100,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         dataManager.delegate = self
         gestureHandler.delegate = self
         zoomManager.delegate = self
+        //A followX graph follows from the first frame on, not only after the first zoom gesture (as on Android)
+        zoomManager.notifyDataManager(dataManager)
         markerSystem.delegate = self
         toolbarManager.delegate = self
         graphRenderer.gridView.delegate = self
@@ -334,6 +336,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             zScaleFrame: layoutManager.zScaleFrame
         )
         markerSystem.updateLayout(graphFrame: layoutManager.graphFrame)
+        dataManager.plotSize = layoutManager.graphFrame.size
     }
     
     // MARK: - Public Interface
@@ -347,6 +350,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
             graphRenderer.refresh()
             markerSystem.refreshMarkers()
+            graphRenderer.statusView.setNeedsDisplay()
         }
     }
 }
@@ -361,6 +365,7 @@ extension ExperimentGraphView: GraphGridDelegate {
             graphRenderer.updateFrames(graphFrame: graphFrame, zScaleFrame: layoutManager.zScaleFrame)
             markerSystem.updateLayout(graphFrame: graphFrame)
             markerSystem.refreshMarkers()
+            dataManager.plotSize = graphFrame.size
         }
     }
 }

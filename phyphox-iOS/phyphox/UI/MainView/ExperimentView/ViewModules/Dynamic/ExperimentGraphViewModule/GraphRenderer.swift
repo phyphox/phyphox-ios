@@ -12,6 +12,7 @@ class GraphRenderer {
     let gridView: GraphGridView
     let zScaleView: GLGraphView?
     let zGridView: GraphGridView?
+    let statusView = GraphDataStatusView() //Says why the plot area is empty, laid over the plot
     
     private let descriptor: GraphViewDescriptor
     
@@ -120,6 +121,10 @@ class GraphRenderer {
         if plotView.frame != graphFrame {
             plotView.frame = graphFrame
             plotView.setNeedsLayout()
+        }
+        if statusView.frame != graphFrame {
+            statusView.frame = graphFrame
+            statusView.setNeedsDisplay()
         }
         
         if let zScale = zScaleView, let zGrid = zGridView {
