@@ -179,6 +179,7 @@
 		8A5A0007000000000000AA07 /* GraphSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */; };
 		8A5A0009000000000000AA09 /* GraphEmptyStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0008000000000000AA08 /* GraphEmptyStateTests.swift */; };
 		8A5A000B000000000000AA0B /* GraphFollowXTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A000A000000000000AA0A /* GraphFollowXTests.swift */; };
+		8A5A000D000000000000AA0D /* GraphTicLabelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A000C000000000000AA0C /* GraphTicLabelTests.swift */; };
 		8A5A010C000000000000AA1C /* ViewBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A010B000000000000AA1B /* ViewBehaviorTests.swift */; };
 		8A5A0110000000000000AA20 /* AppChromeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A010F000000000000AA1F /* AppChromeTests.swift */; };
 		8A5A0112000000000000AA22 /* LifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0111000000000000AA21 /* LifecycleTests.swift */; };
@@ -513,6 +514,7 @@
 		8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphSnapshotTests.swift; sourceTree = "<group>"; };
 		8A5A0008000000000000AA08 /* GraphEmptyStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphEmptyStateTests.swift; sourceTree = "<group>"; };
 		8A5A000A000000000000AA0A /* GraphFollowXTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphFollowXTests.swift; sourceTree = "<group>"; };
+		8A5A000C000000000000AA0C /* GraphTicLabelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphTicLabelTests.swift; sourceTree = "<group>"; };
 		8A5A0100000000000000AA10 /* phyphoxUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = phyphoxUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A5A010B000000000000AA1B /* ViewBehaviorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewBehaviorTests.swift; sourceTree = "<group>"; };
 		8A5A010F000000000000AA1F /* AppChromeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppChromeTests.swift; sourceTree = "<group>"; };
@@ -1308,6 +1310,7 @@
 				8A5A0006000000000000AA06 /* GraphSnapshotTests.swift */,
 				8A5A0008000000000000AA08 /* GraphEmptyStateTests.swift */,
 				8A5A000A000000000000AA0A /* GraphFollowXTests.swift */,
+				8A5A000C000000000000AA0C /* GraphTicLabelTests.swift */,
 				8A5A0117000000000000AA27 /* TranslationsBuildTests.swift */,
 				8A5A0122000000000000AA32 /* HttpResultRaceTests.swift */,
 				A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */,
@@ -1831,6 +1834,7 @@
 				8A5A0007000000000000AA07 /* GraphSnapshotTests.swift in Sources */,
 				8A5A0009000000000000AA09 /* GraphEmptyStateTests.swift in Sources */,
 				8A5A000B000000000000AA0B /* GraphFollowXTests.swift in Sources */,
+				8A5A000D000000000000AA0D /* GraphTicLabelTests.swift in Sources */,
 				8A5A0118000000000000AA28 /* TranslationsBuildTests.swift in Sources */,
 				8A5A0121000000000000AA31 /* HttpResultRaceTests.swift in Sources */,
 			);

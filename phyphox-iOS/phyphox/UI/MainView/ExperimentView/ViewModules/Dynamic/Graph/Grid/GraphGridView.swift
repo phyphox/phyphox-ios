@@ -312,6 +312,9 @@ final class GraphGridView: UIView {
 
             let smallestUnit = 1.0/UIScreen.main.scale
 
+            //A tic can sit on the plot border (fixed ranges, zoom). Its label is then kept within the plot's width,
+            //respectively its glyphs within the plot's height, instead of hanging into the neighbouring label
+            //or beyond the view - shifted by at most half its size (as on Android since 2026-09-20)
             let horizontalGridLines = isZScale ? grid.zGridLines : grid.xGridLines
             
             for line in horizontalGridLines {
@@ -329,7 +332,9 @@ final class GraphGridView: UIView {
                 view.frame = CGRect(x: origin+insetRect.origin.x, y: insetRect.origin.y, width: smallestUnit, height: insetRect.size.height)
 
                 let label = labels[index]
-                label.frame = CGRect(x: origin+insetRect.origin.x-label.frame.size.width/2.0, y: insetRect.maxY+spacing, width: label.frame.size.width, height: label.frame.size.height)
+                let halfWidth = label.frame.size.width/2.0
+                let center = max(insetRect.minX + halfWidth, min(origin+insetRect.origin.x, bounds.maxX - halfWidth))
+                label.frame = CGRect(x: center-halfWidth, y: insetRect.maxY+spacing, width: label.frame.size.width, height: label.frame.size.height)
 
                 index += 1
             }
@@ -350,7 +355,10 @@ final class GraphGridView: UIView {
                     view.frame = CGRect(x: insetRect.origin.x, y: origin+insetRect.origin.y, width: insetRect.size.width, height: smallestUnit)
 
                     let label = labels[index]
-                    label.frame = CGRect(x: insetRect.origin.x-spacing-label.frame.size.width, y: origin+insetRect.origin.y-label.frame.size.height/2.0, width: label.frame.size.width, height: label.frame.size.height)
+                    //The digits sit centered in the label's line height; keep them (not the whole line box) inside
+                    let halfGlyph = label.font.capHeight/2.0
+                    let center = max(insetRect.minY + halfGlyph, min(origin+insetRect.origin.y, insetRect.maxY - halfGlyph))
+                    label.frame = CGRect(x: insetRect.origin.x-spacing-label.frame.size.width, y: center-label.frame.size.height/2.0, width: label.frame.size.width, height: label.frame.size.height)
 
                     index += 1
                 }
