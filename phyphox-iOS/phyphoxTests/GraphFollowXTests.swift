@@ -8,6 +8,7 @@
 import XCTest
 @testable import phyphox
 
+// phyphox-test: graph-follow-x
 //A graph with followX keeps the newest data in view from the first frame on (spec: "the graph follows new data
 //with a fixed x axis scale"). Until 2026-09-20 iOS showed the minX..maxX window from the attributes until the
 //first zoom gesture, because the zoom manager's initial state never reached the data manager.

@@ -640,7 +640,7 @@ class GraphDataManager {
                 maxX -= timeMappingsSnapshot.totalGap(byIndex: timeMappingsSnapshot.referenceIndex(fromLinearTime: maxX))
             } else if !logX && !hasZData && !descriptor.timeOnX {
                 //Stretch slightly to give a little headroom, but only at ends the data determines: a fixed or zoomed
-                //end is shown exactly (decided 2026-09-20; Android still pads those, see the handoff)
+                //end is shown exactly (decided 2026-09-20)
                 let extraX = (maxX - minX) * 0.05
                 if !xMaxStrict { maxX += extraX }
                 if !xMinStrict { minX -= extraX }

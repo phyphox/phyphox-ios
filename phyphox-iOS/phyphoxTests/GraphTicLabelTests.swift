@@ -8,6 +8,7 @@
 import XCTest
 @testable import phyphox
 
+// phyphox-test: graph-tic-labels
 //Tic labels of a range whose outer tics sit right on the plot border (fixed ranges, zoom): an interior label is
 //centred on its tic, a border label is moved inside the plot's width (x) or height (y) instead of hanging into the
 //neighbouring label row or beyond the view. Mirrors Android's GraphTicLabelTest.
