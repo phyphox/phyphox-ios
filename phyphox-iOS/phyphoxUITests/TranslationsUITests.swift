@@ -99,11 +99,21 @@ final class TranslationsUITests: XCTestCase {
 
     ///Text that ends up outside the screen is the regression a long translation causes
     private func textOutsideTheScreen(_ app: XCUIApplication) -> [String] {
-        let window = app.windows.firstMatch.frame
+        //One snapshot of the whole hierarchy: the screen is live (a running graph relabels its tics), and elements
+        //resolved by index against a hierarchy that changes underneath fail with "no matches for element at index"
+        guard let root = try? app.snapshot() else { return [] }
+        let window = root.children.first(where: { $0.elementType == .window })?.frame ?? root.frame
         guard window.width > 0 else { return [] }
+        var texts: [XCUIElementSnapshot] = []
+        func collect(_ node: XCUIElementSnapshot) {
+            if node.elementType == .staticText {
+                texts.append(node)
+            }
+            node.children.forEach(collect)
+        }
+        collect(root)
         var offenders: [String] = []
-        let texts = app.staticTexts.allElementsBoundByIndex
-        for text in texts.prefix(80) where text.exists && !text.label.isEmpty {
+        for text in texts.prefix(80) where !text.label.isEmpty {
             let frame = text.frame
             guard frame.width > 0, frame.height > 0 else { continue }
             if frame.minX < -1 || frame.maxX > window.maxX + 1 {
