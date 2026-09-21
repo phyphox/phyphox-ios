@@ -246,10 +246,23 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         self.valueBuffer = ValueBuffer(interval: rate, average: average)
     }
     
+    //Whether this device has the hardware behind a sensor type; the fusion outputs need device motion
+    static func hardwareAvailable(sensorType: SensorType, motionSession: MotionSession) -> Bool {
+        switch sensorType {
+        case .accelerometer: return motionSession.accelerometerAvailable
+        case .gyroscope: return motionSession.gyroAvailable
+        case .magneticField: return motionSession.magnetometerAvailable
+        case .pressure: return motionSession.altimeterAvailable
+        case .proximity: return motionSession.proximityAvailable
+        case .light, .temperature, .humidity, .custom: return false
+        case .attitude, .linearAcceleration, .gravity: return motionSession.deviceMotionAvailable
+        }
+    }
+
     static func verifySensorAvailibility(sensorType: SensorType, motionSession: MotionSession) throws {
-        //-phyphoxAssumeSensors (AutomationLaunchOptions) for store screenshots on the simulator: skips only the hardware
-        //tests below, sensor types iOS supports on no device still fail
-        if AutomationLaunchOptions.assumeSensors {
+        //-phyphoxAssumeSensors and -phyphoxSyntheticSensors (AutomationLaunchOptions) for the simulator: skip only the hardware
+        //test, sensor types iOS supports on no device still fail
+        if AutomationLaunchOptions.assumeSensors || AutomationLaunchOptions.syntheticSensors {
             switch sensorType {
             case .light, .temperature, .humidity, .custom:
                 break
@@ -258,37 +271,8 @@ final class ExperimentSensorInput: MotionSessionReceiver {
             }
         }
         
-        switch sensorType {
-        case .accelerometer:
-            guard motionSession.accelerometerAvailable else {
-                throw SensorError.sensorUnavailable(sensorType)
-            }
-            break;
-        case .gyroscope:
-            guard motionSession.gyroAvailable else {
-                throw SensorError.sensorUnavailable(sensorType)
-            }
-            break;
-        case .magneticField:
-            guard motionSession.magnetometerAvailable else {
-                throw SensorError.sensorUnavailable(sensorType)
-            }
-            break;
-        case .pressure:
-            guard motionSession.altimeterAvailable else {
-                throw SensorError.sensorUnavailable(sensorType)
-            }
-            break;
-        case .proximity:
-            guard motionSession.proximityAvailable else {
-                throw SensorError.sensorUnavailable(sensorType)
-            }
-        case .light, .temperature, .humidity, .custom:
+        guard hardwareAvailable(sensorType: sensorType, motionSession: motionSession) else {
             throw SensorError.sensorUnavailable(sensorType)
-        case .attitude, .linearAcceleration, .gravity:
-            guard motionSession.deviceMotionAvailable else {
-                throw SensorError.sensorUnavailable(sensorType)
-            }
         }
     }
     
@@ -336,6 +320,37 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         }
     }
     
+    //-phyphoxSyntheticSensors (AutomationLaunchOptions): the simulator has no motion sensors, so a timer stands in for the
+    //missing hardware with a constant reading at the requested rate, the way the emulator's virtual sensors do on Android
+    private var syntheticTimer: DispatchSourceTimer? = nil
+
+    private func startSyntheticFeed() -> Bool {
+        guard AutomationLaunchOptions.syntheticSensors,
+              !ExperimentSensorInput.hardwareAvailable(sensorType: sensorType, motionSession: motionSession) else {
+            return false
+        }
+        let reading: (x: Double, y: Double?, z: Double?, abs: Double?, accuracy: Double?)
+        switch sensorType {
+        case .accelerometer, .gravity: reading = (1.5, 2.5, 9.3, nil, nil) //at rest but tilted, so the three components differ
+        case .pressure: reading = (1013.25, nil, nil, nil, nil)
+        case .proximity: reading = (5.0, nil, nil, nil, nil)
+        case .magneticField: reading = (0.0, 20.0, -40.0, nil, 3.0)
+        case .attitude: reading = (0.0, 0.0, 0.0, 1.0, 3.0)
+        case .gyroscope: reading = (0.0, 0.0, 0.0, nil, 0.0)
+        default: reading = (0.0, 0.0, 0.0, nil, nil)
+        }
+        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .userInitiated))
+        timer.schedule(deadline: .now(), repeating: hardwareRate > 0 ? hardwareRate : max(rate, 0.01))
+        timer.setEventHandler { [weak self] in
+            guard let self = self else { return }
+            self.ready = true
+            self.dataIn(reading.x, y: reading.y, z: reading.z, abs: reading.abs, accuracy: reading.accuracy, t: ProcessInfo.processInfo.systemUptime, error: nil)
+        }
+        syntheticTimer = timer
+        timer.resume()
+        return true
+    }
+
     func start(queue: DispatchQueue) {
         self.queue = queue
         
@@ -350,6 +365,10 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         lastEventT = nil
         lastResult = nil
         valueBuffer.reset(nextIntervalStart: nil)
+        
+        if startSyntheticFeed() {
+            return
+        }
         
         switch sensorType {
         case .accelerometer:
@@ -550,6 +569,12 @@ final class ExperimentSensorInput: MotionSessionReceiver {
         } catch {}
         
         ready = false
+        
+        if let timer = syntheticTimer {
+            timer.cancel()
+            syntheticTimer = nil
+            return
+        }
         
         switch sensorType {
         case .accelerometer:

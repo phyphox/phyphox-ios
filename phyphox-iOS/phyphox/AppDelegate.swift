@@ -17,6 +17,8 @@ import UIKit
 //  -phyphoxAutoConfirm        confirms the informational notices on open (network privacy, photosensitivity), declines the save offer
 //  -phyphoxAssumeSensors      treats every sensor iOS could have as present and suppresses the simulator's camera loading error
 //                             (store screenshot system; Android: debug.phyphox.assumeSensors)
+//  -phyphoxSyntheticSensors   like -phyphoxAssumeSensors, and a sensor the device lacks delivers a constant reading at its
+//                             rate - the simulator's stand-in for the emulator's virtual sensors (web interface T1 run)
 //  -phyphoxView <n>           the 0-based view (tab) index to open on; absent or out of range means the first
 //                             (Android: debug.phyphox.view)
 //
@@ -43,6 +45,9 @@ enum AutomationLaunchOptions {
 
     ///Whether every sensor the device could have should be treated as available (store screenshot system)
     static let assumeSensors = arguments.contains("-phyphoxAssumeSensors")
+
+    ///Whether a sensor the device lacks should be fed a constant reading instead of failing the experiment
+    static let syntheticSensors = arguments.contains("-phyphoxSyntheticSensors")
 
     ///The view index to open on, or 0 if absent or not a positive index; the caller checks it against the number of views
     static let startView: Int = {

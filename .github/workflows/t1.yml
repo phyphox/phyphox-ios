@@ -110,22 +110,30 @@ jobs:
 
   # phyphox-test: translations-ui
   # phyphox-test: remote-contract-t1
+  # phyphox-test: webinterface-served-t1
   languages-1:
     needs: build
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
+      # With the submodules: the web interface's own test suite lives in phyphox-webinterface
       - uses: actions/checkout@v5
         with:
           path: phyphox-ios
+          submodules: true
 
       - id: prepare
         uses: ./phyphox-ios/.github/actions/t1-prepare
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
       - name: Test dependencies
         run: |
           set -euo pipefail
           pip3 install --break-system-packages pyyaml jsonschema
+          cd phyphox-ios/phyphox-webinterface/test && npm ci
 
       - name: Half of the shipped languages
         run: |
@@ -169,6 +177,34 @@ jobs:
           curl -fs -m 5 "$BASE/control?cmd=stop" >/dev/null
           python3 phyphox-docs/tools/contract_test.py --ios "$BASE" --allow-control
           xcrun simctl terminate "$UDID" "$BUNDLE" || true
+
+      # phyphox-test: webinterface-served-t1
+      - name: Web interface tests against the app
+        run: |
+          set -euo pipefail
+          UDID="${{ steps.prepare.outputs.udid }}"
+          BASE="http://127.0.0.1:$PORT"
+          TEST="$GITHUB_WORKSPACE/phyphox-ios/phyphox-webinterface/test"
+          mkdir -p t1-diagnostics
+          # The web interface's browser suite against the page the app really serves: the graph
+          # JSON, the translated strings, the picker's writes into real buffers. The suite's mock
+          # server only provides the fixture experiment here; the app fetches it from the host,
+          # and the simulator shares the host's loopback, so no port forward is needed. The
+          # fixture measures the accelerometer, which the simulator lacks: -phyphoxSyntheticSensors
+          # stands in with a constant reading, the way the emulator's virtual sensors do on Android.
+          node "$TEST/mock_server.js" 8081 > t1-diagnostics/mock-server.log 2>&1 &
+          MOCK=$!
+          xcrun simctl launch --terminate-running-process "$UDID" "$BUNDLE" \
+            -phyphoxUrl "phyphox://127.0.0.1:8081/fixtures/webgraphs.phyphox" -phyphoxAutoConfirm \
+            -phyphoxSyntheticSensors -phyphoxRemote -phyphoxRemotePort "$PORT"
+          for i in $(seq 30); do
+            curl -fs -m 2 "$BASE/config" >/dev/null && break
+            sleep 1
+          done
+          curl -fs -m 5 "$BASE/config" >/dev/null
+          (cd "$TEST" && PHYPHOX_URL="$BASE/" npm test 2>&1 | tee "$GITHUB_WORKSPACE/t1-diagnostics/webinterface-served.log")
+          xcrun simctl terminate "$UDID" "$BUNDLE" || true
+          kill "$MOCK" || true
 
       - name: Diagnostics
         if: failure()

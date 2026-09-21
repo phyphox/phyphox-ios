@@ -8,6 +8,57 @@
 
 import Foundation
 
+//A minimal JSON writer for the view layout: keeps the key order of the Android implementation (so the two served pages
+//read alike) and escapes "<", so a string can never end the script block the layout is inlined in
+enum WebJSON {
+    //An ordered object; its own type rather than an array of pairs, because an empty array casts to any element type
+    struct Object: ExpressibleByArrayLiteral {
+        var pairs: [(String, Any?)]
+
+        init(arrayLiteral elements: (String, Any?)...) {
+            pairs = elements
+        }
+
+        mutating func append(_ pair: (String, Any?)) {
+            pairs.append(pair)
+        }
+    }
+
+    static func string(_ s: String) -> String {
+        var out = "\""
+        for scalar in s.unicodeScalars {
+            switch scalar {
+            case "\"": out += "\\\""
+            case "\\": out += "\\\\"
+            case "\n": out += "\\n"
+            case "\r": out += "\\r"
+            case "\t": out += "\\t"
+            case "<": out += "\\u003c"
+            default:
+                if scalar.value < 0x20 {
+                    out += String(format: "\\u%04x", scalar.value)
+                } else {
+                    out.unicodeScalars.append(scalar)
+                }
+            }
+        }
+        return out + "\""
+    }
+
+    static func encode(_ value: Any?) -> String {
+        switch value {
+        case nil: return "null"
+        case let s as String: return string(s)
+        case let b as Bool: return b ? "true" : "false"
+        case let i as Int: return String(i)
+        case let d as Double: return d.isFinite ? String(d) : "null"
+        case let o as Object: return "{" + o.pairs.map { string($0.0) + ":" + encode($0.1) }.joined(separator: ",") + "}"
+        case let a as [Any?]: return "[" + a.map(encode).joined(separator: ",") + "]"
+        default: return "null"
+        }
+    }
+}
+
 final class WebServerUtilities {
     class func genPlaceHolderImage() -> UIImage {
         let s = CGSize(width: 30, height: 30)
@@ -65,6 +116,8 @@ final class WebServerUtilities {
         raw.replaceOccurrences(of: "<!-- [[switchColumns3Translation]] -->", with: localize("switchColumns3"), options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrences(of: "<!-- [[toggleBrightModeTranslation]] -->", with: localize("toggleBrightMode"), options: [], range: NSMakeRange(0, raw.length))
         raw.replaceOccurrences(of: "<!-- [[fontSizeTranslation]] -->", with: localize("fontSize"), options: [], range: NSMakeRange(0, raw.length))
+        //The placeholder sits on a line of its own inside the script block, so the assignment replaces it in place
+        raw.replaceOccurrences(of: "<!-- [[graphStrings]] -->", with: "graphStrings = Object.assign(graphStrings, \(graphStringsJSON()));", options: [], range: NSMakeRange(0, raw.length))
         
         var viewLayout = "var views = ["
         var viewOptions = ""
@@ -106,26 +159,10 @@ final class WebServerUtilities {
 
 
                     if let graph = element as? GraphViewDescriptor {
-                        var dataInput = ""
-                        let updateMode: String
-                        if graph.style[0] == .map {
-                            dataInput += "\"" +  graph.yInputBuffers[0].name.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\","
-                            dataInput += "\"" + (graph.xInputBuffers[0]?.name.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") ?? "") + "\","
-                            dataInput += "\"" + (graph.zInputBuffers[0]?.name.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") ?? "") + "\""
-                            updateMode = "partialXYZ"
-                        } else {
-                            for i in 0..<graph.yInputBuffers.count {
-                                if (dataInput != "") {
-                                    dataInput += ","
-                                }
-                                dataInput += "\"" +  graph.yInputBuffers[i].name.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\""
-                                dataInput += ","
-                                let xName = i < graph.xInputBuffers.count ? graph.xInputBuffers[i]?.name.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") ?? nil : nil
-                                dataInput += xName != nil ? "\"" + xName! + "\"" : "null"
-                            }
-                            updateMode = "partial"
-                        }
-                        viewLayout += ", \"updateMode\": \"\(graph.partialUpdate ? updateMode : "full")\", \"dataInput\": [\(dataInput)], \"dataInputFunction\":\n\(graph.setDataHTMLWithID(idx))\n"
+                        //The interface builds the graph, its html and its data functions from the "graph" object; dataInput and
+                        //updateMode still drive the polling (phyphox-webinterface readme.md, "How the apps embed the interface")
+                        let dataInput = graph.webDataInputs.map { WebJSON.encode($0?.name) }.joined(separator: ",")
+                        viewLayout += ", \"updateMode\": \"\(graph.webUpdateMode)\", \"dataInput\": [\(dataInput)], \"graph\":\(graph.webGraphConfig())"
                     }
                     else if element is InfoViewDescriptor {
                         viewLayout += ", \"updateMode\": \"none\""
@@ -204,6 +241,31 @@ final class WebServerUtilities {
         return (raw as String, htmlId2ViewElement)
     }
     
+    //The translated strings of the interface's graph tools, keyed as index.html expects them (it has English defaults for all)
+    private class func graphStringsJSON() -> String {
+        let strings: WebJSON.Object = [
+            ("panAndZoom", localize("graph_tools_pan_and_zoom")),
+            ("pick", localize("graph_tools_pick")),
+            ("resetZoom", localize("graph_tools_reset")),
+            ("follow", localize("graph_tools_follow")),
+            ("logX", localize("graph_tools_log_x")),
+            ("logY", localize("graph_tools_log_y")),
+            ("systemTime", localize("graph_tools_system_time")),
+            ("point", localize("graph_point_label")),
+            ("difference", localize("graph_difference_label")),
+            ("slope", localize("graph_slope_label")),
+            ("noData", localize("graph_no_data")),
+            ("noValidData", localize("graph_no_valid_data")),
+            ("noDataInRange", localize("graph_no_data_in_range")),
+            ("ok", localize("ok")),
+            ("cancel", localize("cancel")),
+            ("invalidValue", localize("invalidValue")),
+            ("zoomHint", localize("remoteGraphZoomHint")),
+            ("colorMapWarning", localize("remoteColorMapWarning"))
+        ]
+        return WebJSON.encode(strings)
+    }
+
     class func mapFormatString(_ str: String) -> ExportFileFormat? {
         guard let index = Int(str), exportTypes.indices.contains(index) else {
             return nil

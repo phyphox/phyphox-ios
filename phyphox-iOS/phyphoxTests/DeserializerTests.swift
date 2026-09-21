@@ -388,17 +388,70 @@ final class WebServerCORSTests: XCTestCase {
     }
 }
 
-//followX in the remote interface: the generated JS anchors the window end at the newest x while keeping the
-//minX/maxX width, mirroring Android's ExpView.dataCompleteHTML
-final class RemoteGraphFollowXTests: XCTestCase {
-    func testFollowXGeneratesAnchoredRescale() throws {
-        let skeleton = try testBundle.path(forResource: "full-skeleton", ofType: "phyphox").unwrap()
-        let experiment = try ExperimentSerialization.readExperimentFromURL(URL(fileURLWithPath: skeleton))
-        let graphs = (experiment.viewDescriptors ?? []).flatMap { $0.views }.compactMap { $0 as? GraphViewDescriptor }
-        let followGraph = try graphs.first(where: { $0.followX }).unwrap()
-        let js = followGraph.generateDataCompleteHTMLWithID(1)
-        XCTAssertTrue(js.contains("ticks.min = maxX - 10.0;"), "followX rescale must anchor the window end at the newest x")
-        XCTAssertTrue(js.contains("\"min\":0.0, \"max\":10.0"), "followX must keep the initial range from the attributes")
+//The remote interface builds its graphs from the "graph" object of the view layout (phyphox-webinterface readme.md, "The
+//graph configuration"); the served page has to carry it, the translated graph strings, and no placeholder left behind
+final class RemoteGraphConfigTests: XCTestCase {
+    private func skeleton() throws -> Experiment {
+        let path = try testBundle.path(forResource: "full-skeleton", ofType: "phyphox").unwrap()
+        return try ExperimentSerialization.readExperimentFromURL(URL(fileURLWithPath: path))
+    }
+
+    private func graphConfig(_ label: String) throws -> [String: Any] {
+        let graphs = (try skeleton().viewDescriptors ?? []).flatMap { $0.views }.compactMap { $0 as? GraphViewDescriptor }
+        let graph = try graphs.first(where: { $0.label == label }).unwrap()
+        return try (JSONSerialization.jsonObject(with: Data(graph.webGraphConfig().utf8)) as? [String: Any]).unwrap()
+    }
+
+    func testFollowWindowAndDatasetsAreInTheGraphConfig() throws {
+        let cfg = try graphConfig("l6")
+        XCTAssertEqual(cfg["followX"] as? Bool, true)
+        XCTAssertEqual(cfg["minX"] as? Double, 0.0)
+        XCTAssertEqual(cfg["maxX"] as? Double, 10.0)
+        XCTAssertEqual(cfg["scaleMinX"] as? String, "fixed", "followX fixes the x range like the handler does for the app")
+        XCTAssertEqual(cfg["scaleMinY"] as? String, "auto")
+        XCTAssertEqual(cfg["interpolateMapColors"] as? Bool, false)
+        XCTAssertNil(cfg["colorScale"], "without mapColor stops the interface uses its own default scale")
+        let datasets = try (cfg["datasets"] as? [[String: Any]]).unwrap()
+        XCTAssertEqual(datasets.count, 1)
+        XCTAssertEqual(datasets[0]["x"] as? String, "buffer")
+        XCTAssertEqual(datasets[0]["y"] as? String, "buffer")
+        XCTAssertTrue(datasets[0]["z"] is NSNull)
+        XCTAssertEqual(datasets[0]["style"] as? String, "dots")
+        XCTAssertTrue((datasets[0]["color"] as? String)?.hasPrefix("#") ?? false)
+    }
+
+    func testPickOutputsPairValueAndAssignedValue() throws {
+        let cfg = try graphConfig("l6b")
+        XCTAssertEqual(cfg["pickLabel"] as? String, "l6c")
+        let picks = try (cfg["pickOutputs"] as? [[String: Any]]).unwrap()
+        XCTAssertEqual(picks.map { $0["axis"] as? String }, ["x", "y", "z", "x"], "the slots cycle through the axes")
+        XCTAssertEqual(picks[3]["label"] as? String, "l6h")
+        XCTAssertEqual((try graphConfig("l6")["pickOutputs"] as? [Any])?.count, 0, "no outputs is an empty array, not an object")
+        XCTAssertEqual(picks[0]["buffer"] as? String, "buffer")
+        XCTAssertEqual(picks[0]["label"] as? String, "l6d")
+        XCTAssertEqual(picks[0]["calBuffer"] as? String, "buffer")
+        XCTAssertEqual(picks[0]["calLabel"] as? String, "l6e")
+        XCTAssertEqual(picks[1]["label"] as? String, "l6f")
+        XCTAssertTrue(picks[1]["calBuffer"] is NSNull, "a pick without an assigned value has no cal buffer")
+        XCTAssertTrue(picks[1]["calLabel"] is NSNull)
+    }
+
+    func testServedPageEmbedsGraphConfigAndStrings() throws {
+        let (path, _) = WebServerUtilities.prepareWebServerFilesForExperiment(try skeleton())
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        let html = try String(contentsOfFile: path + "/index.html", encoding: .utf8)
+        XCTAssertTrue(html.contains("\"graph\":{\"aspectRatio\":"), "graph elements carry the configuration object")
+        XCTAssertTrue(html.contains("\"pickOutputs\":[{\"axis\":\"x\",\"buffer\":\"buffer\""), "pick outputs in Android's key order")
+        XCTAssertTrue(html.contains("graphStrings = Object.assign(graphStrings, {\"panAndZoom\":"), "translated graph strings")
+        XCTAssertTrue(html.contains("\"zoomHint\":\"Mouse: drag to pan"), "the new zoom hint string is localized")
+        XCTAssertFalse(html.contains("<!-- [[graphStrings]] -->"))
+        XCTAssertFalse(html.contains("<!-- [[viewLayout]] -->"))
+        XCTAssertFalse(html.contains("Chart.controllers.line.extend"), "no app-generated Chart.js 2 code is left")
+    }
+
+    func testViewLayoutStringsCannotEndTheScriptBlock() {
+        XCTAssertEqual(WebJSON.string("a\"b\\c</script>\n"), "\"a\\\"b\\\\c\\u003c/script>\\n\"")
+        XCTAssertEqual(WebJSON.encode([("k", nil), ("b", true), ("n", 1.5), ("i", 2), ("nan", Double.nan), ("l", ["x", nil]), ("e", [] as [WebJSON.Object]), ("o", [] as WebJSON.Object)] as WebJSON.Object), "{\"k\":null,\"b\":true,\"n\":1.5,\"i\":2,\"nan\":null,\"l\":[\"x\",null],\"e\":[],\"o\":{}}")
     }
 }
 
