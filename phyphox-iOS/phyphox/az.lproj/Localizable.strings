@@ -102,7 +102,7 @@
 "pick_exportFormat" = "Verilənlərin formatını seçin.";
 "noDrawableData" = "Təsvir ediləcək verilən yoxdur.";
 "categoryNewExperiment" = "Sadə fərdi təcrübələr";
-"categoryRawSensor" = "Xam sensorlar";
+"categoryRawSensor" = "Sensorlar";
 "categoryPhyphoxOrg" = "phyphox-a dəstək olun";
 "categoryPhyphoxOrgHint" = "Siyahının sonunda phyphox-a dəstək olmaq üçün yeni seçimlər var.";
 "experimentinfo_hint" = "Bu təcrübədən necə istifadə edəcəyinizi öyrənmək üçün təcrübə haqqında məlumata baxın.";
