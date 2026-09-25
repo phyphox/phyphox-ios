@@ -819,6 +819,17 @@ final class WebServerConformanceTests: XCTestCase {
         result = get("/res?src=doesnotexist.png")
         XCTAssertEqual((result.json as? [String: Any])?["error"] as? String, "Unknown file.")
     }
+
+    //The image markup names its resource as a query value of /res: percent-encoded, so a space, & or + survive the
+    //round trip through the query parser above; and no stray closing tag (Android emits the same markup)
+    func testImageMarkupEncodesTheResourceName() throws {
+        let descriptor = ImageViewDescriptor(visibilityBuffer: nil, src: "a b&c+d%.png", scale: 0.5, darkFilter: .none, lightFilter: .none)
+        let html = descriptor.generateViewHTMLWithID(3)
+        XCTAssertTrue(html.contains("src=\"res?src=a%20b%26c%2Bd%25.png\""), html)
+        XCTAssertTrue(html.contains("id=\"element3\""))
+        XCTAssertTrue(html.contains("style=\"width: 50.0%\""))
+        XCTAssertFalse(html.contains("</p>"))
+    }
 }
 
 //phyphox://asset=<url-encoded path> (phyphox-docs transferring-experiments.md) identifies an experiment in the bundled

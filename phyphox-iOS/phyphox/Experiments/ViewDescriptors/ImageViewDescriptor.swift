@@ -31,7 +31,10 @@ struct ImageViewDescriptor: ResourceViewDescriptor, Equatable {
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {
-        return "<div class=\"imageElement\" id=\"element\(id)\"><img style=\"width: \(scale*100.0)% \" class=\"lightFilter_\(lightFilter.rawValue) darkFilter_\(darkFilter.rawValue)\" src=\"res?src=\(src)\"></p></div>"
+        //The resource name is a query value of /res (decoded by the web server before the resource lookup)
+        let unreserved = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-._~"))
+        let encodedSrc = src.addingPercentEncoding(withAllowedCharacters: unreserved) ?? src
+        return "<div class=\"imageElement\" id=\"element\(id)\"><img style=\"width: \(scale*100.0)%\" class=\"lightFilter_\(lightFilter.rawValue) darkFilter_\(darkFilter.rawValue)\" src=\"res?src=\(encodedSrc)\"></div>"
     }
     
 }
