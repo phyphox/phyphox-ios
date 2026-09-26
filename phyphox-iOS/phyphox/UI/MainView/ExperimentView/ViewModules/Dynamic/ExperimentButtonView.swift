@@ -9,13 +9,14 @@
 import UIKit
 
 private let spacing: CGFloat = 5.0
-private let padding: CGFloat = 20.0
 
 protocol ButtonViewTriggerCallback {
     func finished()
 }
 
-final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewTriggerCallback, DynamicViewModule {
+final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewTriggerCallback, DynamicViewModule, ResizingViewModule {
+    //Asks the experiment screen to re-measure the row: the button is as wide as its label, which a mapping can change
+    var onResize: (() -> Void)?
     
     let descriptor: ButtonViewDescriptor
     
@@ -40,11 +41,16 @@ final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewT
     required init?(descriptor: ButtonViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
         
-        button = UIButton()
-        button.backgroundColor = UIColor(named: "lightBackgroundColor")
-        button.setTitleColor(button.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
-        button.setTitleColor(kHighlightColor, for: .highlighted)
-        button.setTitle(descriptor.localizedLabel, for: UIControl.State())
+        //A system button (corner shape, press and disabled feedback, Dynamic Type) in the app's own neutral colours,
+        //which follow the in-app theme setting where the system tint would not
+        var configuration = UIButton.Configuration.filled()
+        configuration.baseBackgroundColor = UIColor(named: "lightBackgroundColor")
+        configuration.baseForegroundColor = UIColor(named: "textColor")
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20)
+        configuration.titleAlignment = .center
+        configuration.titleLineBreakMode = .byWordWrapping
+        configuration.title = ExperimentButtonView.displayTitle(descriptor.localizedLabel)
+        button = UIButton(configuration: configuration)
         
         super.init(frame: .zero)
         
@@ -68,6 +74,25 @@ final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewT
         wantsUpdate = true
     }
     
+    ///An empty label still fills one text line, so the button keeps its height (the configuration would drop the line)
+    private static func displayTitle(_ title: String) -> String {
+        return title.isEmpty ? "\u{00A0}" : title
+    }
+    
+    private func setTitle(_ title: String) {
+        let title = ExperimentButtonView.displayTitle(title)
+        guard button.configuration?.title != title else { return }
+        let unbounded = CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        let before = button.sizeThatFits(unbounded)
+        button.configuration?.title = title
+        //The configuration is applied in the button's next layout pass; until then it measures the old title
+        button.layoutIfNeeded()
+        if button.sizeThatFits(unbounded) != before {
+            onResize?()
+        }
+        setNeedsLayout()
+    }
+    
     private func update(){
         
         if let last = descriptor.buffer?.last, !last.isNaN {
@@ -75,59 +100,54 @@ final class ExperimentButtonView: UIView, DescriptorBoundViewModule, ButtonViewT
             
             for mapping in descriptor.mappings {
                 if mapping.range.contains(last) {
-                    button.setTitle(mapping.replacement, for: .normal)
+                    setTitle(mapping.replacement)
                     mapped = true
                     break
                 }
             }
             
             if !mapped {
-                button.setTitle(descriptor.localizedLabel, for: .normal)
+                setTitle(descriptor.localizedLabel)
             }
         }
         
         else {
-            button.setTitle(descriptor.localizedLabel, for: .normal)
+            setTitle(descriptor.localizedLabel)
         }
-        
-        setNeedsLayout()
         
     }
 
     @objc private func buttonPressed() {
+        //Disabled (and drawn so by the configuration) until the trigger has run, as on Android
         button.isEnabled = false
-        button.backgroundColor = UIColor(named: "lightBackgroundHoverColor")
-        UIView.animate(withDuration: 0.5, delay: 0.0, options: .allowUserInteraction) {
-            self.button.backgroundColor = UIColor(named: "lightBackgroundColor")
-        }
         buttonTappedCallback?()
     }
     
     func finished() {
         DispatchQueue.main.async {
-            self.button.alpha = 1
             self.button.isEnabled = true
         }
     }
     
+    ///The button's own size, wrapped onto more lines when the label does not fit the width
+    private func buttonSize(fitting width: CGFloat) -> CGSize {
+        let fitted = button.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude))
+        guard width.isFinite, fitted.width > width else { return fitted }
+        let wrapped = button.systemLayoutSizeFitting(CGSize(width: width, height: 0), withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel)
+        return CGSize(width: width, height: Swift.max(wrapped.height, fitted.height))
+    }
+    
     override func sizeThatFits(_ size: CGSize) -> CGSize {
-        let s = button.sizeThatFits(size)
+        let s = buttonSize(fitting: size.width - 2*spacing)
         return CGSize(width: s.width+2*spacing, height: s.height+2*spacing)
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        let w = button.sizeThatFits(self.bounds.size).width + 2*padding
+        let w = Swift.min(buttonSize(fitting: bounds.width - 2*spacing).width, bounds.width - 2*spacing)
         
         button.frame = CGRect(origin: CGPoint(x: (self.bounds.size.width-w)/2.0, y: spacing), size: CGSize(width: w, height: self.bounds.height-2*spacing))
-    }
-    
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-            button.setTitleColor(button.backgroundColor?.overlayTextColor() ?? UIColor(named: "textColor"), for: .normal)
-        }
     }
 }
 
