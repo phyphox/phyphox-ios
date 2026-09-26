@@ -31,6 +31,16 @@ class GraphLayoutManager {
     
     private let sideMargins: CGFloat = 10.0
     private let zScaleHeight: CGFloat = 40
+
+    //The colour scale's plot, kept for the fixed plot area, where it is dropped when the top margin has no room
+    private weak var zScaleView: UIView?
+
+    ///Inside a stack: the expand icon is never shown
+    var isStatic = false {
+        didSet {
+            unfoldMoreImageView.isHidden = isStatic || !unfoldLessImageView.isHidden
+        }
+    }
     
     var graphFrame: CGRect {
         return gridView.insetRect.offsetBy(dx: gridView.frame.origin.x, dy: gridView.frame.origin.y)
@@ -103,6 +113,7 @@ class GraphLayoutManager {
             graphArea.addSubview(zScale)
             graphArea.addSubview(zGrid)
             graphArea.addSubview(zLabel)
+            zScaleView = zScale
         }
         
         graphArea.addSubview(markerSystem.markerOverlayView)
@@ -114,7 +125,7 @@ class GraphLayoutManager {
     
     
     func handleResizableStateChange(_ state: ResizableViewModuleState) {
-        unfoldMoreImageView.isHidden = (state == .exclusive)
+        unfoldMoreImageView.isHidden = (state == .exclusive) || isStatic
         unfoldLessImageView.isHidden = (state != .exclusive)
         graphArea.isHidden = (state == .hidden)
         
@@ -329,6 +340,19 @@ class GraphLayoutManager {
 
         graphArea.frame = CGRect(x: 0, y: 0, width: contentWidth, height: bounds.height - bottom)
 
+        if let plotArea = descriptor.plotArea {
+            layoutFixedPlotArea(plotArea, areaSize: graphArea.frame.size)
+            return
+        }
+        gridView.fixedInsetRect = nil
+        gridView.labelExclusion = .zero
+        zScaleView?.isHidden = false
+        zGridView?.isHidden = false
+        zLabel?.isHidden = false
+        label.isHidden = false
+        xLabel.isHidden = false
+        yLabel.isHidden = false
+
         // Layout labels
         let s1 = label.sizeThatFits(bounds.size)
         label.frame = CGRect(x: (contentWidth - s1.width) / 2.0, y: spacing, width: s1.width, height: s1.height)
@@ -361,5 +385,55 @@ class GraphLayoutManager {
         yLabel.frame = CGRect(x: sideMargins,
                              y: yCoord + (graphHeight - s3.height) / 2.0,
                              width: s3.width, height: s3.height)
+    }
+
+    ///plotLeft & co. (file format 1.21, graph.md "Fixing the plot area"): the plot rectangle is pinned to fractions of
+    ///the element's box and no longer moves with the tic labels. The labels, tics and the graph's own label are drawn in
+    ///the margins that remain and dropped where they do not fit.
+    private func layoutFixedPlotArea(_ plotArea: GraphViewDescriptor.PlotArea, areaSize: CGSize) {
+        let spacing: CGFloat = 1.0
+        let w = areaSize.width
+        let h = areaSize.height
+        let plot = CGRect(x: plotArea.left * w, y: plotArea.top * h,
+                          width: Swift.max((plotArea.right - plotArea.left) * w, 0), height: Swift.max((plotArea.bottom - plotArea.top) * h, 0))
+
+        gridView.frame = CGRect(origin: .zero, size: areaSize)
+        gridView.fixedInsetRect = plot
+
+        //The graph's label sits in the top margin, the colour scale below it, both only where they fit
+        let s1 = label.sizeThatFits(areaSize)
+        var top: CGFloat = 0
+        label.isHidden = s1.height > plot.minY
+        if !label.isHidden {
+            label.frame = CGRect(x: (w - s1.width) / 2.0, y: spacing, width: s1.width, height: s1.height)
+            top = s1.height + spacing
+        }
+        if showColorScale, let zGrid = zGridView, let zLabel = zLabel {
+            let s4 = zLabel.sizeThatFits(areaSize)
+            let fits = top + zScaleHeight + s4.height + spacing <= plot.minY
+            zGrid.isHidden = !fits
+            zScaleView?.isHidden = !fits
+            zLabel.isHidden = !fits
+            if fits {
+                zGrid.frame = CGRect(x: plot.minX, y: top, width: plot.width, height: zScaleHeight)
+                zLabel.frame = CGRect(x: plot.midX - s4.width / 2.0, y: top + zScaleHeight, width: s4.width, height: s4.height)
+            }
+        }
+
+        //The axis labels at the outer edges; the tic labels between them and the plot, dropped where the space is gone
+        let s2 = xLabel.sizeThatFits(areaSize)
+        let s3 = yLabel.sizeThatFits(areaSize).applying(yLabel.transform)
+        var exclusion = UIEdgeInsets.zero
+        xLabel.isHidden = s2.height + spacing > h - plot.maxY
+        if !xLabel.isHidden {
+            xLabel.frame = CGRect(x: plot.midX - s2.width / 2.0, y: h - s2.height - spacing, width: s2.width, height: s2.height)
+            exclusion.bottom = s2.height + spacing
+        }
+        yLabel.isHidden = s3.width + spacing > plot.minX
+        if !yLabel.isHidden {
+            yLabel.frame = CGRect(x: spacing, y: plot.midY - s3.height / 2.0, width: s3.width, height: s3.height)
+            exclusion.left = s3.width + spacing
+        }
+        gridView.labelExclusion = exclusion
     }
 }

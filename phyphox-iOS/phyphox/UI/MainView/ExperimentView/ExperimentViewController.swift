@@ -24,6 +24,11 @@ final class ExperimentModule {
         self.view = view
         self.isVisible = isVisible
     }
+
+    ///The row's module and, for a view group, every module below it (ExperimentGroupViews.swift)
+    var moduleTree: [UIView] {
+        return view?.moduleTree ?? []
+    }
 }
 
 final class ExperimentViewController: UITableViewController, ModuleExclusiveLayoutDelegate, ApplyZoomDelegate {
@@ -36,9 +41,9 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
 
     var active = false {
         didSet {
-            for module in modules {
-                (module.view as? DynamicViewModule)?.active = active
-                if var resizingModule = module.view as? ResizingViewModule {
+            for view in modules.flatMap({ $0.moduleTree }) {
+                (view as? DynamicViewModule)?.active = active
+                if var resizingModule = view as? ResizingViewModule {
                     resizingModule.onResize = tableView?.reloadData
                 }
             }
@@ -46,6 +51,15 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
                 restoreLayout()
             }
         }
+    }
+
+    ///A row keeps its inset unless its module, or a leaf inside its view group, is maximized or hidden by a maximized one
+    private func isNormalRow(_ module: ExperimentModule) -> Bool {
+        if let resizable = module.view as? ResizableViewModule {
+            return resizable.resizableState == .normal
+        }
+        guard let exclusiveView = exclusiveView else { return true }
+        return !module.moduleTree.contains(where: { $0 === exclusiveView }) && !(module.view?.isHidden ?? false)
     }
 
     override func numberOfSections(in tableView: UITableView) -> Int {
@@ -83,7 +97,7 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         let size = moduleView.sizeThatFits(CGSize(width: availableSize.width, height: max(availableSize.height-20, 0)))
         //TODO: The source for the value -20 is not clear. It seems like the scroll features adds a padding, but I could not find how to control it or read the correct value programmatically
 
-        let spacing = ((module.view as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? (indexPath.row > 0 ? intercellSpacing : insetTop) : 0
+        let spacing = isNormalRow(module) ? (indexPath.row > 0 ? intercellSpacing : insetTop) : 0
         let height = size.height + spacing
         //A non-finite or negative height (corrupt image, zero-aspect graph) would make UITableView throw in reloadData
         return height.isFinite ? Swift.max(height, 0) : 0
@@ -97,10 +111,10 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         let module = modules[indexPath.row]
 
         if indexPath.row > 0 {
-            cell.topInset = ((module.view as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? intercellSpacing : 0
+            cell.topInset = isNormalRow(module) ? intercellSpacing : 0
         }
         else {
-            cell.topInset = ((module.view as? ResizableViewModule)?.resizableState ?? .normal == .normal) ? insetTop : 0
+            cell.topInset = isNormalRow(module) ? insetTop : 0
         }
         
         // Add to new cell
@@ -112,13 +126,17 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
     override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         guard let cell = cell as? ExperimentViewModuleTableViewCell else { return  }
 
-        (cell.module as? DynamicViewModule)?.active = active
+        for view in cell.module?.moduleTree ?? [] {
+            (view as? DynamicViewModule)?.active = active
+        }
     }
 
     override func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         guard let cell = cell as? ExperimentViewModuleTableViewCell else { return  }
 
-        (cell.module as? DynamicViewModule)?.active = false
+        for view in cell.module?.moduleTree ?? [] {
+            (view as? DynamicViewModule)?.active = false
+        }
     }
     
     init(modules: [ExperimentModule]) {
@@ -126,14 +144,14 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
 
         super.init(style: .grouped)
                 
-        for module in modules {
-            if let resizableViewModule = module.view as? ResizableViewModule {
+        for view in modules.flatMap({ $0.moduleTree }) {
+            if let resizableViewModule = view as? ResizableViewModule {
                 resizableViewModule.layoutDelegate = self
             }
-            if let zoomableViewModule = module.view as? ZoomableViewModule {
+            if let zoomableViewModule = view as? ZoomableViewModule {
                 zoomableViewModule.zoomDelegate = self
             }
-            if let vcm = module.view as? VisibilityControllableViewModule, let buffer = vcm.visibilityBuffer {
+            if let vcm = view as? VisibilityControllableViewModule, let buffer = vcm.visibilityBuffer {
                 buffer.addObserver(self)
             }
         }
@@ -156,6 +174,7 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         fatalError("init(coder:) has not been implemented")
     }
     
+    //The maximized leaf may sit inside a view group: its row stays and the group hides its other children
     func presentExclusiveLayout(_ view: UIView) {
         exclusiveView = view
         for (index, module) in modules.enumerated() {
@@ -163,8 +182,14 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
                 (module.view as? ResizableViewModule)?.switchResizableState(.exclusive)
                 module.view?.isHidden = false
                 modules[index].isVisible = true
+            } else if let container = module.view as? ContainerViewModule, module.moduleTree.contains(where: { $0 === view }) {
+                container.presentExclusive(view)
+                module.view?.isHidden = false
+                modules[index].isVisible = true
             } else {
-                (module.view as? ResizableViewModule)?.switchResizableState(.hidden)
+                for leaf in module.moduleTree {
+                    (leaf as? ResizableViewModule)?.switchResizableState(.hidden)
+                }
                 module.view?.isHidden = true
                 modules[index].isVisible = false
             }
@@ -175,9 +200,11 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
     func restoreLayout() {
         exclusiveView = nil
         for module in modules {
-            (module.view as? ResizableViewModule)?.switchResizableState(.normal)
-            module.view?.isHidden = false
-            
+            (module.view as? ContainerViewModule)?.restoreExclusive()
+            for view in module.moduleTree {
+                (view as? ResizableViewModule)?.switchResizableState(.normal)
+                view.isHidden = false
+            }
         }
         updateModuleVisibilities()
         self.tableView.reloadData()
@@ -186,11 +213,14 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
     private func updateModuleVisibilities() {
         guard exclusiveView == nil else { return }
         for (index, module) in modules.enumerated() {
-            if let vcm = module.view as? VisibilityControllableViewModule, let buffer = vcm.visibilityBuffer {
-                let isVisible = (buffer.last ?? 1.0) > 0.0 && buffer.size != 0
-                modules[index].isVisible = isVisible
-                module.view?.isHidden = !isVisible
+            for view in module.moduleTree {
+                if let vcm = view as? VisibilityControllableViewModule, let buffer = vcm.visibilityBuffer {
+                    let isVisible = (buffer.last ?? 1.0) > 0.0 && buffer.size != 0
+                    view.isHidden = !isVisible
+                }
             }
+            modules[index].isVisible = !(module.view?.isHidden ?? true)
+            module.view?.setNeedsLayout()
         }
     }
     
@@ -201,8 +231,8 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
     
     func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
         
-        for module in modules {
-            if let zoomableViewModule = module.view as? ZoomableViewModule {
+        for view in modules.flatMap({ $0.moduleTree }) {
+            if let zoomableViewModule = view as? ZoomableViewModule {
                 zoomableViewModule.applyZoom(modeX: modeX, applyToX: applyToX, targetX: targetX, modeY: modeY, applyToY: applyToY, targetY: targetY, zoomMin: zoomMin, zoomMax: zoomMax, systemTime: systemTime)
             }
         }
@@ -217,13 +247,21 @@ extension ExperimentViewController: DataBufferObserver {
         // Reload only if a visibility actually changed: a reload cancels touch interactions and is too heavy per analysis cycle
         var visibilityChanged = false
         for (index, module) in modules.enumerated() {
-            if let vcm = module.view as? VisibilityControllableViewModule, vcm.visibilityBuffer === buffer {
-                let isVisible = (buffer.last ?? 1.0) > 0.0 && buffer.size != 0
-                if modules[index].isVisible != isVisible || (module.view?.isHidden ?? false) == isVisible {
-                    modules[index].isVisible = isVisible
-                    module.view?.isHidden = !isVisible
-                    visibilityChanged = true
+            //A child of a view group hides in place: the group re-lays out and the row height follows in the reload
+            var rowChanged = false
+            for view in module.moduleTree {
+                if let vcm = view as? VisibilityControllableViewModule, vcm.visibilityBuffer === buffer {
+                    let isVisible = (buffer.last ?? 1.0) > 0.0 && buffer.size != 0
+                    if view.isHidden == isVisible {
+                        view.isHidden = !isVisible
+                        rowChanged = true
+                    }
                 }
+            }
+            if rowChanged {
+                modules[index].isVisible = !(module.view?.isHidden ?? true)
+                module.view?.setNeedsLayout()
+                visibilityChanged = true
             }
         }
         if visibilityChanged {

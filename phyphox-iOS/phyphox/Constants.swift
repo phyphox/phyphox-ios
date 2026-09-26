@@ -75,8 +75,9 @@ let shutterSpeeds : [CMTime] = [
 
 let iso = [25, 50, 100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200]
 
-//A named phyphox colour (case-insensitive) or exactly six hex digits with optional "#", else nil, which the handlers treat
-//as an error (phyphox-docs color-invalid-value, Android RGB.fromPhyphoxStringStrict). Keeps the lenient NSScanner out.
+//A named phyphox colour (case-insensitive), exactly six hex digits RRGGBB or, from file format 1.21, eight hex digits
+//RRGGBBAA, each with optional "#"; else nil, which the handlers treat as an error (phyphox-docs color-invalid-value,
+//Android RGB.fromPhyphoxStringStrict). Keeps the lenient NSScanner out.
 func mapColorString(_ string: String?) -> UIColor? {
     guard let colorString = string else {
         return nil
@@ -87,10 +88,12 @@ func mapColorString(_ string: String?) -> UIColor? {
     }
 
     let hex = colorString.hasPrefix("#") ? String(colorString.dropFirst()) : colorString
-    guard hex.count == 6, hex.allSatisfy({ $0.isASCII && $0.isHexDigit }) else {
+    guard hex.count == 6 || hex.count == 8, hex.allSatisfy({ $0.isASCII && $0.isHexDigit }), let value = UInt32(hex, radix: 16) else {
         return nil
     }
-    return UIColor(hexString: hex)
+    let rgb = hex.count == 8 ? value >> 8 : value
+    let alpha = hex.count == 8 ? CGFloat(value & 0xff) / 255.0 : 1.0
+    return UIColor(red: CGFloat((rgb >> 16) & 0xff) / 255.0, green: CGFloat((rgb >> 8) & 0xff) / 255.0, blue: CGFloat(rgb & 0xff) / 255.0, alpha: alpha)
 }
 
 /**

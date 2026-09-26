@@ -4530,8 +4530,8 @@ final class StrictnessFixesTests: XCTestCase {
     }
 
     func testColorAttributesAreStrict() throws {
-        //A named phyphox colour (case-insensitive) or exactly six hex digits with optional "#"; anything else rejects
-        //the file (color-invalid-value in phyphox-docs)
+        //A named phyphox colour (case-insensitive), exactly six hex digits or, since file format 1.21, eight (RRGGBBAA),
+        //with optional "#"; anything else rejects the file (color-invalid-value in phyphox-docs)
         func value(color: String) -> String {
             return xml(view: "<value label=\"l\" color=\"\(color)\"><input>buffer</input></value>")
         }
@@ -4539,9 +4539,10 @@ final class StrictnessFixesTests: XCTestCase {
         _ = try parse(value(color: "WeakGreen"))
         _ = try parse(value(color: "fF00Aa"))
         _ = try parse(value(color: "#ff00aa"))
+        _ = try parse(value(color: "#ff00aabb"))
 
-        //"abc" and "12zz34" passed the old NSScanner hex path; Android accepts exactly six digits, nothing else
-        for bad in ["bogus", "abc", "#abc", "12zz34", "ff00aab", "#ff00aabb"] {
+        //"abc" and "12zz34" passed the old NSScanner hex path; Android accepts exactly six or eight digits, nothing else
+        for bad in ["bogus", "abc", "#abc", "12zz34", "ff00aab", "#ff00aabbc", "ff00aabg"] {
             assertRejects(value(color: bad), message: "Could not parse color \"\(bad)\" of attribute \"color\".")
         }
     }

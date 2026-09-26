@@ -126,7 +126,7 @@ final class Experiment {
         var res: Set<String> = []
         if let viewDescriptors = viewDescriptors {
             for viewDescriptor in viewDescriptors {
-                for view in viewDescriptor.views {
+                for view in viewDescriptor.views.flatMap({ $0.leafDescriptors }) {
                     if let view = view as? ResourceViewDescriptor {
                         for resource in view.resources {
                             res.insert(resource)
@@ -673,7 +673,7 @@ final class Experiment {
     private static func collectInputDefaults(_ viewDescriptors: [ExperimentViewCollectionDescriptor]?) -> [(Double, DataBuffer)] {
         var found: [(Double, DataBuffer)] = []
         for collection in viewDescriptors ?? [] {
-            for view in collection.views {
+            for view in collection.views.flatMap({ $0.leafDescriptors }) {
                 switch view {
                 case let edit as EditViewDescriptor:
                     found.append((edit.defaultValue, edit.buffer))

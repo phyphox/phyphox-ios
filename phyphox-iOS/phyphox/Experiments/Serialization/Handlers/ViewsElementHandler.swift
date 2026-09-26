@@ -10,7 +10,8 @@ import Foundation
 
 // This file contains element handlers for the `views` child element (and its child elements) of the `phyphox` root element.
 
-enum ViewElementDescriptor {
+//indirect: the view groups of file format 1.21 carry their children (ViewGroupElementHandlers.swift)
+indirect enum ViewElementDescriptor {
     case info(InfoViewElementDescriptor)
     case separator(SeparatorViewElementDescriptor)
     case value(ValueViewElementDescriptor)
@@ -23,6 +24,11 @@ enum ViewElementDescriptor {
     case dropdown(DropdownViewElementDescriptor)
     case slider(SliderViewElementDescriptor)
     case camera(CameraViewElementDescriptor)
+    case vertical(GroupViewElementDescriptor)
+    case horizontal(GroupViewElementDescriptor)
+    case grid(GridViewElementDescriptor)
+    case stack(GroupViewElementDescriptor)
+    case transform(TransformViewElementDescriptor)
 }
 
 protocol ViewComponentElementHandler: ElementHandler {
@@ -37,57 +43,13 @@ struct ViewCollectionDescriptor {
 private final class ViewElementHandler: ResultElementHandler {
     var results = [ViewCollectionDescriptor]()
 
-    private let infoHandler = InfoViewElementHandler()
-    private let separatorHandler = SeparatorViewElementHandler()
-    private let valueHandler = ValueViewElementHandler()
-    private let editHandler = EditViewElementHandler()
-    private let buttonhandler = ButtonViewElementHandler()
-    private let graphHandler = GraphViewElementHandler()
-    private let depthGUIHandler = DepthGUIViewElementHandler()
-    private let imageHandler = ImageViewElementHandler()
-    private let switchHandler = SwitchViewElementHandler()
-    private let dropdownHandler = DropdownViewElementHandler()
-    private let sliderHandler = SliderViewElementHandler()
-    private let cameraHandler = CameraViewElementHandler()
-
-    private var elementOrder = [ViewComponentElementHandler]()
+    //The child dispatch is shared with the view groups (ViewGroupElementHandlers.swift); a fresh container per view
+    private var container = ViewElementContainerHandler(childSet: .all, readsWeight: false)
 
     func startElement(attributes: AttributeContainer) throws {}
 
     func childHandler(for elementName: String) throws -> ElementHandler {
-        let handler: ViewComponentElementHandler
-
-        switch elementName.lowercased() { //Element names are matched case-insensitively
-        case "info":
-            handler = infoHandler
-        case "separator":
-            handler = separatorHandler
-        case "value":
-            handler = valueHandler
-        case "edit":
-            handler = editHandler
-        case "button":
-            handler = buttonhandler
-        case "graph":
-            handler = graphHandler
-        case "depth-gui":
-            handler = depthGUIHandler
-        case "image":
-            handler = imageHandler
-        case "toggle":
-            handler = switchHandler
-        case "dropdown":
-            handler = dropdownHandler
-        case "slider":
-            handler = sliderHandler
-        case "camera-gui":
-            handler = cameraHandler
-        default:
-            throw ElementHandlerError.unexpectedChildElement(elementName)
-        }
-        elementOrder.append(handler)
-
-        return handler
+        return try container.childHandler(for: elementName)
     }
 
     private enum Attribute: String, AttributeKey {
@@ -99,7 +61,7 @@ private final class ViewElementHandler: ResultElementHandler {
 
         let label = try attributes.nonEmptyString(for: .label)
 
-        let views = try elementOrder.map { try $0.nextResult() }
+        let views = try container.results().elements
 
         guard !views.isEmpty else { throw ElementHandlerError.missingChildElement("view-element") }
 
@@ -107,19 +69,7 @@ private final class ViewElementHandler: ResultElementHandler {
     }
 
     func clearChildHandlers() {
-        elementOrder.removeAll()
-        infoHandler.clear()
-        separatorHandler.clear()
-        valueHandler.clear()
-        editHandler.clear()
-        buttonhandler.clear()
-        graphHandler.clear()
-        depthGUIHandler.clear()
-        imageHandler.clear()
-        switchHandler.clear()
-        dropdownHandler.clear()
-        sliderHandler.clear()
-        cameraHandler.clear()
+        container = ViewElementContainerHandler(childSet: .all, readsWeight: false)
     }
 }
 

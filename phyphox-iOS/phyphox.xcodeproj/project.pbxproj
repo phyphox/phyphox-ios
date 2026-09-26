@@ -166,6 +166,11 @@
 		86E751FF2CC2539D00E9E9C8 /* ImageViewDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E751FE2CC2539D00E9E9C8 /* ImageViewDescriptor.swift */; };
 		86E752092CC254AD00E9E9C8 /* CameraPreviewRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E752082CC254AD00E9E9C8 /* CameraPreviewRenderer.swift */; };
 		86E7520D2CC254E500E9E9C8 /* ExperimentImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E7520C2CC254E500E9E9C8 /* ExperimentImageView.swift */; };
+		8A5A0149000000000000AA59 /* ColorAlphaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0148000000000000AA58 /* ColorAlphaTests.swift */; };
+		8A5A0147000000000000AA57 /* ViewGroupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0146000000000000AA56 /* ViewGroupTests.swift */; };
+		8A5A0145000000000000AA55 /* ExperimentGroupViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0144000000000000AA54 /* ExperimentGroupViews.swift */; };
+		8A5A0143000000000000AA53 /* GroupViewDescriptors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0142000000000000AA52 /* GroupViewDescriptors.swift */; };
+		8A5A0141000000000000AA51 /* ViewGroupElementHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0140000000000000AA50 /* ViewGroupElementHandlers.swift */; };
 		86E752132CC2552600E9E9C8 /* LumaAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E752102CC2552600E9E9C8 /* LumaAnalyzer.swift */; };
 		86E752142CC2552600E9E9C8 /* HSVAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E7520F2CC2552600E9E9C8 /* HSVAnalyzer.swift */; };
 		86E752152CC2552600E9E9C8 /* LuminanceAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E752112CC2552600E9E9C8 /* LuminanceAnalyzer.swift */; };
@@ -502,6 +507,11 @@
 		86E751FE2CC2539D00E9E9C8 /* ImageViewDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewDescriptor.swift; sourceTree = "<group>"; };
 		86E752082CC254AD00E9E9C8 /* CameraPreviewRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewRenderer.swift; sourceTree = "<group>"; };
 		86E7520C2CC254E500E9E9C8 /* ExperimentImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentImageView.swift; sourceTree = "<group>"; };
+		8A5A0148000000000000AA58 /* ColorAlphaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorAlphaTests.swift; sourceTree = "<group>"; };
+		8A5A0146000000000000AA56 /* ViewGroupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewGroupTests.swift; sourceTree = "<group>"; };
+		8A5A0144000000000000AA54 /* ExperimentGroupViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentGroupViews.swift; sourceTree = "<group>"; };
+		8A5A0142000000000000AA52 /* GroupViewDescriptors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupViewDescriptors.swift; sourceTree = "<group>"; };
+		8A5A0140000000000000AA50 /* ViewGroupElementHandlers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewGroupElementHandlers.swift; sourceTree = "<group>"; };
 		86E7520E2CC2552600E9E9C8 /* AnalyzingModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyzingModule.swift; sourceTree = "<group>"; };
 		86E7520F2CC2552600E9E9C8 /* HSVAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HSVAnalyzer.swift; sourceTree = "<group>"; };
 		86E752102CC2552600E9E9C8 /* LumaAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumaAnalyzer.swift; sourceTree = "<group>"; };
@@ -746,6 +756,7 @@
 			children = (
 				6B6319641C48207D0038BE22 /* ExperimentViewModuleFactory.swift */,
 				6B00F0A71C46705100971941 /* ExperimentViewModule.swift */,
+				8A5A0144000000000000AA54 /* ExperimentGroupViews.swift */,
 				6B2E0F8E205939DD008FAA91 /* Static */,
 				6B2E0F9D205939F3008FAA91 /* Dynamic */,
 			);
@@ -871,6 +882,7 @@
 				A16D800B2CC7924B00485DDB /* SwitchViewElementHandler.swift */,
 				A1F318E72CCB87390063F49C /* DropdownViewElementHandler.swift */,
 				A171F0682CF5EE6000D5F9F2 /* SliderViewElementHandler.swift */,
+				8A5A0140000000000000AA50 /* ViewGroupElementHandlers.swift */,
 			);
 			path = ViewHandlers;
 			sourceTree = "<group>";
@@ -1058,6 +1070,7 @@
 				A16D80092CC672ED00485DDB /* SwitchViewDescriptor.swift */,
 				A1F318E52CCA5A120063F49C /* DropdownViewDescriptor.swift */,
 				A171F0662CF5ECB400D5F9F2 /* SliderViewDescriptor.swift */,
+				8A5A0142000000000000AA52 /* GroupViewDescriptors.swift */,
 			);
 			path = ViewDescriptors;
 			sourceTree = "<group>";
@@ -1313,6 +1326,8 @@
 				8A5A000C000000000000AA0C /* GraphTicLabelTests.swift */,
 				8A5A0117000000000000AA27 /* TranslationsBuildTests.swift */,
 				8A5A0122000000000000AA32 /* HttpResultRaceTests.swift */,
+				8A5A0148000000000000AA58 /* ColorAlphaTests.swift */,
+				8A5A0146000000000000AA56 /* ViewGroupTests.swift */,
 				A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */,
 				A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */,
 				A1FA9A2E2E42BB0100000006 /* graph-input-orders.phyphox */,
@@ -1737,6 +1752,9 @@
 				6B7BF81B1C147CA8007408FB /* GaussSmoothAnalysis.swift in Sources */,
 				6B00F0BA1C46F24400971941 /* ExperimentExportSet.swift in Sources */,
 				86E7520D2CC254E500E9E9C8 /* ExperimentImageView.swift in Sources */,
+				8A5A0145000000000000AA55 /* ExperimentGroupViews.swift in Sources */,
+				8A5A0143000000000000AA53 /* GroupViewDescriptors.swift in Sources */,
+				8A5A0141000000000000AA51 /* ViewGroupElementHandlers.swift in Sources */,
 				C01F80FC226A05C5001B0DF8 /* FormulaAnalysis.swift in Sources */,
 				A1AD56EB2BC917A900FD3255 /* ExperimentCameraInputSession.swift in Sources */,
 				4B47B0311DA6A2F900CCBA6E /* Atan2Analysis.swift in Sources */,
@@ -1837,6 +1855,8 @@
 				8A5A000D000000000000AA0D /* GraphTicLabelTests.swift in Sources */,
 				8A5A0118000000000000AA28 /* TranslationsBuildTests.swift in Sources */,
 				8A5A0121000000000000AA31 /* HttpResultRaceTests.swift in Sources */,
+				8A5A0149000000000000AA59 /* ColorAlphaTests.swift in Sources */,
+				8A5A0147000000000000AA57 /* ViewGroupTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -184,6 +184,25 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     let pickLabel: String
     let pickOutputs: [PickOutput?]
 
+    ///The plot rectangle as fractions of the element's box (file format 1.21, graph.md "Fixing the plot area")
+    struct PlotArea: Equatable {
+        let left: CGFloat
+        let top: CGFloat
+        let right: CGFloat
+        let bottom: CGFloat
+    }
+
+    //The attributes as given (the remote interface receives them one by one); any one of them fixes the layout
+    let plotLeft: CGFloat?
+    let plotTop: CGFloat?
+    let plotRight: CGFloat?
+    let plotBottom: CGFloat?
+
+    var plotArea: PlotArea? {
+        guard plotLeft != nil || plotTop != nil || plotRight != nil || plotBottom != nil else { return nil }
+        return PlotArea(left: plotLeft ?? 0, top: plotTop ?? 0, right: plotRight ?? 1, bottom: plotBottom ?? 1)
+    }
+
     var localizedPickLabel: String? {
         guard !pickLabel.isEmpty else { return nil }
         return translation?.localizeString(pickLabel) ?? pickLabel
@@ -193,7 +212,11 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     let translation: ExperimentTranslationCollection?
     var visibilityBuffer: DataBuffer?
 
-    init(label: String, visibilityBuffer: DataBuffer?, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, zLabel: String?, xUnit: String?, yUnit: String?, zUnit: String?, yxUnit: String?, timeReference: ExperimentTimeReference, timeOnX: Bool, timeOnY: Bool, systemTime: Bool, linearTime: Bool, hideTimeMarkers: Bool, xInputBuffers: [DataBuffer?], yInputBuffers: [DataBuffer], zInputBuffers: [DataBuffer?], logX: Bool, logY: Bool, logZ: Bool, xPrecision: Int, yPrecision: Int, zPrecision: Int, suppressScientificNotation: Bool, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, scaleMinZ: ScaleMode, scaleMaxZ: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, minZ: CGFloat, maxZ: CGFloat, followX: Bool, aspectRatio: CGFloat, partialUpdate: Bool, history: UInt, style: [GraphViewDescriptor.GraphStyle], lineWidth: [CGFloat], color: [UIColor], mapWidth: UInt, colorMap: [UIColor], showColorScale: Bool, interpolateMapColors: Bool, pickLabel: String, pickOutputs: [PickOutput?]) {
+    init(label: String, visibilityBuffer: DataBuffer?, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, zLabel: String?, xUnit: String?, yUnit: String?, zUnit: String?, yxUnit: String?, timeReference: ExperimentTimeReference, timeOnX: Bool, timeOnY: Bool, systemTime: Bool, linearTime: Bool, hideTimeMarkers: Bool, xInputBuffers: [DataBuffer?], yInputBuffers: [DataBuffer], zInputBuffers: [DataBuffer?], logX: Bool, logY: Bool, logZ: Bool, xPrecision: Int, yPrecision: Int, zPrecision: Int, suppressScientificNotation: Bool, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, scaleMinZ: ScaleMode, scaleMaxZ: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, minZ: CGFloat, maxZ: CGFloat, followX: Bool, aspectRatio: CGFloat, partialUpdate: Bool, history: UInt, style: [GraphViewDescriptor.GraphStyle], lineWidth: [CGFloat], color: [UIColor], mapWidth: UInt, colorMap: [UIColor], showColorScale: Bool, interpolateMapColors: Bool, pickLabel: String, pickOutputs: [PickOutput?], plotLeft: CGFloat? = nil, plotTop: CGFloat? = nil, plotRight: CGFloat? = nil, plotBottom: CGFloat? = nil) {
+        self.plotLeft = plotLeft
+        self.plotTop = plotTop
+        self.plotRight = plotRight
+        self.plotBottom = plotBottom
         self.xLabel = xLabel
         self.yLabel = yLabel
         self.zLabel = zLabel
@@ -316,7 +339,7 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     func webGraphConfig() -> String {
         func number(_ value: CGFloat) -> Double? { return value.isFinite ? Double(value) : nil }
         func text(_ value: String) -> String? { return value.isEmpty ? nil : value }
-        func hex(_ color: UIColor) -> String { return "#" + (color.hexStringValue ?? "000000") }
+        func hex(_ color: UIColor) -> String { return "#" + color.webHexString }
 
         var datasets: [WebJSON.Object] = []
         for i in 0..<yInputBuffers.count {
@@ -380,6 +403,10 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
             ("followX", followX),
             ("partialUpdate", partialUpdate),
             ("mapWidth", Int(mapWidth)),
+            ("plotLeft", plotLeft.flatMap(number)),
+            ("plotTop", plotTop.flatMap(number)),
+            ("plotRight", plotRight.flatMap(number)),
+            ("plotBottom", plotBottom.flatMap(number)),
             ("showColorScale", showColorScale),
             ("interpolateMapColors", interpolateMapColors)
         ]

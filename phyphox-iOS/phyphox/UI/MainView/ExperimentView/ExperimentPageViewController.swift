@@ -155,14 +155,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             experimentViewControllers[selectedViewCollection].active = true
         }
         
-        for module in viewModules.flatMap({ $0 }) {
-            if let button = module.view as? ExperimentButtonView {
+        for view in viewModules.flatMap({ $0 }).flatMap({ $0.moduleTree }) {
+            if let button = view as? ExperimentButtonView {
                 button.buttonTappedCallback = { [weak self, weak button] in
                     guard let button = button else { return }
                     self?.buttonPressed(viewDescriptor: button.descriptor, buttonViewTriggerCallback: button)
                 }
             }
-            if let exportingViewModule = module.view as? ExportingViewModule {
+            if let exportingViewModule = view as? ExportingViewModule {
                 exportingViewModule.exportDelegate = self
             }
         }
@@ -644,12 +644,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     
     override func viewDidAppear(_ animated: Bool) {
         for vc in experimentViewControllers {
-            for view in vc.modules {
-                if let depthGUI = view.view as? ExperimentDepthGUIView, let session = experiment.depthInput?.session {
+            for view in vc.modules.flatMap({ $0.moduleTree }) {
+                if let depthGUI = view as? ExperimentDepthGUIView, let session = experiment.depthInput?.session {
                     session.attachDelegate(delegate: depthGUI)
                     depthGUI.depthGUISelectionDelegate = session
                 }
-                if let cameraGUI = view.view as? ExperimentCameraUIView, let session = experiment.cameraInput?.session {
+                if let cameraGUI = view as? ExperimentCameraUIView, let session = experiment.cameraInput?.session {
                     cameraGUI.cameraModelOwner = session.attachDelegate(cameraGUI)
                     cameraGUI.cameraTextureProvider = session.cameraModel?.getTextureProvider()
                 }
@@ -1632,7 +1632,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.webServer.forceFullUpdate = true //The next time, the webinterface requests buffers, we need to send a full update, so the now empty buffers can be recognized
         
         for section in self.viewModules {
-            for view in section {
+            for view in section.flatMap({ $0.moduleTree }) {
                 if let graphView = view as? GraphViewModule {
                     graphView.clearData()
                 }
@@ -1726,24 +1726,24 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
 extension ExperimentPageViewController: ExperimentAnalysisDelegate {
     func analysisWillUpdate(_: ExperimentAnalysis) {
-        for module in viewModules.flatMap({ $0 }) {
-            if let analysisLimitedViewModule = module.view as? AnalysisLimitedViewModule {
+        for view in viewModules.flatMap({ $0 }).flatMap({ $0.moduleTree }) {
+            if let analysisLimitedViewModule = view as? AnalysisLimitedViewModule {
                 analysisLimitedViewModule.analysisRunning = true
             }
         }
     }
     
     func analysisDidUpdate(_: ExperimentAnalysis) {
-        for module in viewModules.flatMap({ $0 }) {
-            if let analysisLimitedViewModule = module.view as? AnalysisLimitedViewModule {
+        for view in viewModules.flatMap({ $0 }).flatMap({ $0.moduleTree }) {
+            if let analysisLimitedViewModule = view as? AnalysisLimitedViewModule {
                 analysisLimitedViewModule.analysisRunning = false
             }
         }
     }
     
     func analysisSkipped(_ analysis: ExperimentAnalysis) {
-        for module in viewModules.flatMap({ $0 }) {
-            if let analysisLimitedViewModule = module.view as? AnalysisLimitedViewModule {
+        for view in viewModules.flatMap({ $0 }).flatMap({ $0.moduleTree }) {
+            if let analysisLimitedViewModule = view as? AnalysisLimitedViewModule {
                 analysisLimitedViewModule.analysisRunning = false
             }
         }

@@ -47,7 +47,28 @@ final class GraphGridView: UIView {
         }
     }
     
+    //A fixed plot area (file format 1.21): the plot rectangle in this view's coordinates, no longer following the tic labels
+    var fixedInsetRect: CGRect? = nil {
+        didSet {
+            if fixedInsetRect != oldValue {
+                setNeedsLayout()
+            }
+        }
+    }
+
+    //With a fixed plot area: the margins the axis labels occupy; a tic label reaching into them is dropped
+    var labelExclusion: UIEdgeInsets = .zero {
+        didSet {
+            if labelExclusion != oldValue {
+                setNeedsLayout()
+            }
+        }
+    }
+
     var insetRect: CGRect {
+        if let fixedInsetRect = fixedInsetRect {
+            return fixedInsetRect
+        }
         return bounds.insetBy(dx: gridInset.x + gridLabelSpace.x/2.0, dy: gridInset.y + gridLabelSpace.y/2.0).offsetBy(dx: gridOffset.x+gridLabelSpace.x/2.0, dy: gridOffset.y - gridLabelSpace.y/2.0)
     }
     
@@ -335,6 +356,8 @@ final class GraphGridView: UIView {
                 let halfWidth = label.frame.size.width/2.0
                 let center = max(insetRect.minX + halfWidth, min(origin+insetRect.origin.x, bounds.maxX - halfWidth))
                 label.frame = CGRect(x: center-halfWidth, y: insetRect.maxY+spacing, width: label.frame.size.width, height: label.frame.size.height)
+                //Fixed plot area: dropped where the bottom margin is too small
+                label.isHidden = fixedInsetRect != nil && label.frame.maxY > bounds.height - labelExclusion.bottom
 
                 index += 1
             }
@@ -359,6 +382,8 @@ final class GraphGridView: UIView {
                     let halfGlyph = label.font.capHeight/2.0
                     let center = max(insetRect.minY + halfGlyph, min(origin+insetRect.origin.y, insetRect.maxY - halfGlyph))
                     label.frame = CGRect(x: insetRect.origin.x-spacing-label.frame.size.width, y: center-label.frame.size.height/2.0, width: label.frame.size.width, height: label.frame.size.height)
+                    //Fixed plot area: dropped where the left margin is too small
+                    label.isHidden = fixedInsetRect != nil && label.frame.minX < labelExclusion.left
 
                     index += 1
                 }

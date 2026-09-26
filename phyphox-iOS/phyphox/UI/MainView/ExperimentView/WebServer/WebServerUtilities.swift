@@ -137,24 +137,64 @@ final class WebServerUtilities {
                 
                 viewOptions += "<li>\(v.localizedLabel)</li>"
                 
-                var ffirst = true
-                
-                for element in v.views {
-                    htmlId2ViewElement.append(element)
-                    
-                    if !ffirst {
-                        viewLayout += ", "
+                //Nested: a view group is {type, elements: [...]} without index or html, its leaves keep the global
+                //index in document order (phyphox-webinterface readme.md, "The view layout")
+                func emit(_ element: ViewDescriptor, weight: CGFloat?) -> String {
+                    var json = ""
+                    if let group = element as? GroupViewDescriptor {
+                        let type: String
+                        var extra = ""
+                        if group is VerticalViewDescriptor {
+                            type = "vertical"
+                        } else if group is HorizontalViewDescriptor {
+                            type = "horizontal"
+                        } else if let grid = group as? GridViewDescriptor {
+                            type = "grid"
+                            extra += ",\"maxWidth\":\(WebJSON.encode(Double(grid.maxWidth))),\"fillLastRow\":\(grid.fillLastRow)"
+                        } else if group is StackViewDescriptor {
+                            type = "stack"
+                        } else if let transform = group as? TransformViewDescriptor {
+                            type = "transform"
+                            let inputs: [WebJSON.Object] = transform.inputs.map { input in
+                                [("as", input.property.rawValue), ("buffer", input.buffer?.name), ("value", input.value),
+                                 ("min", input.min), ("max", input.max), ("mapMin", input.mapMin), ("mapMax", input.mapMax), ("clamp", input.clamp)]
+                            }
+                            extra += ",\"originX\":\(WebJSON.encode(Double(transform.originX))),\"originY\":\(WebJSON.encode(Double(transform.originY))),\"transformInputs\":\(WebJSON.encode(inputs))"
+                        } else {
+                            return ""
+                        }
+                        json += "{\"type\":\"\(type)\""
+                        if let weight = weight {
+                            json += ",\"weight\":\(WebJSON.encode(Double(weight)))"
+                        }
+                        json += extra
+                        if let visibilityBuffer = group.visibilityBuffer {
+                            json += ",\"visibilityInput\":\(WebJSON.string(visibilityBuffer.name))"
+                        }
+                        //weight on every direct child of a horizontal, leaves and groups alike; absent elsewhere
+                        let weights = (group as? HorizontalViewDescriptor)?.weights
+                        let children = group.children.enumerated().map { (index, child) -> String in
+                            let weight: CGFloat? = weights.map { index < $0.count ? $0[index] : 1 }
+                            return emit(child, weight: weight)
+                        }
+                        json += ",\"elements\":[" + children.joined(separator: ", ") + "]}"
+                        return json
                     }
-                    ffirst = false
-                    
+
+                    htmlId2ViewElement.append(element)
+
                     let escapedLabel = element.localizedLabel.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
                     let escapedHTML = element.generateViewHTMLWithID(idx).replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-                    
-                    viewLayout += "{\"label\": \"\(escapedLabel)\", \"index\": \(idx), \"html\": \"\(escapedHTML)\",\"dataCompleteFunction\": \(element.generateDataCompleteHTMLWithID(idx))"
+
+                    json += "{\"label\": \"\(escapedLabel)\", \"index\": \(idx), \"html\": \"\(escapedHTML)\",\"dataCompleteFunction\": \(element.generateDataCompleteHTMLWithID(idx))"
+
+                    if let weight = weight {
+                        json += ",\"weight\":\(WebJSON.encode(Double(weight)))"
+                    }
 
                     if let visibilityBuffer = element.visibilityBuffer {
                         let escapedName = visibilityBuffer.name.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-                        viewLayout += ",\"visibilityInput\": \"\(escapedName)\""
+                        json += ",\"visibilityInput\": \"\(escapedName)\""
                     }
 
 
@@ -162,50 +202,53 @@ final class WebServerUtilities {
                         //The interface builds the graph, its html and its data functions from the "graph" object; dataInput and
                         //updateMode still drive the polling (phyphox-webinterface readme.md, "How the apps embed the interface")
                         let dataInput = graph.webDataInputs.map { WebJSON.encode($0?.name) }.joined(separator: ",")
-                        viewLayout += ", \"updateMode\": \"\(graph.webUpdateMode)\", \"dataInput\": [\(dataInput)], \"graph\":\(graph.webGraphConfig())"
+                        json += ", \"updateMode\": \"\(graph.webUpdateMode)\", \"dataInput\": [\(dataInput)], \"graph\":\(graph.webGraphConfig())"
                     }
                     else if element is InfoViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"none\""
+                        json += ", \"updateMode\": \"none\""
                     }
                     else if element is SeparatorViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"none\""
+                        json += ", \"updateMode\": \"none\""
                     }
                     else if let value = element as? ValueViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"\(value.updateMode())\", \"dataInput\":[\"\(value.buffer.name)\"], \"dataInputFunction\":\n\(value.setDataHTMLWithID(idx))\n"
+                        json += ", \"updateMode\": \"\(value.updateMode())\", \"dataInput\":[\"\(value.buffer.name)\"], \"dataInputFunction\":\n\(value.setDataHTMLWithID(idx))\n"
                     }
                     else if let edit = element as? EditViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"input\", \"dataInput\":[\"\(edit.buffer.name)\"], \"dataInputFunction\":\n\(edit.setDataHTMLWithID(idx))\n"
+                        json += ", \"updateMode\": \"input\", \"dataInput\":[\"\(edit.buffer.name)\"], \"dataInputFunction\":\n\(edit.setDataHTMLWithID(idx))\n"
                     }
                     else if let button = element as? ButtonViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(button.buffer?.name ?? "")\"], \"dataInputFunction\":\n\(button.setDataHTMLWithID(idx))\n "
+                        json += ", \"updateMode\": \"single\", \"dataInput\": [\"\(button.buffer?.name ?? "")\"], \"dataInputFunction\":\n\(button.setDataHTMLWithID(idx))\n "
                     }
                     else if let toggle = element as? SwitchViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(toggle.buffer.name)\"], \"dataInputFunction\":\n\(toggle.setDataHTMLWithID(idx))\n "
+                        json += ", \"updateMode\": \"single\", \"dataInput\": [\"\(toggle.buffer.name)\"], \"dataInputFunction\":\n\(toggle.setDataHTMLWithID(idx))\n "
                     }
                     else if let dropdown = element as? DropdownViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\"\(dropdown.buffer.name)\"], \"dataInputFunction\":\n\(dropdown.setDataHTMLWithID(idx))\n "
+                        json += ", \"updateMode\": \"single\", \"dataInput\": [\"\(dropdown.buffer.name)\"], \"dataInputFunction\":\n\(dropdown.setDataHTMLWithID(idx))\n "
                     } else if let slider = element as? SliderViewDescriptor {
-                        
+
                         var bufferName = ""
-                        
+
                         if(slider.type == SliderType.Normal){
                             bufferName = "\"" + (slider.outputBuffers[.Empty]?.name ?? "") + "\""
                         } else {
                             bufferName = "\"" + (slider.outputBuffers[.LowerValue]?.name ?? " ").replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\","
                             bufferName += "\"" + (slider.outputBuffers[.UpperValue]?.name ?? " ").replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\""
                         }
-                        
-                        viewLayout += ", \"updateMode\": \"single\", \"dataInput\": [\(bufferName)], \"dataInputFunction\":\n\(slider.setDataHTMLWithID(idx))\n "
+
+                        json += ", \"updateMode\": \"single\", \"dataInput\": [\(bufferName)], \"dataInputFunction\":\n\(slider.setDataHTMLWithID(idx))\n "
                     }
                     else if element is ImageViewDescriptor {
-                        viewLayout += ", \"updateMode\": \"none\""
+                        json += ", \"updateMode\": \"none\""
                     }
-                    
-                    viewLayout += "}"
-                    
+
+                    json += "}"
+
                     idx += 1
+                    return json
                 }
-                
+
+                viewLayout += v.views.map { emit($0, weight: nil) }.joined(separator: ", ")
+
                 viewLayout += "]}"
             }
         }

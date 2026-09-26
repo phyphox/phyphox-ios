@@ -104,18 +104,20 @@ final class GLGraphView: GLKView {
             //Must be created in this view's own context, or it lands in the last-created GLGraphView's and renders black
             EAGLContext.setCurrent(context)
 
-            let textureData = UnsafeMutablePointer<GLubyte>.allocate(capacity: colorMap.count*3)
+            //RGBA: a stop with an alpha byte (file format 1.21) is blended with what lies below the plot
+            let textureData = UnsafeMutablePointer<GLubyte>.allocate(capacity: colorMap.count*4)
             for (i, color) in colorMap.enumerated() {
-                (textureData + 3*i).initialize(to: color.redByte)
-                (textureData + 3*i+1).initialize(to: color.greenByte)
-                (textureData + 3*i+2).initialize(to: color.blueByte)
+                (textureData + 4*i).initialize(to: color.redByte)
+                (textureData + 4*i+1).initialize(to: color.greenByte)
+                (textureData + 4*i+2).initialize(to: color.blueByte)
+                (textureData + 4*i+3).initialize(to: color.alphaByte)
             }
             
             if mapTexture == 0 {
                 glGenTextures(GLsizei(1), &mapTexture)
             }
             glBindTexture(GLenum(GL_TEXTURE_2D), mapTexture)
-            glTexImage2D(GLenum(GL_TEXTURE_2D), 0, GL_RGB, GLsizei(colorMap.count), 1, 0, GLenum(GL_RGB), GLenum(GL_UNSIGNED_BYTE), textureData)
+            glTexImage2D(GLenum(GL_TEXTURE_2D), 0, GL_RGBA, GLsizei(colorMap.count), 1, 0, GLenum(GL_RGBA), GLenum(GL_UNSIGNED_BYTE), textureData)
             glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MIN_FILTER), GLint(GL_LINEAR))
             glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MAG_FILTER), GLint(GL_LINEAR))
             glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_S), GLint(GL_CLAMP_TO_EDGE))

@@ -190,6 +190,12 @@ struct GraphViewElementDescriptor {
 
     let pickLabel: String
     var pickOutputs: [GraphPickOutput?]
+
+    //Fixed plot area of file format 1.21, as fractions of the element's box; nil where the attribute is absent
+    let plotLeft: CGFloat?
+    let plotTop: CGFloat?
+    let plotRight: CGFloat?
+    let plotBottom: CGFloat?
 }
 
 final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler, ViewComponentElementHandler {
@@ -260,6 +266,10 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         case showColorScale
         case interpolateMapColors
         case pickLabel
+        case plotLeft
+        case plotTop
+        case plotRight
+        case plotBottom
     }
     
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -429,6 +439,11 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         
         let pickLabel = attributes.optionalString(for: .pickLabel) ?? ""
 
+        let plotLeft: CGFloat? = try attributes.optionalValue(for: .plotLeft)
+        let plotTop: CGFloat? = try attributes.optionalValue(for: .plotTop)
+        let plotRight: CGFloat? = try attributes.optionalValue(for: .plotRight)
+        let plotBottom: CGFloat? = try attributes.optionalValue(for: .plotBottom)
+
         //Picker outputs in slots of six (x, xcal, y, ycal, z, zcal); the n-th occurrence of an axis fills block n, like Android
         var pickOutputs: [GraphPickOutput?] = []
         var axisOccurrences: [GraphPickAxis: Int] = [:]
@@ -443,7 +458,7 @@ final class GraphViewElementHandler: ResultElementHandler, LookupElementHandler,
         }
 
 
-        results.append(.graph(GraphViewElementDescriptor(label: label, visibility: visibility, xLabel: xLabel, yLabel: yLabel, zLabel: zLabel, xUnit: xUnit, yUnit: yUnit, zUnit: zUnit, yxUnit: yxUnit, timeOnX: timeOnX, timeOnY: timeOnY, systemTime: systemTime, linearTime: linearTime, hideTimeMarkers: hideTimeMarkers, logX: logX, logY: logY, logZ: logZ, xPrecision: xPrecision, yPrecision: yPrecision, zPrecision: zPrecision, suppressScientificNotation: suppressScientificNotation, minX: minX, maxX: maxX, minY: minY, maxY: maxY, minZ: minZ, maxZ: maxZ, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, scaleMinZ: scaleMinZ, scaleMaxZ: scaleMaxZ, followX: followX, mapWidth: mapWidth, colorMap: colorMap, xInputBufferNames: xInputBufferNames, yInputBufferNames: yInputBufferNames, zInputBufferNames: zInputBufferNames, aspectRatio: aspectRatio, partialUpdate: partialUpdate, history: history, lineWidth: lineWidths, color: colors, style: styles, showColorScale: showColorScale, interpolateMapColors: interpolateMapColors, pickLabel: pickLabel, pickOutputs: pickOutputs)))
+        results.append(.graph(GraphViewElementDescriptor(label: label, visibility: visibility, xLabel: xLabel, yLabel: yLabel, zLabel: zLabel, xUnit: xUnit, yUnit: yUnit, zUnit: zUnit, yxUnit: yxUnit, timeOnX: timeOnX, timeOnY: timeOnY, systemTime: systemTime, linearTime: linearTime, hideTimeMarkers: hideTimeMarkers, logX: logX, logY: logY, logZ: logZ, xPrecision: xPrecision, yPrecision: yPrecision, zPrecision: zPrecision, suppressScientificNotation: suppressScientificNotation, minX: minX, maxX: maxX, minY: minY, maxY: maxY, minZ: minZ, maxZ: maxZ, scaleMinX: scaleMinX, scaleMaxX: scaleMaxX, scaleMinY: scaleMinY, scaleMaxY: scaleMaxY, scaleMinZ: scaleMinZ, scaleMaxZ: scaleMaxZ, followX: followX, mapWidth: mapWidth, colorMap: colorMap, xInputBufferNames: xInputBufferNames, yInputBufferNames: yInputBufferNames, zInputBufferNames: zInputBufferNames, aspectRatio: aspectRatio, partialUpdate: partialUpdate, history: history, lineWidth: lineWidths, color: colors, style: styles, showColorScale: showColorScale, interpolateMapColors: interpolateMapColors, pickLabel: pickLabel, pickOutputs: pickOutputs, plotLeft: plotLeft, plotTop: plotTop, plotRight: plotRight, plotBottom: plotBottom)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

@@ -39,6 +39,15 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     var analysisRunning: Bool = false
 
+    //Inside a stack (file format 1.21): no tap-to-maximize and no expand icon; the stack itself takes no touches
+    var isStatic = false {
+        didSet {
+            layoutManager.isStatic = isStatic
+            tapGesture?.isEnabled = !isStatic
+        }
+    }
+    private var tapGesture: UITapGestureRecognizer? = nil
+
     //Data picker values written so far, aligned with descriptor.pickOutputs slots
     private var pickData: [Double?]
     var hasPickOutputs: Bool {
@@ -112,7 +121,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         gestureHandler.setupGestures(on: layoutManager.graphArea, plotView: graphRenderer.plotView)
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTapp(_:)))
+        tapGesture.isEnabled = !isStatic
         layoutManager.graphArea.addGestureRecognizer(tapGesture)
+        self.tapGesture = tapGesture
         
         NotificationCenter.default.addObserver(
             self,
@@ -268,6 +279,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     
     // MARK: - Event Handlers
     @objc  func handleTapp(_ sender: UITapGestureRecognizer) {
+        guard !isStatic else { return }
         if resizableState == .normal {
             layoutDelegate?.presentExclusiveLayout(self)
         } else {

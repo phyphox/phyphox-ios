@@ -35,72 +35,100 @@ final class ExperimentViewCollectionDescriptor: ViewDescriptor {
 
 extension ExperimentViewCollectionDescriptor: Equatable {
     static func == (lhs: ExperimentViewCollectionDescriptor, rhs: ExperimentViewCollectionDescriptor) -> Bool {
-        return lhs.views.elementsEqual(rhs.views) { (l, r) -> Bool in
-            if let ll = l as? InfoViewDescriptor {
-                guard let rr = r as? InfoViewDescriptor, ll == rr else {
-                    return false
-                }
-            }
-            else if let ll = l as? ValueViewDescriptor {
-                guard let rr = r as? ValueViewDescriptor, ll == rr else {
-                    return false
-                }
-            }
-            else if let ll = l as? GraphViewDescriptor {
-                guard let rr = r as? GraphViewDescriptor, ll == rr else {
-                    return false
-                }
-            }
-            else if let ll = l as? EditViewDescriptor {
-                guard let rr = r as? EditViewDescriptor, ll == rr else {
-                    return false
-                }
-            }
-            else if let ll = l as? ButtonViewDescriptor {
-                guard let rr = r as? ButtonViewDescriptor, ll == rr else {
-                    return false
-                }
-            }
-            else if let ll = l as? SeparatorViewDescriptor {
-                guard let rr = r as? SeparatorViewDescriptor, ll == rr else {
-                    return false
-                }
-            }
-            else if let ll = l as? ImageViewDescriptor {
-                guard let rr = r as? ImageViewDescriptor, ll == rr else {
-                    return false
-                }
-            }
-            else if let ll = l as? SwitchViewDescriptor {
-                guard let rr = r as? SwitchViewDescriptor, ll == rr else {
-                    return false
-                }
-            }
-            else if let ll = l as? DropdownViewDescriptor {
-                guard let rr = r as? DropdownViewDescriptor, ll == rr else {
-                    return false
-                }
-            }
-            else if let ll = l as? SliderViewDescriptor {
-                guard let rr = r as? SliderViewDescriptor, ll == rr else {
-                    return false
-                }
-            }
-            else if let ll = l as? CameraViewDescriptor {
-                guard let rr = r as? CameraViewDescriptor, ll == rr else {
-                    return false
-                }
-            }
-            else if let ll = l as? DepthGUIViewDescriptor {
-                guard let rr = r as? DepthGUIViewDescriptor, ll == rr else {
-                    return false
-                }
-            }
-            else {
-                //A view type missing from this list makes every experiment containing it unequal even to itself
-                return false
-            }
-            return true
+        return lhs.views.elementsEqual(rhs.views, by: viewDescriptorsEqual)
+    }
+}
+
+///Equality across the existential: same type and equal, recursing into view groups. A view type missing from this list
+///makes every experiment containing it unequal even to itself.
+func viewDescriptorsEqual(_ l: ViewDescriptor, _ r: ViewDescriptor) -> Bool {
+    if let ll = l as? InfoViewDescriptor {
+        guard let rr = r as? InfoViewDescriptor, ll == rr else {
+            return false
         }
     }
+    else if let ll = l as? ValueViewDescriptor {
+        guard let rr = r as? ValueViewDescriptor, ll == rr else {
+            return false
+        }
+    }
+    else if let ll = l as? GraphViewDescriptor {
+        guard let rr = r as? GraphViewDescriptor, ll == rr else {
+            return false
+        }
+    }
+    else if let ll = l as? EditViewDescriptor {
+        guard let rr = r as? EditViewDescriptor, ll == rr else {
+            return false
+        }
+    }
+    else if let ll = l as? ButtonViewDescriptor {
+        guard let rr = r as? ButtonViewDescriptor, ll == rr else {
+            return false
+        }
+    }
+    else if let ll = l as? SeparatorViewDescriptor {
+        guard let rr = r as? SeparatorViewDescriptor, ll == rr else {
+            return false
+        }
+    }
+    else if let ll = l as? ImageViewDescriptor {
+        guard let rr = r as? ImageViewDescriptor, ll == rr else {
+            return false
+        }
+    }
+    else if let ll = l as? SwitchViewDescriptor {
+        guard let rr = r as? SwitchViewDescriptor, ll == rr else {
+            return false
+        }
+    }
+    else if let ll = l as? DropdownViewDescriptor {
+        guard let rr = r as? DropdownViewDescriptor, ll == rr else {
+            return false
+        }
+    }
+    else if let ll = l as? SliderViewDescriptor {
+        guard let rr = r as? SliderViewDescriptor, ll == rr else {
+            return false
+        }
+    }
+    else if let ll = l as? CameraViewDescriptor {
+        guard let rr = r as? CameraViewDescriptor, ll == rr else {
+            return false
+        }
+    }
+    else if let ll = l as? DepthGUIViewDescriptor {
+        guard let rr = r as? DepthGUIViewDescriptor, ll == rr else {
+            return false
+        }
+    }
+    else if let ll = l as? VerticalViewDescriptor {
+        guard let rr = r as? VerticalViewDescriptor, ll.visibilityBuffer == rr.visibilityBuffer, ll.children.elementsEqual(rr.children, by: viewDescriptorsEqual) else {
+            return false
+        }
+    }
+    else if let ll = l as? HorizontalViewDescriptor {
+        guard let rr = r as? HorizontalViewDescriptor, ll.visibilityBuffer == rr.visibilityBuffer, ll.weights == rr.weights, ll.children.elementsEqual(rr.children, by: viewDescriptorsEqual) else {
+            return false
+        }
+    }
+    else if let ll = l as? GridViewDescriptor {
+        guard let rr = r as? GridViewDescriptor, ll.visibilityBuffer == rr.visibilityBuffer, ll.maxWidth == rr.maxWidth, ll.fillLastRow == rr.fillLastRow, ll.children.elementsEqual(rr.children, by: viewDescriptorsEqual) else {
+            return false
+        }
+    }
+    else if let ll = l as? StackViewDescriptor {
+        guard let rr = r as? StackViewDescriptor, ll.visibilityBuffer == rr.visibilityBuffer, ll.children.elementsEqual(rr.children, by: viewDescriptorsEqual) else {
+            return false
+        }
+    }
+    else if let ll = l as? TransformViewDescriptor {
+        guard let rr = r as? TransformViewDescriptor, ll.visibilityBuffer == rr.visibilityBuffer, ll.originX == rr.originX, ll.originY == rr.originY, ll.inputs == rr.inputs, viewDescriptorsEqual(ll.child, rr.child) else {
+            return false
+        }
+    }
+    else {
+        return false
+    }
+    return true
 }

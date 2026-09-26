@@ -68,7 +68,8 @@ class ColorConverterHelper {
         
         let newRgb =  hsvToRgb(hsv: HSV(hue: hsv.hue, saturation: hsv.saturation, value: hsv.value))
         
-        let adjustedUIColor = UIColor.init(red: CGFloat(newRgb.red)/255.0, green: CGFloat(newRgb.green)/255.0, blue: CGFloat(newRgb.blue)/255.0, alpha: 1.0)
+        //The alpha byte of an eight-digit colour (file format 1.21) stays as it is
+        let adjustedUIColor = UIColor.init(red: CGFloat(newRgb.red)/255.0, green: CGFloat(newRgb.green)/255.0, blue: CGFloat(newRgb.blue)/255.0, alpha: colorName.alpha)
         
         return adjustedUIColor
         

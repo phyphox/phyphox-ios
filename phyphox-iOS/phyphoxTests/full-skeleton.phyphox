@@ -107,6 +107,33 @@
                 <output axis="z" label="l6g">buffer</output>
                 <output axis="x" label="l6h">buffer</output>
             </graph>
+            <horizontal label="l10" visibility="buffer">
+                <button label="l11" weight="2">
+                    <input type="value">0</input>
+                    <output>buffer</output>
+                </button>
+                <vertical>
+                    <value label="l12" color="ff7e2280"><input>buffer</input></value>
+                    <toggle label="l13"><output>buffer</output></toggle>
+                </vertical>
+            </horizontal>
+            <grid maxWidth="25" fillLastRow="true">
+                <graph label="l14" labelX="l7" labelY="l8" color="#2bfb4cc0" plotLeft="0.1" plotTop="0.1" plotRight="0.9" plotBottom="0.9">
+                    <input axis="x">buffer</input>
+                    <input axis="y" color="edf668ff">buffer</input>
+                </graph>
+                <info label="l15" />
+            </grid>
+            <stack visibility="buffer">
+                <image src="img.png" />
+                <transform originX="0.5" originY="0.8" visibility="buffer">
+                    <input as="rotate" min="0" max="100" mapMin="-2.35" mapMax="2.35" clamp="true">buffer</input>
+                    <input as="opacity" type="value">0.5</input>
+                    <image src="img.png" scale="0.5" />
+                </transform>
+                <separator height="2" color="fe005d60" />
+                <value label="" unit="%" size="2"><input>buffer</input></value>
+            </stack>
         </view>
     </views>
     <analysis>

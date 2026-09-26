@@ -23,6 +23,6 @@ struct SeparatorViewDescriptor: ViewDescriptor, Equatable {
     }
     
     func generateViewHTMLWithID(_ id: Int) -> String {
-        return "<div style=\"font-size:105%; background: #\(color.hexStringValue!); height: \(height)em \" class=\"separatorElement adjustableColor\" id=\"element\(id)\"><p>\(localizedLabel)</p></div>"
+        return "<div style=\"font-size:105%; background: #\(color.webHexString); height: \(height)em \" class=\"separatorElement adjustableColor\" id=\"element\(id)\"><p>\(localizedLabel)</p></div>"
     }
 }
