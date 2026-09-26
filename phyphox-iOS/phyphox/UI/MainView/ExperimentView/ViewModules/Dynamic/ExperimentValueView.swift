@@ -15,9 +15,9 @@ final class ExperimentValueView: UIView, DynamicViewModule, ResizingViewModule, 
     
     let descriptor: ValueViewDescriptor
 
-    private let label = UILabel()
-    private let valueLabel = UILabel()
-    private let unitLabel = UILabel()
+    let label = UILabel()
+    let valueLabel = UILabel()
+    let unitLabel = UILabel()
     /** represents which label's text is out of its bound  */
     private var labelOutOfBoundDict = [String: Bool]()
 
@@ -46,7 +46,9 @@ final class ExperimentValueView: UIView, DynamicViewModule, ResizingViewModule, 
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = descriptor.color.autoLightColor()
-        label.textAlignment = .right
+        //verticalLayout: the label on its own line, left-aligned; without a label the value takes the whole row (1.21)
+        label.textAlignment = descriptor.verticalLayout ? .natural : .right
+        label.isHidden = !descriptor.hasLabel
 
         valueLabel.numberOfLines = 0
         valueLabel.lineBreakMode = .byWordWrapping
@@ -179,12 +181,26 @@ final class ExperimentValueView: UIView, DynamicViewModule, ResizingViewModule, 
         return asciiString
     }
     
-    func calculateFrames(width: CGFloat) -> (labelFrame: CGRect, valueFrame: CGRect, unitFrame: CGRect) {
+    func calculateFrames(width: CGFloat) -> (labelFrame: CGRect, valueFrame: CGRect, unitFrame: CGRect, height: CGFloat) {
         let unrestrictedBounds = CGSize(width: width, height: CGFLOAT_MAX)
         let labelIdeal = label.sizeThatFits(unrestrictedBounds).width
         let valueIdeal = valueLabel.sizeThatFits(unrestrictedBounds).width
         let unitWidth = unitLabel.sizeThatFits(unrestrictedBounds).width
         let valueUnitIdeal = valueIdeal + unitWidth
+
+        if !descriptor.hasLabel || descriptor.verticalLayout {
+            //The value and its unit take the whole row; with verticalLayout the label sits on its own line above it
+            let rowWidth = max(width - 2*spacing, 0)
+            let labelHeight = descriptor.hasLabel ? label.sizeThatFits(CGSize(width: rowWidth, height: CGFLOAT_MAX)).height : 0
+            let valueWidth = min(valueIdeal, max(rowWidth - unitWidth, 0))
+            let valueHeight = valueLabel.sizeThatFits(CGSize(width: valueWidth, height: CGFLOAT_MAX)).height
+            let unitHeight = unitLabel.sizeThatFits(CGSize(width: unitWidth, height: CGFLOAT_MAX)).height
+            let rowHeight = max(valueHeight, unitHeight)
+            let labelFrame = CGRect(x: spacing, y: 0, width: rowWidth, height: labelHeight)
+            let valueFrame = CGRect(x: spacing, y: labelHeight, width: valueWidth, height: rowHeight)
+            let unitFrame = CGRect(x: spacing + valueWidth, y: labelHeight, width: unitWidth, height: rowHeight)
+            return (labelFrame, valueFrame, unitFrame, labelHeight + rowHeight)
+        }
         
         let defaultWidth = (width - 3*spacing)/2.0
         var labelWidth = defaultWidth
@@ -209,17 +225,18 @@ final class ExperimentValueView: UIView, DynamicViewModule, ResizingViewModule, 
         let valueFrame = CGRect(x: 2*spacing + labelWidth, y: 0, width: valueWidth, height: height)
         let unitFrame = CGRect(x: 2*spacing + labelWidth + valueWidth, y: 0, width: unitWidth, height: height)
         
-        return (labelFrame, valueFrame, unitFrame)
+        return (labelFrame, valueFrame, unitFrame, height)
         
     }
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
-        return CGSize(width: size.width, height: calculateFrames(width: size.width).valueFrame.height)
+        return CGSize(width: size.width, height: calculateFrames(width: size.width).height)
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        (label.frame, valueLabel.frame, unitLabel.frame) = calculateFrames(width: self.bounds.size.width)
+        let frames = calculateFrames(width: self.bounds.size.width)
+        (label.frame, valueLabel.frame, unitLabel.frame) = (frames.labelFrame, frames.valueFrame, frames.unitFrame)
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {

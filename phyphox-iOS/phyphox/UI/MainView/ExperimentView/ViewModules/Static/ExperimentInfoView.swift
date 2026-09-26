@@ -59,7 +59,8 @@ final class ExperimentInfoView: UIView, DescriptorBoundViewModule, DynamicViewMo
     override func sizeThatFits(_ size: CGSize) -> CGSize {
         var s = size
         s.width = size.width - 20.0
-        s.height = label.sizeThatFits(s).height
+        //Without a label the element keeps the height of one line of text (groups.md, "Labels in narrow columns")
+        s.height = (label.text ?? "").isEmpty ? label.font.lineHeight : label.sizeThatFits(s).height
         return s
     }
 

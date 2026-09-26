@@ -57,8 +57,9 @@ struct GridViewDescriptor: GroupViewDescriptor {
     let translation: ExperimentTranslationCollection? = nil
     let visibilityBuffer: DataBuffer?
     let children: [ViewDescriptor]
-    ///Largest column width in text line heights (the unit of the separator's height)
+    ///Largest column width, in text line heights (the unit of the separator's height) or in shorter window sides
     let maxWidth: CGFloat
+    let maxWidthUnit: GridWidthUnit
     let fillLastRow: Bool
 
     func generateViewHTMLWithID(_ id: Int) -> String {

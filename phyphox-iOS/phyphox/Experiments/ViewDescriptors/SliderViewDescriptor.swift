@@ -17,6 +17,8 @@ enum SliderOutputValueType {
 
 struct SliderViewDescriptor: ViewDescriptor, Equatable {
     var label: String
+    //Label, value and slider in three rows (file format 1.21; only with showValue)
+    let verticalLayout: Bool
     var visibilityBuffer: DataBuffer?
     
     let minValue: Double
@@ -31,7 +33,8 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     
     var translation: ExperimentTranslationCollection?
     
-    init(label: String, visibilityBuffer: DataBuffer?, minValue: Double, maxValue: Double, stepSize: Double, defaultValue: Double, precision: Int, outputBuffers: [SliderOutputValueType: DataBuffer], translation: ExperimentTranslationCollection?, type: SliderType, showValue: Bool) {
+    init(label: String, visibilityBuffer: DataBuffer?, minValue: Double, maxValue: Double, stepSize: Double, defaultValue: Double, precision: Int, outputBuffers: [SliderOutputValueType: DataBuffer], translation: ExperimentTranslationCollection?, type: SliderType, showValue: Bool, verticalLayout: Bool = false) {
+        self.verticalLayout = verticalLayout
         self.label = label
         self.visibilityBuffer = visibilityBuffer
         
@@ -59,18 +62,18 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     //misassign via the comma operator or be a syntax error. Android writes plain values too.
     func generateViewHTMLWithID(_ id: Int) -> String {
 
-        let valueTag = showValue ? "<span class=\"label\">\(localizedLabel)</span><span class=\"value\" id=\"value\(id)\">\(defaultValue)</span>" : ""
+        let valueTag = showValue ? "\(labelSpanHTML())<span class=\"value\" id=\"value\(id)\">\(defaultValue)</span>" : ""
 
         return (type == SliderType.Range) ? generateTwoSlidersHTML(id) :
 
-        "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\">\(valueTag)<div class=\"sliderContainer\"><span class=\"minValue\" id=\"minValue\(id)\">\(minValue)</span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" step=\(getStepSize())></input><span class=\"maxValue\" id=\"maxValue\(id)\">\(maxValue)</span></div></div>"
+        "<div style=\"font-size: 105%;\" class=\"sliderElement\(showValue ? labelLayoutClass(verticalLayout: verticalLayout) : "")\" id=\"element\(id)\">\(valueTag)<div class=\"sliderContainer\"><span class=\"minValue\" id=\"minValue\(id)\">\(minValue)</span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" step=\(getStepSize())></input><span class=\"maxValue\" id=\"maxValue\(id)\">\(maxValue)</span></div></div>"
     }
 
     private func generateTwoSlidersHTML(_ id: Int) -> String{
-        let valueTag = showValue ? "<span class=\"label\">\(localizedLabel)</span>" +
+        let valueTag = showValue ? labelSpanHTML() +
         "<span class=\"value\" id=\"value\(id)\">\(defaultValue)</span>" : ""
         
-        return "<div style=\"font-size: 105%;\" class=\"sliderElement\" id=\"element\(id)\">" + valueTag +
+        return "<div style=\"font-size: 105%;\" class=\"sliderElement\(showValue ? labelLayoutClass(verticalLayout: verticalLayout) : "")\" id=\"element\(id)\">" + valueTag +
                                                     "<div class=\"sliderContainer\">" +
                                                     "<span class=\"minValue\" >\(minValue)</span>" +
                                                         "<input type=\"range\" class=\"slider\" id=\"input\(id)\"" +

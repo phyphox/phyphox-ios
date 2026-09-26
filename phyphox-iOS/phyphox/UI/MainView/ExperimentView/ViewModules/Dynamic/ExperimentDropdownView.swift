@@ -20,8 +20,8 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
     // Checks weather the item is selected from app or web dropdown. If not, set the first item as default value
     var setDropdownTitleAsDefaultValue: Bool = true
     
-    private let dropdown: UIButton
-    private let label =  UILabel()
+    let dropdown: UIButton
+    let label =  UILabel()
     
     var dynamicLabelHeight = 0.0
     
@@ -48,7 +48,9 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = UIColor(named: "textColor")
-        label.textAlignment = .right
+        //verticalLayout: the label on its own line, left-aligned; without a label the dropdown takes the row (1.21)
+        label.textAlignment = descriptor.verticalLayout ? .natural : .right
+        label.isHidden = !descriptor.hasLabel
         
         dropdown = UIButton(type : .system)
         dropdown.backgroundColor = UIColor.lightGray.withAlphaComponent(0.2)
@@ -74,6 +76,11 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
         let s2 = dropdown.sizeThatFits(size)
+
+        if !descriptor.hasLabel || descriptor.verticalLayout {
+            let labelHeight = descriptor.hasLabel ? label.sizeThatFits(CGSize(width: size.width - 2*spacing, height: CGFLOAT_MAX)).height : 0
+            return CGSize(width: size.width, height: labelHeight + s2.height)
+        }
         
         let maxLabelWidth = (size.width-3*spacing)/2.0
         let labelWidth = s2.width > maxLabelWidth ? 2*maxLabelWidth - s2.width : maxLabelWidth
@@ -84,6 +91,15 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
     
     override func layoutSubviews() {
         let s2 = dropdown.sizeThatFits(self.bounds.size)
+
+        if !descriptor.hasLabel || descriptor.verticalLayout {
+            //Label row above (if any), the dropdown over the whole width below
+            let rowWidth = max(self.bounds.width - 2*spacing, 0)
+            let labelHeight = descriptor.hasLabel ? label.sizeThatFits(CGSize(width: rowWidth, height: CGFLOAT_MAX)).height : 0
+            label.frame = CGRect(x: spacing, y: 0, width: rowWidth, height: labelHeight)
+            dropdown.frame = CGRect(x: spacing, y: labelHeight, width: rowWidth, height: s2.height)
+            return
+        }
         
         let maxLabelWidth = (self.bounds.width-3*spacing)/2.0
         let labelWidth = s2.width > maxLabelWidth ? 2*maxLabelWidth - s2.width : maxLabelWidth

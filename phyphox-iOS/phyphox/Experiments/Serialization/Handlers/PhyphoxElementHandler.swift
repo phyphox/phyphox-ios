@@ -430,7 +430,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "value")
 
-            return ValueViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, color: descriptor.color, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings, positiveUnit: descriptor.positiveUnit, negativeUnit: descriptor.negativeUnit, valueFormat: descriptor.valueFormat)
+            return ValueViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, color: descriptor.color, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings, positiveUnit: descriptor.positiveUnit, negativeUnit: descriptor.negativeUnit, valueFormat: descriptor.valueFormat, verticalLayout: descriptor.verticalLayout)
                 
         case .edit(let descriptor):
             guard let buffer = buffers[descriptor.outputBufferName] else {
@@ -443,7 +443,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "edit")
 
-            return EditViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, translation: translations, signed: descriptor.signed, decimal: descriptor.decimal, unit: descriptor.unit, factor: descriptor.factor, min: descriptor.min, max: descriptor.max, defaultValue: descriptor.defaultValue, buffer: buffer)
+            return EditViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, translation: translations, signed: descriptor.signed, decimal: descriptor.decimal, unit: descriptor.unit, factor: descriptor.factor, min: descriptor.min, max: descriptor.max, defaultValue: descriptor.defaultValue, buffer: buffer, verticalLayout: descriptor.verticalLayout)
 
         case .button(let descriptor):
             let dataFlow = try descriptor.dataFlow.map { flow -> (ExperimentAnalysisDataInput, DataBuffer) in
@@ -544,7 +544,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "switch")
             
-            return SwitchViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, translation: translations, defaultValue: descriptor.defaultValue, buffer: buffer)
+            return SwitchViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, translation: translations, defaultValue: descriptor.defaultValue, buffer: buffer, verticalLayout: descriptor.verticalLayout)
             
         case .dropdown(let descriptor):
             guard let buffer = buffers[descriptor.outputBufferName] else {
@@ -557,7 +557,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "dropdown")
             
-            return DropdownViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, defaultValue: descriptor.defaultValue, buffer: buffer, mappings: descriptor.mappings, translation: translations)
+            return DropdownViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, defaultValue: descriptor.defaultValue, buffer: buffer, mappings: descriptor.mappings, translation: translations, verticalLayout: descriptor.verticalLayout)
             
         case .slider(let descriptor):
             
@@ -596,7 +596,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "slider")
             
-            return SliderViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, outputBuffers: outputBuffers, translation: translations, type: descriptor.type, showValue: descriptor.showValue)
+            return SliderViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, minValue: descriptor.minValue, maxValue: descriptor.maxValue, stepSize: descriptor.stepSize, defaultValue: descriptor.defaultValue, precision: descriptor.precision, outputBuffers: outputBuffers, translation: translations, type: descriptor.type, showValue: descriptor.showValue, verticalLayout: descriptor.verticalLayout)
             
             
             
@@ -624,7 +624,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "grid")
             let children = try descriptor.children.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations) }
 
-            return GridViewDescriptor(visibilityBuffer: visibilityBuffer, children: children, maxWidth: descriptor.maxWidth, fillLastRow: descriptor.fillLastRow)
+            return GridViewDescriptor(visibilityBuffer: visibilityBuffer, children: children, maxWidth: descriptor.maxWidth, maxWidthUnit: descriptor.maxWidthUnit, fillLastRow: descriptor.fillLastRow)
 
         case .stack(let descriptor):
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "stack")

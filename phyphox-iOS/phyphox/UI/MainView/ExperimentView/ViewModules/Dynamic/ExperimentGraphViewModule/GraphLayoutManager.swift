@@ -53,6 +53,15 @@ class GraphLayoutManager {
     private var showColorScale: Bool {
         return descriptor.showColorScale && descriptor.style[0] == .map
     }
+
+    //A graph without a label has no title row (file format 1.21)
+    private var hasTitle: Bool {
+        return descriptor.hasLabel
+    }
+
+    private func titleSize(_ size: CGSize) -> CGSize {
+        return hasTitle ? label.sizeThatFits(size) : .zero
+    }
     
     init(descriptor: GraphViewDescriptor, gridView: GraphGridView, zGridView: GraphGridView?) {
         self.descriptor = descriptor
@@ -306,7 +315,7 @@ class GraphLayoutManager {
         case .hidden:
             return CGSize(width: 0, height: 0)
         default:
-            let s1 = label.sizeThatFits(size)
+            let s1 = titleSize(size)
             let s2 = xLabel.sizeThatFits(size)
             let s3 = yLabel.sizeThatFits(size).applying(yLabel.transform)
             
@@ -349,12 +358,12 @@ class GraphLayoutManager {
         zScaleView?.isHidden = false
         zGridView?.isHidden = false
         zLabel?.isHidden = false
-        label.isHidden = false
+        label.isHidden = !hasTitle
         xLabel.isHidden = false
         yLabel.isHidden = false
 
         // Layout labels
-        let s1 = label.sizeThatFits(bounds.size)
+        let s1 = titleSize(bounds.size)
         label.frame = CGRect(x: (contentWidth - s1.width) / 2.0, y: spacing, width: s1.width, height: s1.height)
 
         let s2 = xLabel.sizeThatFits(bounds.size)
@@ -401,9 +410,9 @@ class GraphLayoutManager {
         gridView.fixedInsetRect = plot
 
         //The graph's label sits in the top margin, the colour scale below it, both only where they fit
-        let s1 = label.sizeThatFits(areaSize)
+        let s1 = titleSize(areaSize)
         var top: CGFloat = 0
-        label.isHidden = s1.height > plot.minY
+        label.isHidden = !hasTitle || s1.height > plot.minY
         if !label.isHidden {
             label.frame = CGRect(x: (w - s1.width) / 2.0, y: spacing, width: s1.width, height: s1.height)
             top = s1.height + spacing

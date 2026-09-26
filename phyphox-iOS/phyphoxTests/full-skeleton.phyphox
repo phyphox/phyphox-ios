@@ -113,8 +113,8 @@
                     <output>buffer</output>
                 </button>
                 <vertical>
-                    <value label="l12" color="ff7e2280"><input>buffer</input></value>
-                    <toggle label="l13"><output>buffer</output></toggle>
+                    <value label="l12" color="ff7e2280" verticalLayout="true"><input>buffer</input></value>
+                    <toggle label="l13" verticalLayout="true"><output>buffer</output></toggle>
                 </vertical>
             </horizontal>
             <grid maxWidth="25" fillLastRow="true">
@@ -123,6 +123,15 @@
                     <input axis="y" color="edf668ff">buffer</input>
                 </graph>
                 <info label="l15" />
+            </grid>
+            <grid maxWidth="1" maxWidthUnit="screen">
+                <edit label="l16" verticalLayout="true"><output>buffer</output></edit>
+                <slider label="l17" minValue="0" maxValue="10" showValue="true" verticalLayout="true"><output>buffer</output></slider>
+                <dropdown label="l18" verticalLayout="true"><map value="1">one</map><output>buffer</output></dropdown>
+                <value unit="%"><input>buffer</input></value>
+                <edit><output>buffer</output></edit>
+                <toggle><output>buffer</output></toggle>
+                <graph labelX="l7" labelY="l8"><input axis="x">buffer</input><input axis="y">buffer</input></graph>
             </grid>
             <stack visibility="buffer">
                 <image src="img.png" />

@@ -35,9 +35,9 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         return UIColor(named: "lightBackgroundColor")
     }
 
-    private let textField: UITextField
-    private let unitLabel: UILabel?
-    private let label = UILabel()
+    let textField: UITextField
+    let unitLabel: UILabel?
+    let label = UILabel()
     
     var dynamicLabelHeight = 0.0
     
@@ -50,7 +50,9 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = UIColor(named: "textColor")
-        label.textAlignment = .right
+        //verticalLayout: the label on its own line, left-aligned; without a label the field takes the whole row (1.21)
+        label.textAlignment = descriptor.verticalLayout ? .natural : .right
+        label.isHidden = !descriptor.hasLabel
 
         formatter.numberStyle = .decimal
         formatter.groupingSeparator = ""
@@ -225,6 +227,12 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
     
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
+        if !descriptor.hasLabel || descriptor.verticalLayout {
+            dynamicLabelHeight = Utility.measureHeightOfText(descriptor.hasLabel ? (label.text ?? "-") : "-") * 2.5
+            let labelHeight = descriptor.hasLabel ? label.sizeThatFits(CGSize(width: size.width, height: CGFLOAT_MAX)).height : 0
+            return CGSize(width: size.width, height: labelHeight + dynamicLabelHeight)
+        }
+
         //We want to have the gap between label and value centered, so we require atwice the width of the larger half
         let s1 = label.sizeThatFits(size)
         var s2 = textField.sizeThatFits(size)
@@ -254,6 +262,21 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         
         let h2 = textField.sizeThatFits(self.bounds.size).height
         let w = (bounds.width - spacing)/2.0
+
+        if !descriptor.hasLabel || descriptor.verticalLayout {
+            //Label row above (if any), then the field over the whole width with the unit at its right
+            let labelHeight = descriptor.hasLabel ? label.sizeThatFits(CGSize(width: bounds.width, height: CGFLOAT_MAX)).height : 0
+            label.frame = CGRect(x: 0, y: 0, width: bounds.width, height: labelHeight)
+            let rowHeight = bounds.height - labelHeight
+            var fieldWidth = bounds.width
+            if let unitLabel = unitLabel {
+                let s3 = unitLabel.sizeThatFits(self.bounds.size)
+                fieldWidth = max(bounds.width - s3.width - spacing, 0)
+                unitLabel.frame = CGRect(origin: CGPoint(x: fieldWidth + spacing, y: labelHeight + (rowHeight - s3.height)/2.0), size: s3)
+            }
+            textField.frame = CGRect(x: 0, y: labelHeight + (rowHeight - h2)/2.0, width: fieldWidth, height: h2)
+            return
+        }
         
         label.frame = CGRect(origin: CGPoint(x: 0, y: (bounds.height - dynamicLabelHeight)/2.0), size: CGSize(width: w, height: dynamicLabelHeight))
         

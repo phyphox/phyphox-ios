@@ -148,7 +148,8 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         case .hidden:
             return CGSize.init(width: 0, height: 0)
         default:
-            let labelh = label.sizeThatFits(size).height
+            //No title row without a label (file format 1.21)
+            let labelh = descriptor.hasLabel ? label.sizeThatFits(size).height : 0
             
             return CGSize(width: size.width, height: Swift.min((size.width-2*sideMargins)/descriptor.aspectRatio + labelh + 2*spacing, size.height))
         }

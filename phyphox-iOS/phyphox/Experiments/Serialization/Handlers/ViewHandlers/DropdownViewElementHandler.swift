@@ -35,6 +35,7 @@ final class DropdownViewMapElementHandler: ResultElementHandler, ChildlessElemen
 struct DropdownViewElementDescriptor {
     var label: String
     var visibility: String
+    var verticalLayout: Bool
     
     let defaultValue: Double
     
@@ -60,6 +61,7 @@ final class DropdownViewElementHandler : ResultElementHandler, LookupElementHand
     private enum Attribute: String, AttributeKey {
         case label
         case visibility
+        case verticalLayout
         case defaultValue = "default"
     }
     
@@ -78,6 +80,7 @@ final class DropdownViewElementHandler : ResultElementHandler, LookupElementHand
         
         let label = attributes.optionalString(for: .label) ?? ""
         let visibility = attributes.optionalString(for: .visibility) ?? ""
+        let verticalLayout = try attributes.optionalValue(for: .verticalLayout) ?? false
         
         let outputBufferName = try outputHandler.expectSingleResult()
         
@@ -85,7 +88,7 @@ final class DropdownViewElementHandler : ResultElementHandler, LookupElementHand
         
         let mappings = mapHandler.results
         
-        results.append(.dropdown(DropdownViewElementDescriptor(label: label, visibility: visibility, defaultValue: defaultValue, outputBufferName: outputBufferName, mappings: mappings)))
+        results.append(.dropdown(DropdownViewElementDescriptor(label: label, visibility: visibility, verticalLayout: verticalLayout, defaultValue: defaultValue, outputBufferName: outputBufferName, mappings: mappings)))
         
     }
     

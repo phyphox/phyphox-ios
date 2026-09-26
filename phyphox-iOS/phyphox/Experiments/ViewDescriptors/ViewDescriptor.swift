@@ -23,6 +23,22 @@ extension ViewDescriptor {
         return translation?.localizeString(label) ?? label
     }
 
+    ///Since file format 1.21 the label may be left out (absent or empty) on value, edit, toggle, dropdown, slider,
+    ///graph, camera-gui and depth-gui: the caption and its space are omitted (groups.md, "Labels in narrow columns")
+    var hasLabel: Bool {
+        return !localizedLabel.isEmpty
+    }
+
+    ///The label span of the web markup, only with a label (phyphox-webinterface readme.md, "The view layout")
+    func labelSpanHTML() -> String {
+        return hasLabel ? "<span class=\"label\">\(localizedLabel)</span>" : ""
+    }
+
+    ///The class that puts the label above the control in the web interface
+    func labelLayoutClass(verticalLayout: Bool) -> String {
+        return hasLabel && verticalLayout ? " verticalLayout" : ""
+    }
+
     func generateDataCompleteHTMLWithID(_ id: Int) -> String {
         return "function() {}"
     }

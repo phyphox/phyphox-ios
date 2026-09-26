@@ -30,6 +30,8 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
     var valueFormatString: String?
 
     let label: String
+    //Label on its own line above the value (file format 1.21)
+    let verticalLayout: Bool
     let color: UIColor
     let translation: ExperimentTranslationCollection?
     let visibilityBuffer: DataBuffer?
@@ -55,7 +57,8 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         return translation?.localizeString(negetiveUnit!) ?? negetiveUnit!
     }
     
-    init(label: String, visibilityBuffer: DataBuffer?, color: UIColor, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap], positiveUnit: String?, negativeUnit: String?, valueFormat: String?) {
+    init(label: String, visibilityBuffer: DataBuffer?, color: UIColor, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap], positiveUnit: String?, negativeUnit: String?, valueFormat: String?, verticalLayout: Bool = false) {
+        self.verticalLayout = verticalLayout
         self.scientific = scientific
         self.precision = precision
         self.unit = unit
@@ -94,7 +97,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
     
     
     func generateViewHTMLWithID(_ id: Int) -> String {
-        return "<div style=\"font-size:105%;color:#\(color.webHexString)\" class=\"valueElement adjustableColor\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><span class=\"value\"><span class=\"valueNumber\" style=\"font-size:\(100*size)%;\"></span> <span class=\"valueUnit\">\(localizedUnit ?? "")</span></span></div>"
+        return "<div style=\"font-size:105%;color:#\(color.webHexString)\" class=\"valueElement adjustableColor\(labelLayoutClass(verticalLayout: verticalLayout))\" id=\"element\(id)\">\(labelSpanHTML())<span class=\"value\"><span class=\"valueNumber\" style=\"font-size:\(100*size)%;\"></span> <span class=\"valueUnit\">\(localizedUnit ?? "")</span></span></div>"
     }
     
     func updateMode() -> String {

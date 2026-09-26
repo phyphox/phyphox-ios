@@ -44,10 +44,10 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     var dynamicLabelHeight = 0.0
     private var textFieldWidth: CGFloat = 100.0
 
-    private let uiSlider: UISlider
-    private let rangeSlider = RangeSlider(frame: CGRectZero)
-    private let label = UILabel()
-    private let sliderValue = UILabel()
+    let uiSlider: UISlider
+    let rangeSlider = RangeSlider(frame: CGRectZero)
+    let label = UILabel()
+    let sliderValue = UILabel()
     
     private let minValueLabel = UILabel()
     private let maxValueLabel = UILabel()
@@ -72,7 +72,10 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = UIColor(named: "textColor")
-        label.textAlignment = .center
+        //verticalLayout (with showValue): label, value and slider in three rows, the label left-aligned; without a
+        //label the value takes its row (1.21)
+        label.textAlignment = descriptor.verticalLayout ? .natural : .center
+        label.isHidden = !descriptor.hasLabel
         
         minValueLabel.numberOfLines = 0
         minValueLabel.text = numberFormatter(for: descriptor.minValue)
@@ -171,8 +174,20 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         fatalError("init(coder:) has not been implemented")
     }
     
+    ///With showValue: the label on its own row (verticalLayout) or no label at all - the value row then spans the width
+    private var stackedRows: Bool {
+        return descriptor.showValue && (!descriptor.hasLabel || descriptor.verticalLayout)
+    }
+
     override func sizeThatFits(_ size: CGSize) -> CGSize {
         
+        if stackedRows {
+            let rowHeight = Utility.measureHeightOfText(minValueLabel.text ?? "-") * 1.5
+            dynamicLabelHeight = rowHeight
+            let labelRow = descriptor.hasLabel ? label.sizeThatFits(CGSize(width: size.width - 20.0, height: CGFLOAT_MAX)).height : 0
+            return CGSize(width: size.width, height: labelRow + 2 * rowHeight)
+        }
+
         if(descriptor.showValue){
             let s1 = label.sizeThatFits(size)
             var s2 = sliderValue.sizeThatFits(size)
@@ -200,8 +215,15 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         var sliderContainerYValue = 0.0
         
         let paddingForSliderRow = 10.0
-        
-        if(descriptor.showValue){
+
+        if stackedRows {
+            let rowWidth = bounds.width - 2 * paddingForSliderRow
+            let labelRow = descriptor.hasLabel ? label.sizeThatFits(CGSize(width: rowWidth, height: CGFLOAT_MAX)).height : 0
+            label.frame = CGRect(x: paddingForSliderRow, y: 0, width: rowWidth, height: labelRow)
+            sliderValue.frame = CGRect(x: paddingForSliderRow, y: labelRow + (dynamicLabelHeight - h2)/2.0, width: rowWidth, height: h2)
+            sliderContainerYValue = labelRow + dynamicLabelHeight + (dynamicLabelHeight - h2)/2.0
+        }
+        else if(descriptor.showValue){
             sliderContainerYValue = bounds.height / 2.0
             sliderContainerYValue = sliderContainerYValue + 10.0
             

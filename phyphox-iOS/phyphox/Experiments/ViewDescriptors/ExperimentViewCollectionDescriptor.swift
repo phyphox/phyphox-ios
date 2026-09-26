@@ -113,7 +113,7 @@ func viewDescriptorsEqual(_ l: ViewDescriptor, _ r: ViewDescriptor) -> Bool {
         }
     }
     else if let ll = l as? GridViewDescriptor {
-        guard let rr = r as? GridViewDescriptor, ll.visibilityBuffer == rr.visibilityBuffer, ll.maxWidth == rr.maxWidth, ll.fillLastRow == rr.fillLastRow, ll.children.elementsEqual(rr.children, by: viewDescriptorsEqual) else {
+        guard let rr = r as? GridViewDescriptor, ll.visibilityBuffer == rr.visibilityBuffer, ll.maxWidth == rr.maxWidth, ll.maxWidthUnit == rr.maxWidthUnit, ll.fillLastRow == rr.fillLastRow, ll.children.elementsEqual(rr.children, by: viewDescriptorsEqual) else {
             return false
         }
     }

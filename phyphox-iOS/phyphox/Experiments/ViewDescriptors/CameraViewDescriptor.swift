@@ -32,6 +32,6 @@ struct CameraViewDescriptor: ViewDescriptor, Equatable {
 
     func generateViewHTMLWithID(_ id: Int) -> String {
         let warningText = localize("remoteCameraWarning").replacingOccurrences(of: "\"", with: "\\\"")
-        return "<div style=\"font-size: 105%;\" class=\"graphElement\" id=\"element\(id)\"><span class=\"label\" onclick=\"toggleExclusive(\(id));\">\(localizedLabel)</span><div class=\"warningIcon\" onclick=\"alert('\(warningText)')\"></div></div>"
+        return "<div style=\"font-size: 105%;\" class=\"graphElement\" id=\"element\(id)\">\(hasLabel ? "<span class=\"label\" onclick=\"toggleExclusive(\(id));\">\(localizedLabel)</span>" : "")<div class=\"warningIcon\" onclick=\"alert('\(warningText)')\"></div></div>"
     }
 }

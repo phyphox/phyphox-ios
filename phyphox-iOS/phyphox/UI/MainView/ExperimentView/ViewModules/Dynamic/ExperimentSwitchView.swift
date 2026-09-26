@@ -19,8 +19,8 @@ final class ExperimentSwitchView: UIView, DynamicViewModule, DescriptorBoundView
     
     private let displayLink = DisplayLink(refreshRate: 5)
     
-    private let switchUI: UISwitch
-    private let label =  UILabel()
+    let switchUI: UISwitch
+    let label =  UILabel()
     
     var active = false {
         didSet{
@@ -51,7 +51,9 @@ final class ExperimentSwitchView: UIView, DynamicViewModule, DescriptorBoundView
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = UIColor(named: "textColor")
-        label.textAlignment = .right
+        //verticalLayout: the label on its own line, left-aligned; without a label the switch takes the row (1.21)
+        label.textAlignment = descriptor.verticalLayout ? .natural : .right
+        label.isHidden = !descriptor.hasLabel
         
         switchUI = UISwitch()
         
@@ -100,6 +102,12 @@ final class ExperimentSwitchView: UIView, DynamicViewModule, DescriptorBoundView
     var dynamicLabelHeight = 0.0
     
     override func sizeThatFits(_ size: CGSize) -> CGSize {
+        if !descriptor.hasLabel || descriptor.verticalLayout {
+            dynamicLabelHeight = Utility.measureHeightOfText(descriptor.hasLabel ? (label.text ?? "-") : "-") * 1.5
+            let labelHeight = descriptor.hasLabel ? label.sizeThatFits(CGSize(width: size.width, height: CGFLOAT_MAX)).height : 0
+            return CGSize(width: size.width, height: labelHeight + dynamicLabelHeight)
+        }
+
         let s1 = label.sizeThatFits(size)
         var s2 = switchUI.sizeThatFits(size)
         s2.width = textFieldWidth
@@ -120,6 +128,15 @@ final class ExperimentSwitchView: UIView, DynamicViewModule, DescriptorBoundView
         
         let h2 = switchUI.sizeThatFits(self.bounds.size).height
         let w = (bounds.width - spacing)/2.0
+
+        if !descriptor.hasLabel || descriptor.verticalLayout {
+            //Label row above (if any), the switch at the left edge of its own row
+            let labelHeight = descriptor.hasLabel ? label.sizeThatFits(CGSize(width: bounds.width, height: CGFLOAT_MAX)).height : 0
+            label.frame = CGRect(x: 0, y: 0, width: bounds.width, height: labelHeight)
+            let rowHeight = bounds.height - labelHeight
+            switchUI.frame = CGRect(origin: CGPoint(x: 0, y: labelHeight + (rowHeight - (h2 - 10.0))/2.0), size: CGSize(width: textFieldWidth, height: h2))
+            return
+        }
         
         label.frame =  CGRect(origin: CGPoint(x: 0, y: (bounds.height - dynamicLabelHeight)/2.0), size: CGSize(width: w, height: dynamicLabelHeight))
         

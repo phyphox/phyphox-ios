@@ -72,7 +72,7 @@ final class ExperimentViewModuleFactory {
             return ExperimentGroupView(kind: .horizontal(weights: descriptor.weights), children: children(of: descriptor, resourceFolder: resourceFolder, inStack: inStack), visibilityBuffer: descriptor.visibilityBuffer)
         }
         else if let descriptor = descriptor as? GridViewDescriptor {
-            return ExperimentGroupView(kind: .grid(maxWidth: descriptor.maxWidth, fillLastRow: descriptor.fillLastRow), children: children(of: descriptor, resourceFolder: resourceFolder, inStack: inStack), visibilityBuffer: descriptor.visibilityBuffer)
+            return ExperimentGroupView(kind: .grid(maxWidth: descriptor.maxWidth, screenUnit: descriptor.maxWidthUnit == .screen, fillLastRow: descriptor.fillLastRow), children: children(of: descriptor, resourceFolder: resourceFolder, inStack: inStack), visibilityBuffer: descriptor.visibilityBuffer)
         }
         else if let descriptor = descriptor as? StackViewDescriptor {
             return ExperimentGroupView(kind: .stack, children: children(of: descriptor, resourceFolder: resourceFolder, inStack: true), visibilityBuffer: descriptor.visibilityBuffer)

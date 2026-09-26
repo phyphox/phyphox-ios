@@ -150,7 +150,7 @@ final class WebServerUtilities {
                             type = "horizontal"
                         } else if let grid = group as? GridViewDescriptor {
                             type = "grid"
-                            extra += ",\"maxWidth\":\(WebJSON.encode(Double(grid.maxWidth))),\"fillLastRow\":\(grid.fillLastRow)"
+                            extra += ",\"maxWidth\":\(WebJSON.encode(Double(grid.maxWidth))),\"maxWidthUnit\":\"\(grid.maxWidthUnit.rawValue)\",\"fillLastRow\":\(grid.fillLastRow)"
                         } else if group is StackViewDescriptor {
                             type = "stack"
                         } else if let transform = group as? TransformViewDescriptor {

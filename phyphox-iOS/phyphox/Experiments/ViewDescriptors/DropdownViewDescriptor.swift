@@ -15,6 +15,8 @@ struct DropdownViewMap: Equatable {
 
 struct DropdownViewDescriptor: ViewDescriptor, Equatable {
     var label: String
+    //Label on its own line above the dropdown (file format 1.21)
+    let verticalLayout: Bool
     var visibilityBuffer: DataBuffer?
     let defaultValue: Double
     let buffer: DataBuffer
@@ -39,7 +41,8 @@ struct DropdownViewDescriptor: ViewDescriptor, Equatable {
     
     var translation: ExperimentTranslationCollection?
     
-    init(label: String, visibilityBuffer: DataBuffer?, defaultValue: Double, buffer: DataBuffer, mappings: [DropdownViewMap], translation: ExperimentTranslationCollection?) {
+    init(label: String, visibilityBuffer: DataBuffer?, defaultValue: Double, buffer: DataBuffer, mappings: [DropdownViewMap], translation: ExperimentTranslationCollection?, verticalLayout: Bool = false) {
+        self.verticalLayout = verticalLayout
         self.label = label
         self.visibilityBuffer = visibilityBuffer
         self.defaultValue = defaultValue
@@ -50,7 +53,7 @@ struct DropdownViewDescriptor: ViewDescriptor, Equatable {
     
     
     func generateViewHTMLWithID(_ id: Int) -> String {
-        return "<div style=\"font-size: 105%;\" class=\"dropdownElement\" id=\"element\(id)\"><span class=\"label\">\(localizedLabel)</span><select onchange=\"ajax('control?cmd=set&buffer=\(buffer.name)&value='+this.value)\" class=\"value\" id=\"select\(id)\" /></div>"
+        return "<div style=\"font-size: 105%;\" class=\"dropdownElement\(labelLayoutClass(verticalLayout: verticalLayout))\" id=\"element\(id)\">\(labelSpanHTML())<select onchange=\"ajax('control?cmd=set&buffer=\(buffer.name)&value='+this.value)\" class=\"value\" id=\"select\(id)\" /></div>"
     }
     
     func setDataHTMLWithID(_ id: Int) -> String {

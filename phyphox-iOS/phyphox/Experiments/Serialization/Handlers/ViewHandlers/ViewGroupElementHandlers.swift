@@ -18,9 +18,15 @@ struct GroupViewElementDescriptor {
     let weights: [CGFloat]
 }
 
+///The unit of a grid's maxWidth: text line heights, or the shorter side of the app's window (not the display)
+enum GridWidthUnit: String, CaseInsensitiveAttributeDecodable, CaseIterable {
+    case text, screen
+}
+
 struct GridViewElementDescriptor {
     let visibility: String
     let maxWidth: CGFloat
+    let maxWidthUnit: GridWidthUnit
     let fillLastRow: Bool
     let children: [ViewElementDescriptor]
 }
@@ -251,6 +257,7 @@ final class GridViewElementHandler: ResultElementHandler, ViewComponentElementHa
         case label
         case visibility
         case maxWidth
+        case maxWidthUnit
         case fillLastRow
     }
 
@@ -261,11 +268,13 @@ final class GridViewElementHandler: ResultElementHandler, ViewComponentElementHa
         guard let maxWidth: CGFloat = try attributes.optionalValue(for: .maxWidth) else {
             throw ElementHandlerError.missingAttribute("maxWidth")
         }
+        //An unknown unit is an error like any invalid enumerated value (enum-invalid-value)
+        let maxWidthUnit: GridWidthUnit = try attributes.optionalValue(for: .maxWidthUnit) ?? .text
         let fillLastRow = try attributes.optionalValue(for: .fillLastRow) ?? false
 
         let children = try container.results().elements
 
-        results.append(.grid(GridViewElementDescriptor(visibility: visibility, maxWidth: maxWidth, fillLastRow: fillLastRow, children: children)))
+        results.append(.grid(GridViewElementDescriptor(visibility: visibility, maxWidth: maxWidth, maxWidthUnit: maxWidthUnit, fillLastRow: fillLastRow, children: children)))
     }
 
     func clearChildHandlers() {

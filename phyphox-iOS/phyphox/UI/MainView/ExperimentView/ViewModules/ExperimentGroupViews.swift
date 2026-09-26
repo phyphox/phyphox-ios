@@ -38,8 +38,9 @@ final class ExperimentGroupView: UIView, ContainerViewModule, VisibilityControll
     enum Kind {
         case vertical
         case horizontal(weights: [CGFloat])
-        ///maxWidth in text line heights, the unit of the separator's height
-        case grid(maxWidth: CGFloat, fillLastRow: Bool)
+        ///maxWidth in text line heights (the unit of the separator's height) or, with screenUnit, in multiples of
+        ///the shorter side of the app's window
+        case grid(maxWidth: CGFloat, screenUnit: Bool, fillLastRow: Bool)
         case stack
     }
 
@@ -75,12 +76,19 @@ final class ExperimentGroupView: UIView, ContainerViewModule, VisibilityControll
         return false
     }
 
-    ///Columns of a grid at the given width: the smallest count keeping each column at or below maxWidth
+    ///Columns of a grid at the given width: the smallest count keeping each column at or below maxWidth. The screen
+    ///unit is the shorter side of the window the group is in (the scene's window, so Split View and Slide Over count
+    ///with their own size), not the display.
     func gridColumns(width: CGFloat) -> Int {
-        guard case .grid(let maxWidth, _) = kind else { return 1 }
-        let columnWidth = maxWidth * fontScale
+        return gridColumns(width: width, windowSize: window?.bounds.size ?? UIScreen.main.bounds.size)
+    }
+
+    func gridColumns(width: CGFloat, windowSize: CGSize) -> Int {
+        guard case .grid(let maxWidth, let screenUnit, _) = kind else { return 1 }
+        let unit = screenUnit ? Swift.min(windowSize.width, windowSize.height) : fontScale
+        let columnWidth = maxWidth * unit
         guard columnWidth > 0, columnWidth.isFinite, width > columnWidth else { return 1 }
-        return Int((width / columnWidth).rounded(.up))
+        return Int((width / columnWidth - 1e-6).rounded(.up))
     }
 
     ///Frames of the children (nil for a child that takes no space) at the given width, and the group's own size
@@ -149,7 +157,7 @@ final class ExperimentGroupView: UIView, ContainerViewModule, VisibilityControll
             }
             return (frames, CGSize(width: width, height: rowHeight))
 
-        case .grid(_, let fillLastRow):
+        case .grid(_, _, let fillLastRow):
             let columns = gridColumns(width: width)
             var y: CGFloat = 0
             var start = 0
