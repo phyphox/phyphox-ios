@@ -33,6 +33,8 @@ struct VerticalViewDescriptor: GroupViewDescriptor {
     let translation: ExperimentTranslationCollection? = nil
     let visibilityBuffer: DataBuffer?
     let children: [ViewDescriptor]
+    ///Gap between adjacent visible children, in text line heights (the unit of the separator's height)
+    let spacing: CGFloat
 
     func generateViewHTMLWithID(_ id: Int) -> String {
         return ""
@@ -46,6 +48,8 @@ struct HorizontalViewDescriptor: GroupViewDescriptor {
     let children: [ViewDescriptor]
     ///One per child: its share of the row's width
     let weights: [CGFloat]
+    ///Gap between adjacent visible children, in text line heights; taken off the width before the weights share it
+    let spacing: CGFloat
 
     func generateViewHTMLWithID(_ id: Int) -> String {
         return ""
@@ -61,6 +65,8 @@ struct GridViewDescriptor: GroupViewDescriptor {
     let maxWidth: CGFloat
     let maxWidthUnit: GridWidthUnit
     let fillLastRow: Bool
+    ///Gap between columns and between rows, in text line heights; counted in the column count
+    let spacing: CGFloat
 
     func generateViewHTMLWithID(_ id: Int) -> String {
         return ""

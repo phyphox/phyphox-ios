@@ -13,6 +13,7 @@ struct SwitchViewElementDescriptor {
     let label: String
     let visibility: String
     let verticalLayout: Bool
+    let align: InfoViewElementDescriptor.TextAlignment
     let defaultValue: Double
     
     let outputBufferName: String
@@ -34,6 +35,7 @@ final class SwitchViewElementHandler: ResultElementHandler, LookupElementHandler
         case label
         case visibility
         case verticalLayout
+        case align
         case defaultValue = "default"
     }
     
@@ -54,12 +56,13 @@ final class SwitchViewElementHandler: ResultElementHandler, LookupElementHandler
         let label = attributes.optionalString(for: .label) ?? ""
         let visibility = attributes.optionalString(for: .visibility) ?? ""
         let verticalLayout = try attributes.optionalValue(for: .verticalLayout) ?? false
+        let align: InfoViewElementDescriptor.TextAlignment = try attributes.optionalValue(for: .align) ?? .left
         
         let outputBufferName = try outputHandler.expectSingleResult()
         
         let defaultValue = try attributes.optionalValue(for: .defaultValue) ?? 0.0
         
-        results.append(.switchView(SwitchViewElementDescriptor(label: label, visibility: visibility, verticalLayout: verticalLayout, defaultValue: defaultValue, outputBufferName: outputBufferName)))
+        results.append(.switchView(SwitchViewElementDescriptor(label: label, visibility: visibility, verticalLayout: verticalLayout, align: align, defaultValue: defaultValue, outputBufferName: outputBufferName)))
         
     }
     

@@ -72,9 +72,9 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = UIColor(named: "textColor")
-        //verticalLayout (with showValue): label, value and slider in three rows, the label left-aligned; without a
-        //label the value takes its row (1.21)
-        label.textAlignment = descriptor.verticalLayout ? .natural : .center
+        //verticalLayout (with showValue): label, value and slider in three rows, the label following align (left by
+        //default); without a label the value takes its row (1.21)
+        label.textAlignment = descriptor.verticalLayout ? descriptor.align.textAlignment : .center
         label.isHidden = !descriptor.hasLabel
         
         minValueLabel.numberOfLines = 0
@@ -95,7 +95,8 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
         sliderValue.font = UIFont.preferredFont(forTextStyle: .body)
         sliderValue.textColor = UIColor(named: "textColor")
         sliderValue.backgroundColor =  UIColor.lightGray.withAlphaComponent(0.2)
-        sliderValue.textAlignment = .center
+        //In its own row the value spans the width and its text follows align (left by default, as on Android)
+        sliderValue.textAlignment = stackedRows ? descriptor.align.textAlignment : .center
         sliderValue.adjustsFontSizeToFitWidth = true
         
         if(descriptor.type == SliderType.Normal){

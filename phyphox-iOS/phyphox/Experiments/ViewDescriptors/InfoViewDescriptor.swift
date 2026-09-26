@@ -30,6 +30,7 @@ struct InfoViewDescriptor: ViewDescriptor, Equatable {
     }
 
     func generateViewHTMLWithID(_ id: Int) -> String {
-        return "<div style=\"font-size:90%;color:#\(color.webHexString)\" class=\"infoElement adjustableColor\" id=\"element\(id)\"><p>\(localizedLabel)</p></div>"
+        //The alignment reaches the browser as an inline text-align, as on Android (InfoElement.createViewHTML)
+        return "<div style=\"font-size:90%;color:#\(color.webHexString);text-align:\(align.cssTextAlign);\" class=\"infoElement adjustableColor\" id=\"element\(id)\"><p>\(localizedLabel)</p></div>"
     }
 }

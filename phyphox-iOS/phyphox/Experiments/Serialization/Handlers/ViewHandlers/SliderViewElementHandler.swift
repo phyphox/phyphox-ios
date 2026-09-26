@@ -12,6 +12,7 @@ struct SliderViewElementDescriptor{
     var label: String
     var visibility: String
     var verticalLayout: Bool
+    var align: InfoViewElementDescriptor.TextAlignment
     var minValue: Double
     var maxValue: Double
     var stepSize: Double
@@ -76,6 +77,7 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         case label
         case visibility
         case verticalLayout
+        case align
         case minValue
         case maxValue
         case stepSize
@@ -101,6 +103,7 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
         let label = attributes.optionalString(for: .label) ?? ""
         let visibility = attributes.optionalString(for: .visibility) ?? ""
         let verticalLayout = try attributes.optionalValue(for: .verticalLayout) ?? false
+        let align: InfoViewElementDescriptor.TextAlignment = try attributes.optionalValue(for: .align) ?? .left
         let minValue = try attributes.optionalValue(for: .minValue) ?? 0.0
         let maxValue = try attributes.optionalValue(for: .maxValue) ?? 1.0
         let stepSize = try attributes.optionalValue(for: .stepSize) ?? 1.0
@@ -153,6 +156,7 @@ final class SliderViewElementHandler: ResultElementHandler, LookupElementHandler
             label: label,
             visibility: visibility,
             verticalLayout: verticalLayout,
+            align: align,
             minValue: minValue,
             maxValue: maxValue,
             stepSize: stepSize,

@@ -17,8 +17,9 @@ extension UIColor {
             return hexStringValue ?? "000000"
         }
         func byte(_ v: CGFloat) -> Int { return Int((Swift.min(Swift.max(v, 0), 1) * 255).rounded()) }
-        let rgb = String(format: "%02X%02X%02X", byte(r), byte(g), byte(b))
-        return a < 1 ? rgb + String(format: "%02X", byte(a)) : rgb
+        //Lowercase, as the web interface contract writes it (readme.md: "#rrggbb" or "#rrggbbaa") and Android emits it
+        let rgb = String(format: "%02x%02x%02x", byte(r), byte(g), byte(b))
+        return a < 1 ? rgb + String(format: "%02x", byte(a)) : rgb
     }
 
     func autoLightColor() -> UIColor {

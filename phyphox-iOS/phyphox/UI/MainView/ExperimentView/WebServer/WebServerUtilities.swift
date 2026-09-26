@@ -144,13 +144,16 @@ final class WebServerUtilities {
                     if let group = element as? GroupViewDescriptor {
                         let type: String
                         var extra = ""
-                        if group is VerticalViewDescriptor {
+                        //spacing is always there on vertical, horizontal and grid, like on Android (RemoteServer.appendElement)
+                        if let vertical = group as? VerticalViewDescriptor {
                             type = "vertical"
-                        } else if group is HorizontalViewDescriptor {
+                            extra += ",\"spacing\":\(WebJSON.encode(Double(vertical.spacing)))"
+                        } else if let horizontal = group as? HorizontalViewDescriptor {
                             type = "horizontal"
+                            extra += ",\"spacing\":\(WebJSON.encode(Double(horizontal.spacing)))"
                         } else if let grid = group as? GridViewDescriptor {
                             type = "grid"
-                            extra += ",\"maxWidth\":\(WebJSON.encode(Double(grid.maxWidth))),\"maxWidthUnit\":\"\(grid.maxWidthUnit.rawValue)\",\"fillLastRow\":\(grid.fillLastRow)"
+                            extra += ",\"spacing\":\(WebJSON.encode(Double(grid.spacing))),\"maxWidth\":\(WebJSON.encode(Double(grid.maxWidth))),\"maxWidthUnit\":\"\(grid.maxWidthUnit.rawValue)\",\"fillLastRow\":\(grid.fillLastRow)"
                         } else if group is StackViewDescriptor {
                             type = "stack"
                         } else if let transform = group as? TransformViewDescriptor {

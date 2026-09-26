@@ -40,6 +40,7 @@ struct ValueViewElementDescriptor {
     let label: String
     let visibility: String
     let verticalLayout: Bool
+    let align: InfoViewElementDescriptor.TextAlignment
     let color: UIColor
     let size: Double
     let precision: Int
@@ -73,6 +74,7 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         case label
         case visibility
         case verticalLayout
+        case align
         case color
         case size
         case precision
@@ -90,6 +92,8 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
         let label = attributes.optionalString(for: .label) ?? ""
         let visibility = attributes.optionalString(for: .visibility) ?? ""
         let verticalLayout = try attributes.optionalValue(for: .verticalLayout) ?? false
+        //align (1.21): the values of the info element's align, case-insensitive, an unknown one rejects the file
+        let align: InfoViewElementDescriptor.TextAlignment = try attributes.optionalValue(for: .align) ?? .left
         let color = try attributes.optionalColor(for: .color) ?? kFullWhiteColor
 
         let mappings = mapHandler.results
@@ -111,7 +115,7 @@ final class ValueViewElementHandler: ResultElementHandler, LookupElementHandler,
             }
         }
 
-        results.append(.value(ValueViewElementDescriptor(label: label, visibility: visibility, verticalLayout: verticalLayout, color: color, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inputBufferName, mappings: mappings, positiveUnit: positiveUnit, negativeUnit: negativeUnit, valueFormat: valueFormat)))
+        results.append(.value(ValueViewElementDescriptor(label: label, visibility: visibility, verticalLayout: verticalLayout, align: align, color: color, size: size, precision: precision, scientific: scientific, unit: unit, factor: factor, inputBufferName: inputBufferName, mappings: mappings, positiveUnit: positiveUnit, negativeUnit: negativeUnit, valueFormat: valueFormat)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

@@ -14,6 +14,8 @@ import Foundation
 ///vertical, horizontal and stack: the children in document order and, for horizontal, each child's weight (1 elsewhere)
 struct GroupViewElementDescriptor {
     let visibility: String
+    ///Gap between adjacent visible children in text line heights; 0 on a stack
+    let spacing: CGFloat
     let children: [ViewElementDescriptor]
     let weights: [CGFloat]
 }
@@ -28,7 +30,14 @@ struct GridViewElementDescriptor {
     let maxWidth: CGFloat
     let maxWidthUnit: GridWidthUnit
     let fillLastRow: Bool
+    let spacing: CGFloat
     let children: [ViewElementDescriptor]
+}
+
+///spacing (1.21): a negative value is treated as 0
+private func readSpacing<Key: AttributeKey>(_ attributes: KeyedAttributeContainer<Key>, key: Key) throws -> CGFloat {
+    let spacing: CGFloat = try attributes.optionalValue(for: key) ?? 0
+    return spacing.isFinite ? Swift.max(spacing, 0) : 0
 }
 
 enum TransformProperty: String, CaseInsensitiveAttributeDecodable, CaseIterable {
@@ -213,14 +222,17 @@ final class GroupViewElementHandler: ResultElementHandler, ViewComponentElementH
     private enum Attribute: String, AttributeKey {
         case label
         case visibility
+        case spacing
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
         let attributes = attributes.attributes(keyedBy: Attribute.self)
         let visibility = attributes.optionalString(for: .visibility) ?? ""
+        //spacing is an attribute of vertical and horizontal only; a stack has no gaps
+        let spacing = kind == .stack ? 0 : try readSpacing(attributes, key: .spacing)
 
         let (children, weights) = try container.results()
-        let descriptor = GroupViewElementDescriptor(visibility: visibility, children: children, weights: weights)
+        let descriptor = GroupViewElementDescriptor(visibility: visibility, spacing: spacing, children: children, weights: weights)
 
         switch kind {
         case .vertical:
@@ -259,6 +271,7 @@ final class GridViewElementHandler: ResultElementHandler, ViewComponentElementHa
         case maxWidth
         case maxWidthUnit
         case fillLastRow
+        case spacing
     }
 
     func endElement(text: String, attributes: AttributeContainer) throws {
@@ -271,10 +284,11 @@ final class GridViewElementHandler: ResultElementHandler, ViewComponentElementHa
         //An unknown unit is an error like any invalid enumerated value (enum-invalid-value)
         let maxWidthUnit: GridWidthUnit = try attributes.optionalValue(for: .maxWidthUnit) ?? .text
         let fillLastRow = try attributes.optionalValue(for: .fillLastRow) ?? false
+        let spacing = try readSpacing(attributes, key: .spacing)
 
         let children = try container.results().elements
 
-        results.append(.grid(GridViewElementDescriptor(visibility: visibility, maxWidth: maxWidth, maxWidthUnit: maxWidthUnit, fillLastRow: fillLastRow, children: children)))
+        results.append(.grid(GridViewElementDescriptor(visibility: visibility, maxWidth: maxWidth, maxWidthUnit: maxWidthUnit, fillLastRow: fillLastRow, spacing: spacing, children: children)))
     }
 
     func clearChildHandlers() {

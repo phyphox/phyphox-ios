@@ -51,8 +51,9 @@ final class ExperimentSwitchView: UIView, DynamicViewModule, DescriptorBoundView
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = UIColor(named: "textColor")
-        //verticalLayout: the label on its own line, left-aligned; without a label the switch takes the row (1.21)
-        label.textAlignment = descriptor.verticalLayout ? .natural : .right
+        //verticalLayout: the label on its own line, following align (left by default); without a label the switch takes
+        //the row (1.21)
+        label.textAlignment = descriptor.verticalLayout ? descriptor.align.textAlignment : .right
         label.isHidden = !descriptor.hasLabel
         
         switchUI = UISwitch()
@@ -130,11 +131,17 @@ final class ExperimentSwitchView: UIView, DynamicViewModule, DescriptorBoundView
         let w = (bounds.width - spacing)/2.0
 
         if !descriptor.hasLabel || descriptor.verticalLayout {
-            //Label row above (if any), the switch at the left edge of its own row
+            //Label row above (if any), the switch in its own row where align puts it (the left edge by default)
             let labelHeight = descriptor.hasLabel ? label.sizeThatFits(CGSize(width: bounds.width, height: CGFLOAT_MAX)).height : 0
             label.frame = CGRect(x: 0, y: 0, width: bounds.width, height: labelHeight)
             let rowHeight = bounds.height - labelHeight
             switchUI.frame = CGRect(origin: CGPoint(x: 0, y: labelHeight + (rowHeight - (h2 - 10.0))/2.0), size: CGSize(width: textFieldWidth, height: h2))
+            //The switch is scaled down, so its rendered width (the frame after the transform) places it, not the 100 pt
+            switch descriptor.align {
+            case .left: break
+            case .center: switchUI.center.x = bounds.width / 2.0
+            case .right: switchUI.center.x = bounds.width - switchUI.frame.width / 2.0
+            }
             return
         }
         

@@ -14,6 +14,7 @@ struct EditViewElementDescriptor {
     let label: String
     let visibility: String
     let verticalLayout: Bool
+    let align: InfoViewElementDescriptor.TextAlignment
     let signed: Bool
     let decimal: Bool
     let min: Double
@@ -42,6 +43,7 @@ final class EditViewElementHandler: ResultElementHandler, LookupElementHandler, 
         case label
         case visibility
         case verticalLayout
+        case align
         case signed
         case decimal
         case max
@@ -57,6 +59,7 @@ final class EditViewElementHandler: ResultElementHandler, LookupElementHandler, 
         let label = attributes.optionalString(for: .label) ?? ""
         let visibility = attributes.optionalString(for: .visibility) ?? ""
         let verticalLayout = try attributes.optionalValue(for: .verticalLayout) ?? false
+        let align: InfoViewElementDescriptor.TextAlignment = try attributes.optionalValue(for: .align) ?? .left
 
         let outputBufferName = try outputHandler.expectSingleResult()
 
@@ -68,7 +71,7 @@ final class EditViewElementHandler: ResultElementHandler, LookupElementHandler, 
         let factor = try attributes.optionalValue(for: .factor) ?? 1.0
         let defaultValue = try attributes.optionalValue(for: .defaultValue) ?? 0.0
 
-        results.append(.edit(EditViewElementDescriptor(label: label, visibility: visibility, verticalLayout: verticalLayout, signed: signed, decimal: decimal, min: min, max: max, unit: unit, factor: factor, defaultValue: defaultValue, outputBufferName: outputBufferName)))
+        results.append(.edit(EditViewElementDescriptor(label: label, visibility: visibility, verticalLayout: verticalLayout, align: align, signed: signed, decimal: decimal, min: min, max: max, unit: unit, factor: factor, defaultValue: defaultValue, outputBufferName: outputBufferName)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

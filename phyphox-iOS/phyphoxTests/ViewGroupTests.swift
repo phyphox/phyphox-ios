@@ -12,6 +12,8 @@ import XCTest
 // phyphox-test: view-stack-transform
 // phyphox-test: view-vertical-layout
 // phyphox-test: grid-screen-unit
+// phyphox-test: view-align
+// phyphox-test: view-group-spacing
 //View groups, the transform and the fixed plot area of file format 1.21 (phyphox-docs views/groups.md and graph.md,
 //"Fixing the plot area"): the geometry the specification fixes, measured on the real modules of a loaded experiment,
 //wired the way the experiment screen wires them. Mirrors Android's ViewGroupsTest. Images and the GL curve need a
@@ -433,6 +435,19 @@ final class ViewGroupTests: XCTestCase {
         let nested = try XCTUnwrap(grid.children[2] as? HorizontalViewDescriptor)
         XCTAssertTrue(try XCTUnwrap(nested.children[0] as? EditViewDescriptor).verticalLayout)
         XCTAssertTrue(try XCTUnwrap(nested.children[1] as? SliderViewDescriptor).verticalLayout)
+        //align and spacing as written (view-align, view-group-spacing)
+        XCTAssertEqual(grid.spacing, 0.5)
+        XCTAssertEqual(nested.spacing, 1)
+        XCTAssertEqual(horizontal.spacing, 0, "the default is the flush layout")
+        XCTAssertEqual(inner.spacing, 0)
+        XCTAssertEqual(try XCTUnwrap(nested.children[0] as? EditViewDescriptor).align, .right)
+        XCTAssertEqual(try XCTUnwrap(nested.children[1] as? SliderViewDescriptor).align, .center)
+        let nestedColumn = try XCTUnwrap(nested.children[2] as? VerticalViewDescriptor)
+        XCTAssertEqual(nestedColumn.spacing, 0.25)
+        XCTAssertEqual(try XCTUnwrap(nestedColumn.children[0] as? ValueViewDescriptor).align, .center, "Center matches case-insensitively")
+        XCTAssertEqual(try XCTUnwrap(nestedColumn.children[1] as? SwitchViewDescriptor).align, .left)
+        XCTAssertEqual(try XCTUnwrap(nestedColumn.children[2] as? DropdownViewDescriptor).align, .right)
+        XCTAssertEqual(try XCTUnwrap(inner.children[2] as? ValueViewDescriptor).align, .center, "align without a label")
 
         let vertical = try XCTUnwrap(views[1].views[0] as? VerticalViewDescriptor)
         let gauge = try XCTUnwrap(vertical.children[0] as? StackViewDescriptor)
@@ -463,18 +478,22 @@ final class ViewGroupTests: XCTestCase {
         XCTAssertTrue(elements[29] is GraphViewDescriptor)
         XCTAssertTrue(html.contains("\"index\": 29,"))
         XCTAssertFalse(html.contains("\"index\": 30,"))
-        XCTAssertTrue(html.contains("{\"type\":\"horizontal\",\"visibilityInput\":\"show\",\"elements\":["))
+        XCTAssertTrue(html.contains("{\"type\":\"horizontal\",\"spacing\":0.0,\"visibilityInput\":\"show\",\"elements\":["), "spacing is always emitted on vertical, horizontal and grid")
         XCTAssertTrue(html.contains("\"index\": 0, \"html\": \"<div style=\\\"font-size: 105%;\\\" class=\\\"buttonElement\\\" id=\\\"element0\\\">"))
         XCTAssertTrue(html.contains("\"dataCompleteFunction\": function() {},\"weight\":2.0"), "weight on a direct child of a horizontal")
-        XCTAssertTrue(html.contains("{\"type\":\"vertical\",\"weight\":1.0,\"elements\":["), "a group child of a horizontal carries its weight too")
-        XCTAssertTrue(html.contains("{\"type\":\"grid\",\"maxWidth\":25.0,\"maxWidthUnit\":\"text\",\"fillLastRow\":true,\"visibilityInput\":\"show\",\"elements\":["))
-        XCTAssertTrue(html.contains("{\"type\":\"grid\",\"maxWidth\":1.0,\"maxWidthUnit\":\"screen\",\"fillLastRow\":false,\"elements\":["))
-        XCTAssertTrue(html.contains("class=\\\"editElement verticalLayout\\\""), "verticalLayout on the edit's div")
-        XCTAssertTrue(html.contains("class=\\\"sliderElement verticalLayout\\\""), "and on the slider with showValue")
+        XCTAssertTrue(html.contains("{\"type\":\"vertical\",\"weight\":1.0,\"spacing\":0.0,\"elements\":["), "a group child of a horizontal carries its weight too")
+        XCTAssertTrue(html.contains("{\"type\":\"horizontal\",\"spacing\":1.0,\"elements\":["))
+        XCTAssertTrue(html.contains("{\"type\":\"vertical\",\"weight\":1.0,\"spacing\":0.25,\"elements\":["))
+        XCTAssertTrue(html.contains("{\"type\":\"grid\",\"spacing\":0.5,\"maxWidth\":25.0,\"maxWidthUnit\":\"text\",\"fillLastRow\":true,\"visibilityInput\":\"show\",\"elements\":["))
+        XCTAssertTrue(html.contains("{\"type\":\"grid\",\"spacing\":0.0,\"maxWidth\":1.0,\"maxWidthUnit\":\"screen\",\"fillLastRow\":false,\"elements\":["))
+        XCTAssertTrue(html.contains("class=\\\"editElement verticalLayout alignRight\\\""), "verticalLayout and the align class on the edit's div")
+        XCTAssertTrue(html.contains("class=\\\"sliderElement verticalLayout alignCenter\\\""), "and on the slider with showValue")
+        XCTAssertTrue(html.contains("class=\\\"switchElement verticalLayout\\\""), "left adds no class")
+        XCTAssertTrue(html.contains("class=\\\"valueElement adjustableColor alignCenter\\\""), "align without a label")
         XCTAssertTrue(html.contains("{\"type\":\"transform\",\"originX\":0.5,\"originY\":0.8,\"transformInputs\":[{\"as\":\"rotate\",\"buffer\":\"percent\",\"value\":null,\"min\":0.0,\"max\":100.0,\"mapMin\":-2.35,\"mapMax\":2.35,\"clamp\":true},{\"as\":\"opacity\",\"buffer\":\"fade\",\"value\":null,\"min\":0.0,\"max\":1.0,\"mapMin\":0.0,\"mapMax\":1.0,\"clamp\":false}],\"visibilityInput\":\"show\",\"elements\":["))
         XCTAssertTrue(html.contains("{\"as\":\"scale\",\"buffer\":null,\"value\":0.1,"))
         XCTAssertTrue(html.contains("\"plotLeft\":0.0,\"plotTop\":0.0,\"plotRight\":1.0,\"plotBottom\":1.0"))
-        XCTAssertTrue(html.contains("\"colorScale\":[\"#0000FF00\",\"#FF0000C0\"]"), "eight-digit colours where the alpha is not ff")
+        XCTAssertTrue(html.contains("\"colorScale\":[\"#0000ff00\",\"#ff0000c0\"]"), "eight-digit colours where the alpha is not ff")
     }
 
     // MARK: - view-vertical-layout
@@ -596,6 +615,230 @@ final class ViewGroupTests: XCTestCase {
         let with = views[9].generateViewHTMLWithID(9)
         XCTAssertTrue(with.contains("valueElement adjustableColor verticalLayout"), with)
         XCTAssertTrue(with.contains("<span class=\"label\">With</span>"))
+    }
+
+    // MARK: - view-align
+
+    func testAlignPositionsLabelAndControlAtFullWidthOnly() throws {
+        let experiment = try load("""
+            <value label="Centred" unit="Hz" verticalLayout="true" align="center"><input>v</input></value>
+            <edit label="Right" unit="m" verticalLayout="true" align="right"><output>v</output></edit>
+            <toggle label="Run" verticalLayout="true" align="right"><output>show</output></toggle>
+            <dropdown label="Choice" verticalLayout="true" align="center"><map value="1">one</map><map value="2">two</map><output>v</output></dropdown>
+            <slider label="Level" minValue="0" maxValue="10" showValue="true" verticalLayout="true" align="right"><output>v</output></slider>
+            <value unit="Hz" align="RIGHT"><input>v</input></value>
+            <toggle align="center"><output>show</output></toggle>
+            <value label="Side by side" unit="Hz" align="right"><input>v</input></value>
+            <slider label="Bar only" minValue="0" maxValue="10" showValue="false" verticalLayout="true" align="right"><output>v</output></slider>
+            <value label="Default" unit="Hz" verticalLayout="true"><input>v</input></value>
+            <dropdown label="Plain"><map value="1">one</map><output>v</output></dropdown>
+            <slider label="Left" minValue="0" maxValue="10" showValue="true" verticalLayout="true"><output>v</output></slider>
+            """)
+        let (controller, rows) = try self.rows(experiment)
+        defer { _ = controller }
+        for row in rows {
+            layout(row, width: 600)
+        }
+        let value = try XCTUnwrap(rows[0] as? ExperimentValueView)
+        let edit = try XCTUnwrap(rows[1] as? ExperimentEditView)
+        let toggle = try XCTUnwrap(rows[2] as? ExperimentSwitchView)
+        let dropdown = try XCTUnwrap(rows[3] as? ExperimentDropdownView)
+        let slider = try XCTUnwrap(rows[4] as? ExperimentSliderView)
+
+        //the label line follows align
+        XCTAssertEqual(value.descriptor.align, .center)
+        XCTAssertEqual(value.label.textAlignment, .center)
+        XCTAssertEqual(edit.label.textAlignment, .right)
+        XCTAssertEqual(toggle.label.textAlignment, .right)
+        XCTAssertEqual(dropdown.label.textAlignment, .center)
+        XCTAssertEqual(slider.label.textAlignment, .right)
+        //the value with its unit is positioned in the row
+        let valueMid = (value.valueLabel.frame.minX + value.unitLabel.frame.maxX) / 2
+        XCTAssertEqual(valueMid, 300, accuracy: 2, "value: centred in the row")
+        XCTAssertEqual(value.unitLabel.frame.minX, value.valueLabel.frame.maxX, accuracy: 0.5, "the unit stays next to the value")
+        //a stretching control keeps its width and aligns its text
+        XCTAssertGreaterThanOrEqual(edit.textField.frame.width, 500)
+        XCTAssertEqual(edit.textField.textAlignment, .right)
+        XCTAssertGreaterThanOrEqual(dropdown.dropdown.frame.width, 560)
+        XCTAssertEqual(dropdown.dropdown.contentHorizontalAlignment, .center)
+        //the switch is positioned
+        XCTAssertEqual(toggle.switchUI.frame.maxX, 600, accuracy: 2, "toggle: at the right edge")
+        //the slider: label and value rows follow align, the bar's row stays
+        XCTAssertGreaterThanOrEqual(slider.sliderValue.frame.width, 560)
+        XCTAssertEqual(slider.sliderValue.textAlignment, .right)
+        XCTAssertEqual(slider.uiSlider.frame.minX, 60, accuracy: 0.5)
+
+        //without a label align applies on its own (and matches case-insensitively)
+        let unlabelled = try XCTUnwrap(rows[5] as? ExperimentValueView)
+        XCTAssertEqual(unlabelled.descriptor.align, .right)
+        XCTAssertEqual(unlabelled.unitLabel.frame.maxX, 590, accuracy: 2, "value: at the right edge (inside the 10 pt margin)")
+        let unlabelledToggle = try XCTUnwrap(rows[6] as? ExperimentSwitchView)
+        XCTAssertEqual(unlabelledToggle.switchUI.frame.midX, 300, accuracy: 2, "toggle: centred")
+
+        //no effect side by side, nor on a slider without showValue
+        let side = try XCTUnwrap(rows[7] as? ExperimentValueView)
+        XCTAssertEqual(side.label.textAlignment, .right)
+        XCTAssertLessThanOrEqual(side.label.frame.maxX, 300.5)
+        XCTAssertGreaterThanOrEqual(side.valueLabel.frame.minX, 299.5)
+        XCTAssertLessThanOrEqual(side.valueLabel.frame.minX, 320, "the value starts at the middle as before")
+        let barOnly = try XCTUnwrap(rows[8] as? ExperimentSliderView)
+        XCTAssertEqual(barOnly.uiSlider.frame.minX, 60, accuracy: 0.5)
+        XCTAssertEqual(barOnly.frame.height, barOnly.sizeThatFits(CGSize(width: 600, height: 1000)).height, accuracy: 0.5)
+
+        //the default is left, rendered as today
+        let plain = try XCTUnwrap(rows[9] as? ExperimentValueView)
+        XCTAssertEqual(plain.descriptor.align, .left)
+        XCTAssertEqual(plain.label.textAlignment, .natural)
+        XCTAssertEqual(plain.valueLabel.frame.minX, 10, accuracy: 0.5)
+        XCTAssertEqual(try XCTUnwrap(rows[10] as? ExperimentDropdownView).dropdown.contentHorizontalAlignment, .center, "side by side the dropdown text stays centred")
+        let left = try XCTUnwrap(rows[11] as? ExperimentSliderView)
+        XCTAssertEqual(left.label.textAlignment, .natural)
+        XCTAssertEqual(left.sliderValue.textAlignment, .natural, "in its own row the value text follows align, left by default")
+
+        //the web markup: alignCenter/alignRight only where the attribute applies, left adds nothing
+        let views = try XCTUnwrap(experiment.viewDescriptors?.first?.views)
+        XCTAssertTrue(views[0].generateViewHTMLWithID(0).contains("class=\"valueElement adjustableColor verticalLayout alignCenter\""))
+        XCTAssertTrue(views[1].generateViewHTMLWithID(1).contains("class=\"editElement verticalLayout alignRight\""))
+        XCTAssertTrue(views[2].generateViewHTMLWithID(2).contains("class=\"switchElement verticalLayout alignRight\""))
+        XCTAssertTrue(views[3].generateViewHTMLWithID(3).contains("class=\"dropdownElement verticalLayout alignCenter\""))
+        XCTAssertTrue(views[4].generateViewHTMLWithID(4).contains("class=\"sliderElement verticalLayout alignRight\""))
+        XCTAssertTrue(views[5].generateViewHTMLWithID(5).contains("class=\"valueElement adjustableColor alignRight\""), "without a label: the align class alone")
+        XCTAssertTrue(views[6].generateViewHTMLWithID(6).contains("class=\"switchElement alignCenter\""))
+        XCTAssertTrue(views[7].generateViewHTMLWithID(7).contains("class=\"valueElement adjustableColor\""), "side by side: no class")
+        XCTAssertTrue(views[8].generateViewHTMLWithID(8).contains("class=\"sliderElement\""), "no showValue: no class")
+        XCTAssertTrue(views[9].generateViewHTMLWithID(9).contains("class=\"valueElement adjustableColor verticalLayout\""), "left adds nothing")
+    }
+
+    func testAnUnknownAlignRejectsTheFileOnEveryElementThatHasIt() throws {
+        let elements = [
+            "value": "<value label=\"l\" align=\"middle\"><input>v</input></value>",
+            "edit": "<edit label=\"l\" align=\"middle\"><output>v</output></edit>",
+            "toggle": "<toggle label=\"l\" align=\"middle\"><output>show</output></toggle>",
+            "dropdown": "<dropdown label=\"l\" align=\"middle\"><map value=\"1\">one</map><output>v</output></dropdown>",
+            "slider": "<slider label=\"l\" minValue=\"0\" maxValue=\"10\" align=\"middle\"><output>v</output></slider>",
+            "info": "<info label=\"l\" align=\"middle\" />"
+        ]
+        for (name, body) in elements {
+            XCTAssertThrowsError(try load(body), name)
+        }
+        //the info element's alignment reaches the browser as an inline text-align, like on Android
+        let experiment = try load("<info label=\"a\" align=\"right\" /><info label=\"b\" align=\"center\" /><info label=\"c\" />")
+        let views = try XCTUnwrap(experiment.viewDescriptors?.first?.views)
+        XCTAssertTrue(views[0].generateViewHTMLWithID(0).contains("text-align:end;"))
+        XCTAssertTrue(views[1].generateViewHTMLWithID(1).contains("text-align:center;"))
+        XCTAssertTrue(views[2].generateViewHTMLWithID(2).contains("text-align:start;"))
+    }
+
+    // MARK: - view-group-spacing
+
+    func testSpacingInsertsGapsBetweenVisibleChildrenOnly() throws {
+        let experiment = try load("""
+            <horizontal spacing="1">
+                <value label="two" weight="2"><input>v</input></value>
+                <value label="one"><input>v</input></value>
+                <value label="gone" visibility="hide"><input>v</input></value>
+                <value label="one"><input>v</input></value>
+            </horizontal>
+            <vertical spacing="0.5">
+                <value label="a"><input>v</input></value>
+                <value label="hidden" visibility="hide"><input>v</input></value>
+                <value label="b"><input>v</input></value>
+            </vertical>
+            <horizontal spacing="-2">
+                <value label="a"><input>v</input></value>
+                <value label="b"><input>v</input></value>
+            </horizontal>
+            <vertical>
+                <value label="a"><input>v</input></value>
+                <value label="b"><input>v</input></value>
+            </vertical>
+            """)
+        let views = try XCTUnwrap(experiment.viewDescriptors?.first?.views)
+        XCTAssertEqual(try XCTUnwrap(views[0] as? HorizontalViewDescriptor).spacing, 1)
+        XCTAssertEqual(try XCTUnwrap(views[1] as? VerticalViewDescriptor).spacing, 0.5)
+        XCTAssertEqual(try XCTUnwrap(views[2] as? HorizontalViewDescriptor).spacing, 0, "negative is treated as 0")
+        XCTAssertEqual(try XCTUnwrap(views[3] as? VerticalViewDescriptor).spacing, 0, "the default is 0")
+
+        let (controller, rows) = try self.rows(experiment)
+        defer { _ = controller }
+
+        //horizontal: two gaps between the three visible children come off the width, 2:1:1 shares the rest
+        let row = try group(rows[0])
+        XCTAssertEqual(row.gap, unit, accuracy: 1e-6)
+        layout(row, width: 1000)
+        let shared = 1000 - 2 * unit
+        let children = row.childModules
+        XCTAssertEqual(children[0].frame.width, shared / 2, accuracy: 1)
+        XCTAssertEqual(children[1].frame.width, shared / 4, accuracy: 1)
+        XCTAssertEqual(children[3].frame.width, shared / 4, accuracy: 1)
+        XCTAssertEqual(children[0].frame.minX, 0, accuracy: 0.5, "no gap at the left edge")
+        XCTAssertEqual(children[1].frame.minX, shared / 2 + unit, accuracy: 1)
+        XCTAssertTrue(children[2].isHidden)
+        XCTAssertEqual(children[3].frame.minX, 3 * shared / 4 + 2 * unit, accuracy: 1, "one gap next to the hidden child, not two")
+        XCTAssertEqual(children[3].frame.maxX, 1000, accuracy: 1, "no gap at the right edge")
+
+        //vertical: the same gap between rows, none for the hidden child
+        let column = try group(rows[1])
+        let size = layout(column, width: 600)
+        let stacked = column.childModules
+        XCTAssertEqual(stacked[0].frame.minY, 0, accuracy: 0.5)
+        XCTAssertEqual(stacked[2].frame.minY, stacked[0].frame.maxY + unit / 2, accuracy: 0.5)
+        XCTAssertEqual(size.height, stacked[2].frame.maxY, accuracy: 0.5, "no gap at the bottom")
+
+        //spacing 0 is the flush layout
+        let flush = try group(rows[2])
+        layout(flush, width: 1000)
+        XCTAssertEqual(flush.childModules[1].frame.minX, 500, accuracy: 0.5)
+        let flushColumn = try group(rows[3])
+        layout(flushColumn, width: 600)
+        XCTAssertEqual(flushColumn.childModules[1].frame.minY, flushColumn.childModules[0].frame.maxY, accuracy: 0.5)
+
+        //the view layout JSON carries the gap in text line heights
+        let (path, _) = WebServerUtilities.prepareWebServerFilesForExperiment(experiment)
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        let html = try String(contentsOfFile: path + "/index.html", encoding: .utf8)
+        XCTAssertTrue(html.contains("{\"type\":\"horizontal\",\"spacing\":1.0,\"elements\":["))
+        XCTAssertTrue(html.contains("{\"type\":\"vertical\",\"spacing\":0.5,\"elements\":["))
+        XCTAssertTrue(html.contains("{\"type\":\"horizontal\",\"spacing\":0.0,\"elements\":["), "negative became 0")
+    }
+
+    func testGridSpacingCountsInTheColumnsAndSitsBetweenColumnsAndRows() throws {
+        let values = (1...5).map { "<value label=\"v\($0)\"><input>v</input></value>" }.joined()
+        let experiment = try load("<grid maxWidth=\"10\" spacing=\"2\">\(values)</grid><grid maxWidth=\"10\" spacing=\"2\" fillLastRow=\"true\">\(values)</grid>")
+        let (controller, rows) = try self.rows(experiment)
+        defer { _ = controller }
+        let grid = try group(rows[0])
+        let filling = try group(rows[1])
+        XCTAssertEqual(grid.gap, 2 * unit, accuracy: 1e-6)
+
+        //the smallest n with (W - (n-1)·s) / n <= maxWidth: two columns of 10 need 22 units, three need 34
+        XCTAssertEqual(grid.gridColumns(width: 10 * unit), 1)
+        XCTAssertEqual(grid.gridColumns(width: 10 * unit + 1), 2)
+        XCTAssertEqual(grid.gridColumns(width: 22 * unit), 2)
+        XCTAssertEqual(grid.gridColumns(width: 22 * unit + 1), 3)
+        XCTAssertEqual(grid.gridColumns(width: 34 * unit), 3)
+        XCTAssertEqual(grid.gridColumns(width: 34 * unit + 1), 4)
+
+        //three columns share the width left after two gaps; the gap sits between columns and between rows
+        let width = 30 * unit
+        let columnWidth = (width - 2 * 2 * unit) / 3
+        layout(grid, width: width)
+        let cells = grid.childModules
+        XCTAssertEqual(cells[0].frame.width, columnWidth, accuracy: 1)
+        XCTAssertEqual(cells[0].frame.minX, 0, accuracy: 0.5)
+        XCTAssertEqual(cells[1].frame.minX, columnWidth + 2 * unit, accuracy: 1)
+        XCTAssertEqual(cells[2].frame.maxX, width, accuracy: 1, "no gap at the right edge")
+        XCTAssertEqual(cells[3].frame.minY, cells[0].frame.maxY + 2 * unit, accuracy: 1, "the same gap between rows")
+        XCTAssertEqual(cells[3].frame.width, columnWidth, accuracy: 1, "an incomplete last row keeps the column width")
+        XCTAssertEqual(cells[4].frame.minX, columnWidth + 2 * unit, accuracy: 1)
+        XCTAssertEqual(grid.sizeThatFits(CGSize(width: width, height: 10000)).height, cells[4].frame.maxY, accuracy: 0.5, "no gap at the bottom")
+
+        //with fillLastRow the two children of the last row share the width left after their own gap
+        layout(filling, width: width)
+        let last = filling.childModules
+        XCTAssertEqual(last[3].frame.width, (width - 2 * unit) / 2, accuracy: 1)
+        XCTAssertEqual(last[4].frame.minX, (width - 2 * unit) / 2 + 2 * unit, accuracy: 1)
+        XCTAssertEqual(last[4].frame.maxX, width, accuracy: 1)
     }
 
     // MARK: - grid-screen-unit

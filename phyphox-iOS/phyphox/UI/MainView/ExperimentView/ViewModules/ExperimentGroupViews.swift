@@ -35,12 +35,13 @@ extension UIView {
 ///vertical, horizontal, grid and stack. A child keeps the size it reports at the width it is given and is centred in its
 ///cell, like a top-level module in its table row; the manual-frame style of the leaf modules is kept.
 final class ExperimentGroupView: UIView, ContainerViewModule, VisibilityControllableViewModule {
+    ///spacing is the gap between adjacent visible children in text line heights (file format 1.21); 0 is the flush layout
     enum Kind {
-        case vertical
-        case horizontal(weights: [CGFloat])
+        case vertical(spacing: CGFloat)
+        case horizontal(weights: [CGFloat], spacing: CGFloat)
         ///maxWidth in text line heights (the unit of the separator's height) or, with screenUnit, in multiples of
-        ///the shorter side of the app's window
-        case grid(maxWidth: CGFloat, screenUnit: Bool, fillLastRow: Bool)
+        ///the shorter side of the app's window; spacing sits between columns and between rows alike
+        case grid(maxWidth: CGFloat, screenUnit: Bool, fillLastRow: Bool, spacing: CGFloat)
         case stack
     }
 
@@ -76,19 +77,30 @@ final class ExperimentGroupView: UIView, ContainerViewModule, VisibilityControll
         return false
     }
 
-    ///Columns of a grid at the given width: the smallest count keeping each column at or below maxWidth. The screen
-    ///unit is the shorter side of the window the group is in (the scene's window, so Split View and Slide Over count
-    ///with their own size), not the display.
+    ///The gap between adjacent visible children in points: text line heights, the unit of the separator's height
+    var gap: CGFloat {
+        switch kind {
+        case .vertical(let spacing), .horizontal(_, let spacing), .grid(_, _, _, let spacing):
+            return spacing.isFinite ? Swift.max(spacing, 0) * fontScale : 0
+        case .stack:
+            return 0
+        }
+    }
+
+    ///Columns of a grid at the given width: the smallest count keeping each column at or below maxWidth, the gaps
+    ///counted - the smallest n with (width - (n-1)·gap) / n <= maxWidth, i.e. n >= (width + gap) / (maxWidth + gap).
+    ///The screen unit is the shorter side of the window the group is in (the scene's window, so Split View and Slide
+    ///Over count with their own size), not the display.
     func gridColumns(width: CGFloat) -> Int {
         return gridColumns(width: width, windowSize: window?.bounds.size ?? UIScreen.main.bounds.size)
     }
 
     func gridColumns(width: CGFloat, windowSize: CGSize) -> Int {
-        guard case .grid(let maxWidth, let screenUnit, _) = kind else { return 1 }
+        guard case .grid(let maxWidth, let screenUnit, _, _) = kind else { return 1 }
         let unit = screenUnit ? Swift.min(windowSize.width, windowSize.height) : fontScale
         let columnWidth = maxWidth * unit
         guard columnWidth > 0, columnWidth.isFinite, width > columnWidth else { return 1 }
-        return Int((width / columnWidth - 1e-6).rounded(.up))
+        return Swift.max(1, Int(((width + gap) / (columnWidth + gap) - 1e-6).rounded(.up)))
     }
 
     ///Frames of the children (nil for a child that takes no space) at the given width, and the group's own size
@@ -107,6 +119,8 @@ final class ExperimentGroupView: UIView, ContainerViewModule, VisibilityControll
 
         let visible = childModules.enumerated().filter { $0.element.takesSpace }
         guard !visible.isEmpty else { return (frames, CGSize(width: width, height: 0)) }
+        //Between adjacent visible children only: none at the outer edges, none for a hidden child
+        let gap = self.gap
 
         //A child is centred in its cell; it may report a narrower size (info and image keep side margins)
         func place(_ child: UIView, in cell: CGRect) -> CGRect {
@@ -119,7 +133,10 @@ final class ExperimentGroupView: UIView, ContainerViewModule, VisibilityControll
         switch kind {
         case .vertical:
             var y: CGFloat = 0
-            for (index, child) in visible {
+            for (position, (index, child)) in visible.enumerated() {
+                if position > 0 {
+                    y += gap
+                }
                 let fitted = child.sizeThatFits(unbounded)
                 let w = Swift.min(Swift.max(fitted.width, 0), width)
                 let h = fitted.height.isFinite ? Swift.max(fitted.height, 0) : 0
@@ -128,21 +145,22 @@ final class ExperimentGroupView: UIView, ContainerViewModule, VisibilityControll
             }
             return (frames, CGSize(width: width, height: y))
 
-        case .horizontal(let weights):
-            //The row splits by weight; a hidden child gives its share to its siblings
+        case .horizontal(let weights, _):
+            //The gaps come off the width first, the rest splits by weight; a hidden child gives its share to its siblings
             var total: CGFloat = 0
             for (index, _) in visible {
                 let weight = index < weights.count ? weights[index] : 1
                 total += weight > 0 && weight.isFinite ? weight : 0
             }
+            let shared = Swift.max(width - gap * CGFloat(visible.count - 1), 0)
             var columns: [(index: Int, x: CGFloat, width: CGFloat)] = []
             var x: CGFloat = 0
             for (index, _) in visible {
                 let weight = index < weights.count ? weights[index] : 1
                 let share = total > 0 ? (weight > 0 && weight.isFinite ? weight : 0) / total : 1.0 / CGFloat(visible.count)
-                let columnWidth = width * share
+                let columnWidth = shared * share
                 columns.append((index, x, columnWidth))
-                x += columnWidth
+                x += columnWidth + gap
             }
             //The row is as tall as its tallest child, the others are centred vertically
             var rowHeight: CGFloat = 0
@@ -157,14 +175,19 @@ final class ExperimentGroupView: UIView, ContainerViewModule, VisibilityControll
             }
             return (frames, CGSize(width: width, height: rowHeight))
 
-        case .grid(_, _, let fillLastRow):
+        case .grid(_, _, let fillLastRow, _):
             let columns = gridColumns(width: width)
             var y: CGFloat = 0
             var start = 0
             while start < visible.count {
+                if start > 0 {
+                    y += gap
+                }
                 let row = Array(visible[start..<Swift.min(start + columns, visible.count)])
-                //An incomplete last row keeps the column width unless fillLastRow stretches its children over the row
-                let columnWidth = width / CGFloat(fillLastRow ? row.count : columns)
+                //The columns share the width left after the gaps. An incomplete last row keeps the column width unless
+                //fillLastRow stretches its children over the row (sharing what its own gaps leave)
+                let count = fillLastRow ? row.count : columns
+                let columnWidth = Swift.max(width - gap * CGFloat(count - 1), 0) / CGFloat(count)
                 var rowHeight: CGFloat = 0
                 for (_, child) in row {
                     let fitted = child.sizeThatFits(CGSize(width: columnWidth, height: CGFloat.greatestFiniteMagnitude))
@@ -173,7 +196,7 @@ final class ExperimentGroupView: UIView, ContainerViewModule, VisibilityControll
                     }
                 }
                 for (position, (index, child)) in row.enumerated() {
-                    frames[index] = place(child, in: CGRect(x: CGFloat(position) * columnWidth, y: y, width: columnWidth, height: rowHeight))
+                    frames[index] = place(child, in: CGRect(x: CGFloat(position) * (columnWidth + gap), y: y, width: columnWidth, height: rowHeight))
                 }
                 y += rowHeight
                 start += columns

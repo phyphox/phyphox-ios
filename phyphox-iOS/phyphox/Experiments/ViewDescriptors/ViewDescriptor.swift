@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 
 protocol ViewDescriptor {
     var label: String { get }
@@ -34,9 +35,23 @@ extension ViewDescriptor {
         return hasLabel ? "<span class=\"label\">\(localizedLabel)</span>" : ""
     }
 
-    ///The class that puts the label above the control in the web interface
-    func labelLayoutClass(verticalLayout: Bool) -> String {
-        return hasLabel && verticalLayout ? " verticalLayout" : ""
+    ///Whether label and control take the full width - with verticalLayout, or without a label - which is where align applies
+    func isFullWidth(verticalLayout: Bool) -> Bool {
+        return !hasLabel || verticalLayout
+    }
+
+    ///The classes that go with the label handling of the web markup: verticalLayout, and alignCenter or alignRight
+    ///where align applies (phyphox-webinterface readme.md, "Labels"); left adds nothing
+    func labelLayoutClass(verticalLayout: Bool, align: InfoViewElementDescriptor.TextAlignment = .left) -> String {
+        var classes = hasLabel && verticalLayout ? " verticalLayout" : ""
+        if isFullWidth(verticalLayout: verticalLayout) {
+            switch align {
+            case .center: classes += " alignCenter"
+            case .right: classes += " alignRight"
+            case .left: break
+            }
+        }
+        return classes
     }
 
     func generateDataCompleteHTMLWithID(_ id: Int) -> String {
@@ -47,6 +62,35 @@ extension ViewDescriptor {
         return "function(x) {}"
     }
 
+}
+
+extension InfoViewElementDescriptor.TextAlignment {
+    ///The UIKit alignment; left is .natural like the labels of the full-width layouts (RTL is not supported yet)
+    var textAlignment: NSTextAlignment {
+        switch self {
+        case .left: return .natural
+        case .center: return .center
+        case .right: return .right
+        }
+    }
+
+    ///The alignment of a button's content, for a control that spans the row and aligns its text
+    var contentHorizontalAlignment: UIControl.ContentHorizontalAlignment {
+        switch self {
+        case .left: return .left
+        case .center: return .center
+        case .right: return .right
+        }
+    }
+
+    ///The CSS value of the info element's inline text-align, as Android emits it
+    var cssTextAlign: String {
+        switch self {
+        case .left: return "start"
+        case .center: return "center"
+        case .right: return "end"
+        }
+    }
 }
 
 protocol ResourceViewDescriptor: ViewDescriptor {

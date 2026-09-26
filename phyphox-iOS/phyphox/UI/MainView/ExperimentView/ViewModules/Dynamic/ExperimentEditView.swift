@@ -50,8 +50,9 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = UIColor(named: "textColor")
-        //verticalLayout: the label on its own line, left-aligned; without a label the field takes the whole row (1.21)
-        label.textAlignment = descriptor.verticalLayout ? .natural : .right
+        //verticalLayout: the label on its own line, following align (left by default); without a label the field takes
+        //the whole row (1.21)
+        label.textAlignment = descriptor.verticalLayout ? descriptor.align.textAlignment : .right
         label.isHidden = !descriptor.hasLabel
 
         formatter.numberStyle = .decimal
@@ -65,6 +66,10 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         
         textField.borderStyle = .roundedRect
         textField.keyboardType = .decimalPad
+        //At full width the field spans the row with its unit and only its text follows align
+        if !descriptor.hasLabel || descriptor.verticalLayout {
+            textField.textAlignment = descriptor.align.textAlignment
+        }
         
         if descriptor.unit != nil {
             unitLabel = {

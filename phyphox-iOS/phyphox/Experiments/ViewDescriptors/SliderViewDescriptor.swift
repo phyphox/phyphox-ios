@@ -19,6 +19,8 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     var label: String
     //Label, value and slider in three rows (file format 1.21; only with showValue)
     let verticalLayout: Bool
+    //Alignment of the label and value rows at full width (only with showValue; file format 1.21)
+    let align: InfoViewElementDescriptor.TextAlignment
     var visibilityBuffer: DataBuffer?
     
     let minValue: Double
@@ -33,8 +35,9 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
     
     var translation: ExperimentTranslationCollection?
     
-    init(label: String, visibilityBuffer: DataBuffer?, minValue: Double, maxValue: Double, stepSize: Double, defaultValue: Double, precision: Int, outputBuffers: [SliderOutputValueType: DataBuffer], translation: ExperimentTranslationCollection?, type: SliderType, showValue: Bool, verticalLayout: Bool = false) {
+    init(label: String, visibilityBuffer: DataBuffer?, minValue: Double, maxValue: Double, stepSize: Double, defaultValue: Double, precision: Int, outputBuffers: [SliderOutputValueType: DataBuffer], translation: ExperimentTranslationCollection?, type: SliderType, showValue: Bool, verticalLayout: Bool = false, align: InfoViewElementDescriptor.TextAlignment = .left) {
         self.verticalLayout = verticalLayout
+        self.align = align
         self.label = label
         self.visibilityBuffer = visibilityBuffer
         
@@ -66,14 +69,14 @@ struct SliderViewDescriptor: ViewDescriptor, Equatable {
 
         return (type == SliderType.Range) ? generateTwoSlidersHTML(id) :
 
-        "<div style=\"font-size: 105%;\" class=\"sliderElement\(showValue ? labelLayoutClass(verticalLayout: verticalLayout) : "")\" id=\"element\(id)\">\(valueTag)<div class=\"sliderContainer\"><span class=\"minValue\" id=\"minValue\(id)\">\(minValue)</span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" step=\(getStepSize())></input><span class=\"maxValue\" id=\"maxValue\(id)\">\(maxValue)</span></div></div>"
+        "<div style=\"font-size: 105%;\" class=\"sliderElement\(showValue ? labelLayoutClass(verticalLayout: verticalLayout, align: align) : "")\" id=\"element\(id)\">\(valueTag)<div class=\"sliderContainer\"><span class=\"minValue\" id=\"minValue\(id)\">\(minValue)</span><input type=\"range\" class=\"slider\" id=\"input\(id)\" min=\"1\" max=\"100\" value=\"100\" step=\(getStepSize())></input><span class=\"maxValue\" id=\"maxValue\(id)\">\(maxValue)</span></div></div>"
     }
 
     private func generateTwoSlidersHTML(_ id: Int) -> String{
         let valueTag = showValue ? labelSpanHTML() +
         "<span class=\"value\" id=\"value\(id)\">\(defaultValue)</span>" : ""
         
-        return "<div style=\"font-size: 105%;\" class=\"sliderElement\(showValue ? labelLayoutClass(verticalLayout: verticalLayout) : "")\" id=\"element\(id)\">" + valueTag +
+        return "<div style=\"font-size: 105%;\" class=\"sliderElement\(showValue ? labelLayoutClass(verticalLayout: verticalLayout, align: align) : "")\" id=\"element\(id)\">" + valueTag +
                                                     "<div class=\"sliderContainer\">" +
                                                     "<span class=\"minValue\" >\(minValue)</span>" +
                                                         "<input type=\"range\" class=\"slider\" id=\"input\(id)\"" +

@@ -36,6 +36,7 @@ struct DropdownViewElementDescriptor {
     var label: String
     var visibility: String
     var verticalLayout: Bool
+    var align: InfoViewElementDescriptor.TextAlignment
     
     let defaultValue: Double
     
@@ -62,6 +63,7 @@ final class DropdownViewElementHandler : ResultElementHandler, LookupElementHand
         case label
         case visibility
         case verticalLayout
+        case align
         case defaultValue = "default"
     }
     
@@ -81,6 +83,7 @@ final class DropdownViewElementHandler : ResultElementHandler, LookupElementHand
         let label = attributes.optionalString(for: .label) ?? ""
         let visibility = attributes.optionalString(for: .visibility) ?? ""
         let verticalLayout = try attributes.optionalValue(for: .verticalLayout) ?? false
+        let align: InfoViewElementDescriptor.TextAlignment = try attributes.optionalValue(for: .align) ?? .left
         
         let outputBufferName = try outputHandler.expectSingleResult()
         
@@ -88,7 +91,7 @@ final class DropdownViewElementHandler : ResultElementHandler, LookupElementHand
         
         let mappings = mapHandler.results
         
-        results.append(.dropdown(DropdownViewElementDescriptor(label: label, visibility: visibility, verticalLayout: verticalLayout, defaultValue: defaultValue, outputBufferName: outputBufferName, mappings: mappings)))
+        results.append(.dropdown(DropdownViewElementDescriptor(label: label, visibility: visibility, verticalLayout: verticalLayout, align: align, defaultValue: defaultValue, outputBufferName: outputBufferName, mappings: mappings)))
         
     }
     

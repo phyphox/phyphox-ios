@@ -35,12 +35,14 @@ struct EditViewDescriptor: ViewDescriptor, Equatable {
     let label: String
     //Label on its own line above the field (file format 1.21)
     let verticalLayout: Bool
+    let align: InfoViewElementDescriptor.TextAlignment
     let translation: ExperimentTranslationCollection?
     
     var visibilityBuffer : DataBuffer?
 
-    init(label: String, visibilityBuffer : DataBuffer?, translation: ExperimentTranslationCollection?, signed: Bool, decimal: Bool, unit: String?, factor: Double, min: Double, max: Double, defaultValue: Double, buffer: DataBuffer, verticalLayout: Bool = false) {
+    init(label: String, visibilityBuffer : DataBuffer?, translation: ExperimentTranslationCollection?, signed: Bool, decimal: Bool, unit: String?, factor: Double, min: Double, max: Double, defaultValue: Double, buffer: DataBuffer, verticalLayout: Bool = false, align: InfoViewElementDescriptor.TextAlignment = .left) {
         self.verticalLayout = verticalLayout
+        self.align = align
         self.signed = signed
         self.decimal = decimal
         self.unit = unit
@@ -71,7 +73,7 @@ struct EditViewDescriptor: ViewDescriptor, Equatable {
             restrictions += "step=\"1\" "
         }
         
-        return "<div style=\"font-size: 105%;\" class=\"editElement\(labelLayoutClass(verticalLayout: verticalLayout))\" id=\"element\(id)\">\(labelSpanHTML())<input onchange=\"ajax('control?cmd=set&buffer=\(buffer.name)&value='+this.value/\(factor))\" type=\"number\" class=\"value\" \(restrictions) /><span class=\"unit\">\(localizedUnit ?? "")</span></div>"
+        return "<div style=\"font-size: 105%;\" class=\"editElement\(labelLayoutClass(verticalLayout: verticalLayout, align: align))\" id=\"element\(id)\">\(labelSpanHTML())<input onchange=\"ajax('control?cmd=set&buffer=\(buffer.name)&value='+this.value/\(factor))\" type=\"number\" class=\"value\" \(restrictions) /><span class=\"unit\">\(localizedUnit ?? "")</span></div>"
     }
 
     func setDataHTMLWithID(_ id: Int) -> String {

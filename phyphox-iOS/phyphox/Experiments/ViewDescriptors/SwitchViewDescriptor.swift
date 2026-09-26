@@ -15,6 +15,7 @@ struct SwitchViewDescriptor: ViewDescriptor, Equatable {
     let label: String
     //Label on its own line above the switch (file format 1.21)
     let verticalLayout: Bool
+    let align: InfoViewElementDescriptor.TextAlignment
     var visibilityBuffer: DataBuffer?
     let translation: ExperimentTranslationCollection?
     
@@ -22,8 +23,9 @@ struct SwitchViewDescriptor: ViewDescriptor, Equatable {
         return buffer.last ?? defaultValue
     }
     
-    init(label: String, visibilityBuffer: DataBuffer?, translation: ExperimentTranslationCollection?, defaultValue: Double, buffer: DataBuffer, verticalLayout: Bool = false) {
+    init(label: String, visibilityBuffer: DataBuffer?, translation: ExperimentTranslationCollection?, defaultValue: Double, buffer: DataBuffer, verticalLayout: Bool = false, align: InfoViewElementDescriptor.TextAlignment = .left) {
         self.verticalLayout = verticalLayout
+        self.align = align
         
         self.defaultValue = defaultValue
         self.buffer = buffer
@@ -36,7 +38,7 @@ struct SwitchViewDescriptor: ViewDescriptor, Equatable {
         
         let defaultSwitchValue = (defaultValue == 1.0)
         
-        return "<div style=\"font-size: 105%;\" class=\"switchElement\(labelLayoutClass(verticalLayout: verticalLayout))\" id=\"element\(id)\">\(labelSpanHTML())<input type=\"checkbox\" class=\"value\" id=\"radio\(id)\" \(defaultSwitchValue) ></input></div>"
+        return "<div style=\"font-size: 105%;\" class=\"switchElement\(labelLayoutClass(verticalLayout: verticalLayout, align: align))\" id=\"element\(id)\">\(labelSpanHTML())<input type=\"checkbox\" class=\"value\" id=\"radio\(id)\" \(defaultSwitchValue) ></input></div>"
     }
     
     func setDataHTMLWithID(_ id: Int) -> String {

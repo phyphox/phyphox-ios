@@ -46,8 +46,9 @@ final class ExperimentValueView: UIView, DynamicViewModule, ResizingViewModule, 
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = descriptor.color.autoLightColor()
-        //verticalLayout: the label on its own line, left-aligned; without a label the value takes the whole row (1.21)
-        label.textAlignment = descriptor.verticalLayout ? .natural : .right
+        //verticalLayout: the label on its own line, following align (left by default); without a label the value takes
+        //the whole row (1.21)
+        label.textAlignment = descriptor.verticalLayout ? descriptor.align.textAlignment : .right
         label.isHidden = !descriptor.hasLabel
 
         valueLabel.numberOfLines = 0
@@ -196,9 +197,16 @@ final class ExperimentValueView: UIView, DynamicViewModule, ResizingViewModule, 
             let valueHeight = valueLabel.sizeThatFits(CGSize(width: valueWidth, height: CGFLOAT_MAX)).height
             let unitHeight = unitLabel.sizeThatFits(CGSize(width: unitWidth, height: CGFLOAT_MAX)).height
             let rowHeight = max(valueHeight, unitHeight)
+            //The value with its unit is not stretched, so align positions it in the row
+            let offset: CGFloat
+            switch descriptor.align {
+            case .left: offset = 0
+            case .center: offset = max(rowWidth - valueWidth - unitWidth, 0) / 2.0
+            case .right: offset = max(rowWidth - valueWidth - unitWidth, 0)
+            }
             let labelFrame = CGRect(x: spacing, y: 0, width: rowWidth, height: labelHeight)
-            let valueFrame = CGRect(x: spacing, y: labelHeight, width: valueWidth, height: rowHeight)
-            let unitFrame = CGRect(x: spacing + valueWidth, y: labelHeight, width: unitWidth, height: rowHeight)
+            let valueFrame = CGRect(x: spacing + offset, y: labelHeight, width: valueWidth, height: rowHeight)
+            let unitFrame = CGRect(x: spacing + offset + valueWidth, y: labelHeight, width: unitWidth, height: rowHeight)
             return (labelFrame, valueFrame, unitFrame, labelHeight + rowHeight)
         }
         

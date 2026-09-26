@@ -48,14 +48,17 @@ final class ExperimentDropdownView: UIView, DynamicViewModule, DescriptorBoundVi
         label.text = descriptor.localizedLabel
         label.font = UIFont.preferredFont(forTextStyle: .body)
         label.textColor = UIColor(named: "textColor")
-        //verticalLayout: the label on its own line, left-aligned; without a label the dropdown takes the row (1.21)
-        label.textAlignment = descriptor.verticalLayout ? .natural : .right
+        //verticalLayout: the label on its own line, following align (left by default); without a label the dropdown takes
+        //the row (1.21)
+        label.textAlignment = descriptor.verticalLayout ? descriptor.align.textAlignment : .right
         label.isHidden = !descriptor.hasLabel
         
         dropdown = UIButton(type : .system)
         dropdown.backgroundColor = UIColor.lightGray.withAlphaComponent(0.2)
         dropdown.layer.cornerRadius = 8
-        dropdown.contentHorizontalAlignment = .center
+        //At full width the dropdown spans the row and only its text follows align (left by default, as on Android and
+        //in the browser); side by side it stays centred
+        dropdown.contentHorizontalAlignment = (!descriptor.hasLabel || descriptor.verticalLayout) ? descriptor.align.contentHorizontalAlignment : .center
                 
         super.init(frame: .zero)
         
