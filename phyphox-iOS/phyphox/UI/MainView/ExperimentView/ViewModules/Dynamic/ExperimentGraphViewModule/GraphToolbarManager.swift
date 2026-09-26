@@ -257,11 +257,11 @@ extension ExperimentGraphView : UITableViewDataSource, UITableViewDelegate {
         
         // Log scale items
         if descriptor.logX {
-            elements.append((localize("graph_tools_log_x"), logX, { self.dataManager.toggleLogX() }))
+            elements.append((localize("graph_tools_log_x"), dataManager.logX, { self.dataManager.toggleLogX() }))
         }
         
         if descriptor.logY {
-            elements.append((localize("graph_tools_log_y"), logY, { self.dataManager.toggleLogY() }))
+            elements.append((localize("graph_tools_log_y"), dataManager.logY, { self.dataManager.toggleLogY() }))
         }
         
         return elements

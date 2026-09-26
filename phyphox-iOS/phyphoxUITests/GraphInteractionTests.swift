@@ -9,7 +9,9 @@ import XCTest
 
 //The maximized graph's tools over phyphox-docs fixtures/views/graphs-interaction.phyphox (test-matrix row
 //graph-interaction): a straight line y = 2x + 1 with pick outputs, so every read-out has an exact value, and a
-//graph over empty containers that has to survive every gesture (the Android 1.2.1 crash was in its pick handler).
+//graph over empty containers that has to survive every gesture (the Android 1.2.1 crash was in its pick handler), and a
+//graph on log axes whose menu items switch each axis back to linear (iOS 1.2.1 kept clamping the linear axis to the
+//log limit, freezing pan and zoom on the audio spectrum).
 //The plot is reached through its accessibility element, whose value reports the visible axis ranges; taps and
 //drags are placed by converting data coordinates through those ranges.
 final class GraphInteractionTests: XCTestCase {
@@ -138,6 +140,19 @@ final class GraphInteractionTests: XCTestCase {
         action.tap()
     }
 
+    ///Whether the tools menu shows this item checked, read from its cell's selected trait; the menu is closed again
+    private func menuItemChecked(_ label: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) -> Bool {
+        tool("More tools", in: app).tap()
+        let text = app.cells.staticTexts[label].firstMatch
+        XCTAssertTrue(text.waitForExistence(timeout: 5), "the tools menu offers \"\(label)\"", file: file, line: line)
+        let cell = app.cells.containing(.staticText, identifier: label).firstMatch
+        let checked = cell.isSelected
+        //Anchored to the toolbar, the sheet is a popover without a cancel button: a tap outside, into the plot, closes it
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3)).tap()
+        XCTAssertTrue(text.waitForNonExistence(timeout: 5), "the tools menu closed again", file: file, line: line)
+        return checked
+    }
+
     ///The read-out box the marker system shows for a pick, a drag or a fit
     private func readOut(containing fragments: [String], in app: XCUIApplication, timeout: TimeInterval = 5) -> Bool {
         let predicate = NSPredicate(format: fragments.map { _ in "label CONTAINS %@" }.joined(separator: " AND "),
@@ -240,6 +255,51 @@ final class GraphInteractionTests: XCTestCase {
 
         toggleMaximized("line", in: app)
         XCTAssertTrue(plot("empty", in: app).waitForExistence(timeout: 5), "the page comes back without a zoom prompt")
+    }
+
+    //The log graph's menu items switch each axis to linear: the checkmarks follow, the ranges read in the axes' own
+    //units, and a pan moves the now linear x axis by the dragged fraction (its values lie above the log limit of 87.5
+    //that the zoom clamped to while it still took the axis for logarithmic)
+    // phyphox-test: graph-interaction
+    func testLogScaleToggle() throws {
+        let app = try launch()
+        toggleMaximized("log", in: app)
+        let area = plot("log", in: app)
+        guard let logarithmic = ranges(of: area) else { return }
+        XCTAssertGreaterThan(logarithmic.minX, 0, "a log axis reports its range in the axis' own units")
+        XCTAssertTrue(menuItemChecked("Logarithmic x axis", in: app), "the x axis starts out logarithmic, as the file says")
+        XCTAssertTrue(menuItemChecked("Logarithmic y axis", in: app), "the y axis starts out logarithmic, as the file says")
+
+        menuAction("Logarithmic x axis", in: app)
+        menuAction("Logarithmic y axis", in: app)
+        XCTAssertFalse(menuItemChecked("Logarithmic x axis", in: app), "the checkmark follows the toggle")
+        XCTAssertFalse(menuItemChecked("Logarithmic y axis", in: app), "the checkmark follows the toggle")
+
+        //Linear now: x runs from 100 to 900 and y from 201 to 1801 plus the headroom on the automatic ends
+        let deadline = Date().addingTimeInterval(5)
+        var linear = logarithmic
+        repeat {
+            if let now = ranges(of: area) { linear = now }
+        } while linear.maxX > 1100 && Date() < deadline
+        XCTAssertEqual(linear.minX, 100, accuracy: 100, "the x range is reported in linear units after the toggle")
+        XCTAssertEqual(linear.maxX, 900, accuracy: 100)
+        XCTAssertEqual(linear.minY, 201, accuracy: 200, "the y range is reported in linear units after the toggle")
+        XCTAssertEqual(linear.maxY, 1801, accuracy: 200)
+
+        tool("Pan and zoom", in: app).tap()
+        area.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.5))
+            .press(forDuration: 0.2, thenDragTo: area.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5)))
+        let panned = Date().addingTimeInterval(5)
+        var after = linear
+        repeat {
+            if let now = ranges(of: area) { after = now }
+        } while after.minX == linear.minX && Date() < panned
+        XCTAssertEqual(after.minX - linear.minX, 0.4 * linear.width, accuracy: 0.1 * linear.width, "the linear x axis pans by the dragged fraction")
+        XCTAssertEqual(after.width, linear.width, accuracy: 1e-3 * linear.width, "a pan does not change the zoom")
+
+        menuAction("Reset zoom", in: app)
+        toggleMaximized("log", in: app)
+        XCTAssertTrue(plot("line", in: app).waitForExistence(timeout: 5), "the page is restored")
     }
 
     //Every gesture on a graph whose containers are empty: nothing may crash or tear the view down

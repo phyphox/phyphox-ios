@@ -62,8 +62,6 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
 
-    var logX, logY, logZ: Bool
-    
     var isViewVisible: Bool = true
     
     // MARK: - Initialization
@@ -72,20 +70,17 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         self.timeReference = descriptor.timeReference
         self.systemTime = descriptor.systemTime
         
-        self.logX = descriptor.logX
-        self.logY = descriptor.logY
-        self.logZ = descriptor.logZ
-
         self.pickData = [Double?](repeating: nil, count: descriptor.pickOutputs.count)
 
         // Initialize components
         self.graphRenderer = GraphRenderer(descriptor: descriptor)
-        self.zoomManager = GraphZoomManager(descriptor: descriptor)
+        //The data manager owns the log-scale state (the menu can toggle it); zoom and markers read it from there
+        self.dataManager = GraphDataManager(descriptor: descriptor, timeReference: timeReference)
+        self.zoomManager = GraphZoomManager(descriptor: descriptor, dataManager: dataManager)
         self.gestureHandler = GraphGestureHandler()
-        self.markerSystem = GraphMarkerSystem(descriptor: descriptor, timeReference: timeReference, graphRenderer: graphRenderer)
+        self.markerSystem = GraphMarkerSystem(descriptor: descriptor, timeReference: timeReference, graphRenderer: graphRenderer, dataManager: dataManager)
         self.toolbarManager = GraphToolbarManager()
         self.layoutManager = GraphLayoutManager(descriptor: descriptor, gridView: graphRenderer.gridView, zGridView: graphRenderer.zGridView)
-        self.dataManager = GraphDataManager(descriptor: descriptor, timeReference: timeReference)
 
         super.init(frame: .zero)
 
@@ -249,7 +244,7 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
             }
 
             let vertical = axis == 0
-            let logAxis = vertical ? descriptor.logX : descriptor.logY
+            let logAxis = vertical ? dataManager.logX : dataManager.logY
             annotations.append(GraphMarkerSystem.PickAnnotation(vertical: vertical, plotValue: logAxis ? log(value) : value, label: label))
         }
         markerSystem.setPickAnnotations(annotations)

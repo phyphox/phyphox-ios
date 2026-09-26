@@ -978,8 +978,8 @@ extension ExperimentGraphView: GraphDataManagerDelegate {
 
     //"x from -0.4 to 8.4, y from 0.2 to 17.8" in the axes' own units (log axes converted back)
     private func axisRangesDescription(_ bounds: GraphBounds) -> String {
-        let x = (descriptor.logX ? exp(bounds.min.x) : bounds.min.x, descriptor.logX ? exp(bounds.max.x) : bounds.max.x)
-        let y = (descriptor.logY ? exp(bounds.min.y) : bounds.min.y, descriptor.logY ? exp(bounds.max.y) : bounds.max.y)
+        let x = (dataManager.logX ? exp(bounds.min.x) : bounds.min.x, dataManager.logX ? exp(bounds.max.x) : bounds.max.x)
+        let y = (dataManager.logY ? exp(bounds.min.y) : bounds.min.y, dataManager.logY ? exp(bounds.max.y) : bounds.max.y)
         return String(format: "x from %g to %g, y from %g to %g", x.0, x.1, y.0, y.1)
     }
 

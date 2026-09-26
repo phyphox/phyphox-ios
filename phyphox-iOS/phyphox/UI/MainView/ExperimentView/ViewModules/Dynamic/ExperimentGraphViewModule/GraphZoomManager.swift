@@ -11,6 +11,7 @@ class GraphZoomManager {
     weak var delegate: GraphZoomDelegate?
     
     private let descriptor: GraphViewDescriptor
+    private let dataManager: GraphDataManager
     private var zoomMin: GraphPoint3D<Double>?
     private var zoomMax: GraphPoint3D<Double>?
     private var zoomFollows = false
@@ -37,8 +38,9 @@ class GraphZoomManager {
     }
     var isZoomFollows: Bool { return zoomFollows }
     
-    init(descriptor: GraphViewDescriptor) {
+    init(descriptor: GraphViewDescriptor, dataManager: GraphDataManager) {
         self.descriptor = descriptor
+        self.dataManager = dataManager
         self.zoomFollows = descriptor.followX
         
         if descriptor.followX {
@@ -85,13 +87,13 @@ class GraphZoomManager {
         let dy = Double(translation.y / frameSize.height) * (min.y - max.y)
         
         zoomMin = GraphPoint3D(
-            x: limitRange(startMin.x - dx, isLog: descriptor.logX),
-            y: limitRange(startMin.y - dy, isLog: descriptor.logY),
+            x: limitRange(startMin.x - dx, isLog: dataManager.logX),
+            y: limitRange(startMin.y - dy, isLog: dataManager.logY),
             z: zoomMin?.z ?? Double.nan
         )
         zoomMax = GraphPoint3D(
-            x: limitRange(startMax.x - dx, isLog: descriptor.logX),
-            y: limitRange(startMax.y - dy, isLog: descriptor.logY),
+            x: limitRange(startMax.x - dx, isLog: dataManager.logX),
+            y: limitRange(startMax.y - dy, isLog: dataManager.logY),
             z: zoomMax?.z ?? Double.nan
         )
         
@@ -136,13 +138,13 @@ class GraphZoomManager {
         let zoomMinY = zoomMaxY - scaleY
         
         zoomMin = GraphPoint3D(
-            x: limitRange(zoomMinX, isLog: descriptor.logX),
-            y: limitRange(zoomMinY, isLog: descriptor.logY),
+            x: limitRange(zoomMinX, isLog: dataManager.logX),
+            y: limitRange(zoomMinY, isLog: dataManager.logY),
             z: zoomMin?.z ?? Double.nan
         )
         zoomMax = GraphPoint3D(
-            x: limitRange(zoomMaxX, isLog: descriptor.logX),
-            y: limitRange(zoomMaxY, isLog: descriptor.logY),
+            x: limitRange(zoomMaxX, isLog: dataManager.logX),
+            y: limitRange(zoomMaxY, isLog: dataManager.logY),
             z: zoomMax?.z ?? Double.nan
         )
         

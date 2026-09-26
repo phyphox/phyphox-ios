@@ -11,6 +11,7 @@ class GraphMarkerSystem {
     weak var delegate: GraphMarkerDelegate?
     
     private let descriptor: GraphViewDescriptor
+    private let dataManager: GraphDataManager
     private let timeReference: ExperimentTimeReference
     private var markers: [(set: Int, index: Int)] = []
     private var showLinearFit = false
@@ -30,8 +31,9 @@ class GraphMarkerSystem {
     private var pickAnnotations: [PickAnnotation] = []
     private var pickAnnotationViews: [UIView] = []
     
-    init(descriptor: GraphViewDescriptor, timeReference: ExperimentTimeReference, graphRenderer: GraphRenderer) {
+    init(descriptor: GraphViewDescriptor, timeReference: ExperimentTimeReference, graphRenderer: GraphRenderer, dataManager: GraphDataManager) {
             self.descriptor = descriptor
+            self.dataManager = dataManager
             self.timeReference = timeReference
             self.markerOverlayView = MarkerOverlayView()
             self.markerOverlayView.clipsToBounds = true
@@ -65,9 +67,9 @@ class GraphMarkerSystem {
         guard markers.count == 1, let marker = markers.first, marker.set < currentDataSets.count else { return nil }
         guard let (x, y, z) = extractCoordinates(from: currentDataSets[marker.set], at: marker.index) else { return nil }
         return SelectedPoint(
-            x: descriptor.logX ? exp(Double(x)) : Double(x),
-            y: descriptor.logY ? exp(Double(y)) : Double(y),
-            z: descriptor.logZ ? exp(Double(z)) : Double(z),
+            x: dataManager.logX ? exp(Double(x)) : Double(x),
+            y: dataManager.logY ? exp(Double(y)) : Double(y),
+            z: dataManager.logZ ? exp(Double(z)) : Double(z),
             plotX: Double(x),
             plotY: Double(y))
     }
@@ -241,12 +243,12 @@ class GraphMarkerSystem {
                 relativeCoordinates.append(relativePoint)
                 
                 labelText = localize("graph_point_label")
-                let x = descriptor.logX ? exp(Double(point.x)) : Double(point.x)
+                let x = dataManager.logX ? exp(Double(point.x)) : Double(point.x)
                 labelText += "\n    " + (formatter.string(from: x as NSNumber) ?? "N/A") + (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
-                let y = descriptor.logY ? exp(Double(point.y)) : Double(point.y)
+                let y = dataManager.logY ? exp(Double(point.y)) : Double(point.y)
                 labelText += "\n    " + (formatter.string(from: y as NSNumber) ?? "N/A") + (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
                 if point.z != 0 {
-                    let z = descriptor.logZ ? exp(Double(point.z)) : Double(point.z)
+                    let z = dataManager.logZ ? exp(Double(point.z)) : Double(point.z)
                     labelText += "\n    " + (formatter.string(from: z as NSNumber) ?? "N/A") + (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
                 }
             }
@@ -519,7 +521,7 @@ extension GraphMarkerSystem {
     }
     
     private var markerLabels: GraphMarkerLabels {
-        return GraphMarkerLabels(descriptor: descriptor, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, hasZData: descriptor.style[0] == .map)
+        return GraphMarkerLabels(descriptor: descriptor, logX: dataManager.logX, logY: dataManager.logY, logZ: dataManager.logZ, hasZData: descriptor.style[0] == .map)
     }
 
     private func createLinearFitMarkerData(slope: GLfloat, intercept: GLfloat) -> MarkerData {
@@ -639,14 +641,14 @@ extension GraphMarkerSystem {
             markerOverlayView.markers = relativeCoordinates
             
             var labelText = localize("graph_point_label")
-            let x = (descriptor.logX ? exp(Double(xlist[0])) : Double(xlist[0]))
+            let x = (dataManager.logX ? exp(Double(xlist[0])) : Double(xlist[0]))
             labelText += "\n    " + (formatter.string(from: x as NSNumber) ?? "N/A") +
                         (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
-            let y = (descriptor.logY ? exp(Double(ylist[0])) : Double(ylist[0]))
+            let y = (dataManager.logY ? exp(Double(ylist[0])) : Double(ylist[0]))
             labelText += "\n    " + (formatter.string(from: y as NSNumber) ?? "N/A") +
                         (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
             if hasZData {
-                let z = (descriptor.logZ ? exp(Double(zlist[0])) : Double(zlist[0]))
+                let z = (dataManager.logZ ? exp(Double(zlist[0])) : Double(zlist[0]))
                 labelText += "\n    " + (formatter.string(from: z as NSNumber) ?? "N/A") +
                             (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
             }
@@ -657,25 +659,25 @@ extension GraphMarkerSystem {
             markerOverlayView.markers = relativeCoordinates
             
             var labelText = localize("graph_difference_label")
-            let dx = abs((descriptor.logX ? exp(Double(xlist[0])) : Double(xlist[0])) -
-                        (descriptor.logX ? exp(Double(xlist[1])) : Double(xlist[1])))
+            let dx = abs((dataManager.logX ? exp(Double(xlist[0])) : Double(xlist[0])) -
+                        (dataManager.logX ? exp(Double(xlist[1])) : Double(xlist[1])))
             labelText += "\n    " + (formatter.string(from: dx as NSNumber) ?? "N/A") +
                         (descriptor.localizedXUnit != "" ? " " + descriptor.localizedXUnit : "")
-            let dy = abs((descriptor.logY ? exp(Double(ylist[0])) : Double(ylist[0])) -
-                        (descriptor.logY ? exp(Double(ylist[1])) : Double(ylist[1])))
+            let dy = abs((dataManager.logY ? exp(Double(ylist[0])) : Double(ylist[0])) -
+                        (dataManager.logY ? exp(Double(ylist[1])) : Double(ylist[1])))
             labelText += "\n    " + (formatter.string(from: dy as NSNumber) ?? "N/A") +
                         (descriptor.localizedYUnit != "" ? " " + descriptor.localizedYUnit : "")
             if hasZData {
-                let dz = abs((descriptor.logZ ? exp(Double(zlist[0])) : Double(zlist[0])) -
-                            (descriptor.logZ ? exp(Double(zlist[1])) : Double(zlist[1])))
+                let dz = abs((dataManager.logZ ? exp(Double(zlist[0])) : Double(zlist[0])) -
+                            (dataManager.logZ ? exp(Double(zlist[1])) : Double(zlist[1])))
                 labelText += "\n    " + (formatter.string(from: dz as NSNumber) ?? "N/A") +
                             (descriptor.localizedZUnit != "" ? " " + descriptor.localizedZUnit : "")
             }
             labelText += "\n" + localize("graph_slope_label")
-            let slope = ((descriptor.logY ? exp(Double(ylist[0])) : Double(ylist[0])) -
-                        (descriptor.logY ? exp(Double(ylist[1])) : Double(ylist[1]))) /
-                       ((descriptor.logX ? exp(Double(xlist[0])) : Double(xlist[0])) -
-                        (descriptor.logX ? exp(Double(xlist[1])) : Double(xlist[1])))
+            let slope = ((dataManager.logY ? exp(Double(ylist[0])) : Double(ylist[0])) -
+                        (dataManager.logY ? exp(Double(ylist[1])) : Double(ylist[1]))) /
+                       ((dataManager.logX ? exp(Double(xlist[0])) : Double(xlist[0])) -
+                        (dataManager.logX ? exp(Double(xlist[1])) : Double(xlist[1])))
             labelText += "\n    " + (formatter.string(from: slope as NSNumber) ?? "N/A") + " " + descriptor.localizedYXUnit
             
             delegate?.markerSystem(self, shouldShowLabel: labelText)
