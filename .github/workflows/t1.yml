@@ -194,6 +194,11 @@ jobs:
           # stands in with a constant reading, the way the emulator's virtual sensors do on Android.
           node "$TEST/mock_server.js" 8081 > t1-diagnostics/mock-server.log 2>&1 &
           MOCK=$!
+          # The app fetches the fixture right after launch and shows an error if nothing listens yet
+          for i in $(seq 30); do
+            curl -fs -m 2 "http://127.0.0.1:8081/fixtures/webgraphs.phyphox" >/dev/null && break
+            sleep 1
+          done
           xcrun simctl launch --terminate-running-process "$UDID" "$BUNDLE" \
             -phyphoxUrl "phyphox://127.0.0.1:8081/fixtures/webgraphs.phyphox" -phyphoxAutoConfirm \
             -phyphoxSyntheticSensors -phyphoxRemote -phyphoxRemotePort "$PORT"
@@ -212,6 +217,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         if: always()
+        # Diagnostics only: an upload timeout must not fail a job whose tests passed
+        continue-on-error: true
         with:
           name: t1-results-languages-1
           path: t1-diagnostics/
@@ -298,6 +305,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         if: always()
+        # Diagnostics only: an upload timeout must not fail a job whose tests passed
+        continue-on-error: true
         with:
           name: t1-results-languages-2
           path: t1-diagnostics/
@@ -362,6 +371,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         if: always()
+        # Diagnostics only: an upload timeout must not fail a job whose tests passed
+        continue-on-error: true
         with:
           name: t1-results-experiments-1
           path: |
@@ -429,6 +440,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         if: always()
+        # Diagnostics only: an upload timeout must not fail a job whose tests passed
+        continue-on-error: true
         with:
           name: t1-results-experiments-2
           path: |
@@ -526,6 +539,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         if: always()
+        # Diagnostics only: an upload timeout must not fail a job whose tests passed
+        continue-on-error: true
         with:
           name: t1-results-interaction
           path: t1-diagnostics/
