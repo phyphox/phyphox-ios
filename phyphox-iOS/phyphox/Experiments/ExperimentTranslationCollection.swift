@@ -12,6 +12,9 @@ struct ExperimentTranslationCollection: Equatable {
     let translations: [String: ExperimentTranslation]
     let selectedTranslation: ExperimentTranslation?
 
+    ///Stands in for the app's language when set (tests only)
+    static var deviceLocaleOverride: Locale? = nil
+
     static func getLanguageRating(languageCode: String?) -> Int {
         guard let languageCode = languageCode, languageCode != "" else {
             return 1
@@ -42,7 +45,7 @@ struct ExperimentTranslationCollection: Equatable {
             script = ""
         }
 
-        let appLocale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
+        let appLocale = deviceLocaleOverride ?? Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
         let currentBaseLanguage = appLocale.languageCode?.lowercased()
         let currentRegion = appLocale.regionCode?.lowercased()
         let currentScript = appLocale.scriptCode?.lowercased()

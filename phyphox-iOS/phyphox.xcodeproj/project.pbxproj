@@ -191,6 +191,7 @@
 		8A5A0114000000000000AA24 /* AccessibilitySmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0113000000000000AA23 /* AccessibilitySmokeTests.swift */; };
 		8A5A0116000000000000AA26 /* SwitchBypassedUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0115000000000000AA25 /* SwitchBypassedUITests.swift */; };
 		8A5A0118000000000000AA28 /* TranslationsBuildTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0117000000000000AA27 /* TranslationsBuildTests.swift */; };
+		8A5A0151000000000000AA61 /* TranslationSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0150000000000000AA60 /* TranslationSelectionTests.swift */; };
 		8A5A011A000000000000AA2A /* TranslationsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0119000000000000AA29 /* TranslationsUITests.swift */; };
 		8A5A011C000000000000AA2C /* SaveToCollectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A011B000000000000AA2B /* SaveToCollectionTests.swift */; };
 		8A5A0121000000000000AA31 /* HttpResultRaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0122000000000000AA32 /* HttpResultRaceTests.swift */; };
@@ -532,6 +533,7 @@
 		8A5A0113000000000000AA23 /* AccessibilitySmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilitySmokeTests.swift; sourceTree = "<group>"; };
 		8A5A0115000000000000AA25 /* SwitchBypassedUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwitchBypassedUITests.swift; sourceTree = "<group>"; };
 		8A5A0117000000000000AA27 /* TranslationsBuildTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationsBuildTests.swift; sourceTree = "<group>"; };
+		8A5A0150000000000000AA60 /* TranslationSelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationSelectionTests.swift; sourceTree = "<group>"; };
 		8A5A0119000000000000AA29 /* TranslationsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationsUITests.swift; sourceTree = "<group>"; };
 		8A5A011B000000000000AA2B /* SaveToCollectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveToCollectionTests.swift; sourceTree = "<group>"; };
 		8A5A0122000000000000AA32 /* HttpResultRaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HttpResultRaceTests.swift; sourceTree = "<group>"; };
@@ -1325,6 +1327,7 @@
 				8A5A000A000000000000AA0A /* GraphFollowXTests.swift */,
 				8A5A000C000000000000AA0C /* GraphTicLabelTests.swift */,
 				8A5A0117000000000000AA27 /* TranslationsBuildTests.swift */,
+				8A5A0150000000000000AA60 /* TranslationSelectionTests.swift */,
 				8A5A0122000000000000AA32 /* HttpResultRaceTests.swift */,
 				8A5A0148000000000000AA58 /* ColorAlphaTests.swift */,
 				8A5A0146000000000000AA56 /* ViewGroupTests.swift */,
@@ -1854,6 +1857,7 @@
 				8A5A000B000000000000AA0B /* GraphFollowXTests.swift in Sources */,
 				8A5A000D000000000000AA0D /* GraphTicLabelTests.swift in Sources */,
 				8A5A0118000000000000AA28 /* TranslationsBuildTests.swift in Sources */,
+				8A5A0151000000000000AA61 /* TranslationSelectionTests.swift in Sources */,
 				8A5A0121000000000000AA31 /* HttpResultRaceTests.swift in Sources */,
 				8A5A0149000000000000AA59 /* ColorAlphaTests.swift in Sources */,
 				8A5A0147000000000000AA57 /* ViewGroupTests.swift in Sources */,
