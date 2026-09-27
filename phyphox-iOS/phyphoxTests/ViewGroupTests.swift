@@ -28,6 +28,7 @@ final class ViewGroupTests: XCTestCase {
     <container size="1">angle</container>
     <container size="1" init="7">v</container>
     <container size="1" init="0.25">fade</container>
+    <container size="0" init="1">unlimited</container>
     </data-containers><input></input><analysis></analysis><views><view label="v">
     """
     private static let tail = "</view></views></phyphox>"
@@ -106,6 +107,33 @@ final class ViewGroupTests: XCTestCase {
         XCTAssertEqual(row2.childModules[0].frame.width, 500, accuracy: 1)
         XCTAssertEqual(row2.childModules[2].frame.width, 500, accuracy: 1)
         XCTAssertEqual(row2.childModules[2].frame.minX, 500, accuracy: 1)
+    }
+
+    //Spec (views, "visibility"): empty, NaN, zero or negative hide; only a last value > 0 shows. The size of the buffer is
+    //irrelevant (size 0 is unlimited). An auto-clearing module such as formula empties its output on a pre-run with empty
+    //inputs, so an init value alone does not protect an element from the empty case.
+    func testTheVisibilityRuleHidesEmptyAndNaNAndIgnoresTheBufferSize() throws {
+        let experiment = try load("""
+            <value label="empty" visibility="angle"><input>v</input></value>
+            <value label="unlimited" visibility="unlimited"><input>v</input></value>
+            """)
+        let (controller, rows) = try self.rows(experiment)
+        XCTAssertTrue(rows[0].isHidden, "an empty visibility buffer hides")
+        XCTAssertFalse(rows[1].isHidden, "a buffer of size 0 (unlimited) holding 1 shows")
+
+        let angle = try XCTUnwrap(experiment.buffers["angle"])
+        angle.replaceValues([1])
+        controller.dataBufferUpdated(angle)
+        XCTAssertFalse(rows[0].isHidden)
+        angle.replaceValues([.nan])
+        controller.dataBufferUpdated(angle)
+        XCTAssertTrue(rows[0].isHidden, "NaN hides")
+        angle.replaceValues([1])
+        controller.dataBufferUpdated(angle)
+        XCTAssertFalse(rows[0].isHidden)
+        angle.clear(reset: false)
+        controller.dataBufferUpdated(angle)
+        XCTAssertTrue(rows[0].isHidden, "a cleared buffer hides again")
     }
 
     func testAChildHiddenAtRuntimeGivesItsSpaceToItsSiblings() throws {

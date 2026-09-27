@@ -210,12 +210,19 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         self.tableView.reloadData()
     }
     
+    ///The visibility rule of the file format (views, "visibility"): shown only while the buffer's last value is greater than zero.
+    ///An empty buffer and NaN hide, as on Android (Android's DataBuffer.value is NaN when empty); the buffer size plays no role (0 is unlimited).
+    static func isVisible(accordingTo buffer: DataBuffer) -> Bool {
+        guard let last = buffer.last else { return false }
+        return last > 0
+    }
+
     private func updateModuleVisibilities() {
         guard exclusiveView == nil else { return }
         for (index, module) in modules.enumerated() {
             for view in module.moduleTree {
                 if let vcm = view as? VisibilityControllableViewModule, let buffer = vcm.visibilityBuffer {
-                    let isVisible = (buffer.last ?? 1.0) > 0.0 && buffer.size != 0
+                    let isVisible = ExperimentViewController.isVisible(accordingTo: buffer)
                     view.isHidden = !isVisible
                 }
             }
@@ -251,7 +258,7 @@ extension ExperimentViewController: DataBufferObserver {
             var rowChanged = false
             for view in module.moduleTree {
                 if let vcm = view as? VisibilityControllableViewModule, vcm.visibilityBuffer === buffer {
-                    let isVisible = (buffer.last ?? 1.0) > 0.0 && buffer.size != 0
+                    let isVisible = ExperimentViewController.isVisible(accordingTo: buffer)
                     if view.isHidden == isVisible {
                         view.isHidden = !isVisible
                         rowChanged = true
