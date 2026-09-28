@@ -4498,7 +4498,7 @@ final class AnalysisIOMappingCoverageTests: XCTestCase {
 }
 
 //The strictness fixes views-map-color-limit, ble-address-ios-must-reject, container-type-unvalidated and
-//gausssmooth-nonpositive-sigma (phyphox-docs)
+//gausssmooth-nonpositive-sigma (phyphox-docs), plus the one leniency bluetooth-mode-default
 final class StrictnessFixesTests: XCTestCase {
     private func parse(_ xml: String) throws -> Experiment {
         let stream = InputStream(data: xml.data(using: .utf8)!)
@@ -4601,6 +4601,21 @@ final class StrictnessFixesTests: XCTestCase {
                 <output char="cddf1002-30f7-4671-8b43-5e40ba53514a" conversion="float32LittleEndian">buffer</output>
             </bluetooth>
         """)))
+    }
+
+    func testBluetoothModeDefaultsToNotification() throws {
+        //Only absence selects the default; an invalid value still rejects (bluetooth-mode-default in phyphox-docs)
+        func bluetooth(_ mode: String) -> String {
+            return xml(input: """
+                <bluetooth name="d"\(mode)>
+                    <output char="cddf1002-30f7-4671-8b43-5e40ba53514a" conversion="float32LittleEndian">buffer</output>
+                </bluetooth>
+            """)
+        }
+        let experiment = try parse(bluetooth(""))
+        XCTAssertEqual(experiment.bluetoothInputs.first?.mode, .notification, "no mode and no rate is not poll")
+        XCTAssertEqual(try parse(bluetooth(" mode=\"indication\"")).bluetoothInputs.first?.mode, .indication)
+        XCTAssertThrowsError(try parse(bluetooth(" mode=\"bogus\"")))
     }
 
     func testContainerTypeIsValidated() throws {

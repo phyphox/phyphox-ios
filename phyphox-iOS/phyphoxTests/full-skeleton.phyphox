@@ -47,6 +47,9 @@
             <output component="luminance">buffer</output>
             <output component="t">buffer2</output>
         </camera>
+        <bluetooth name="devicename">
+            <output char="cddf1002-30f7-4671-8b43-5e40ba53514a" conversion="float32LittleEndian">buffer</output>
+        </bluetooth>
     </input>
     <output>
         <audio>

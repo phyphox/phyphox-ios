@@ -535,7 +535,7 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
         } else {
             uuid = nil
         }
-        let mode: BluetoothMode = try attributes.value(for: .mode)
+        let mode: BluetoothMode = try attributes.optionalValue(for: .mode) ?? .notification
         let subscribeOnStart: Bool = try attributes.optionalValue(for: .subscribeOnStart) ?? false
         let autoConnect: Bool = try attributes.optionalValue(for: .autoConnect) ?? false
         let rate: Double? = try attributes.optionalValue(for: .rate)
