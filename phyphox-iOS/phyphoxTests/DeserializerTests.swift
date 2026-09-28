@@ -4498,7 +4498,7 @@ final class AnalysisIOMappingCoverageTests: XCTestCase {
 }
 
 //The strictness fixes views-map-color-limit, ble-address-ios-must-reject, container-type-unvalidated and
-//gausssmooth-nonpositive-sigma (phyphox-docs), plus the one leniency bluetooth-mode-default
+//gausssmooth-nonpositive-sigma (phyphox-docs)
 final class StrictnessFixesTests: XCTestCase {
     private func parse(_ xml: String) throws -> Experiment {
         let stream = InputStream(data: xml.data(using: .utf8)!)
@@ -4604,7 +4604,7 @@ final class StrictnessFixesTests: XCTestCase {
     }
 
     func testBluetoothModeDefaultsToNotification() throws {
-        //Only absence selects the default; an invalid value still rejects (bluetooth-mode-default in phyphox-docs)
+        //Only absence selects the default; an invalid value still rejects
         func bluetooth(_ mode: String) -> String {
             return xml(input: """
                 <bluetooth name="d"\(mode)>
