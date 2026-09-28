@@ -88,15 +88,16 @@ final class AudioEngine {
         
         let avSession = AVAudioSession.sharedInstance()
         //mixWithOthers: a tone generator works while music plays, as Android's AudioTrack never takes audio focus
+        //allowBluetoothA2DP: output stays on Bluetooth headphones while recording, as on Android (not allowBluetooth: HFP would take over the mic at 8/16 kHz)
         if playbackOut != nil && recordIn != nil {
-            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: [.defaultToSpeaker, .mixWithOthers])
+            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers])
         } else if playbackOut != nil {
             try avSession.setCategory(AVAudioSession.Category.playback, options: [.mixWithOthers])
         } else if recordIn != nil {
             if !avSession.isInputAvailable {
                 throw AudioEngineError.NoInput
             }
-            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: [.defaultToSpeaker, .mixWithOthers]) //Just setting AVAudioSessionCategoryRecord interferes with VoiceOver as it silences every other audio output (as documented)
+            try avSession.setCategory(AVAudioSession.Category.playAndRecord, options: [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers]) //Just setting AVAudioSessionCategoryRecord interferes with VoiceOver as it silences every other audio output (as documented)
         }
         try avSession.setMode(AVAudioSession.Mode.measurement)
         if (avSession.isInputGainSettable) {
