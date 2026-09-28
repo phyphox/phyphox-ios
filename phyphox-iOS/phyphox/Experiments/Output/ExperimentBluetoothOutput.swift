@@ -96,7 +96,7 @@ class ExperimentBluetoothOutput: BluetoothDeviceDelegate {
             }
             for uuid in out.keys {
                 if let outBuffer = out[uuid], outBuffer.count > 0 {
-                    try device.writeCharacteristic(uuid: uuid, data: outBuffer)
+                    try device.writeCharacteristic(uuid: uuid, data: outBuffer, coalescible: true)
                 }
             }
             requestedTriggers.removeAll()

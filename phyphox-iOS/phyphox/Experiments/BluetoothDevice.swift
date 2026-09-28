@@ -123,6 +123,10 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     var pendingWrites = 0
     //Newest unsent value per characteristic for writes without response; a newer value replaces an unsent one
     var pendingWithoutResponseWrites: [String: Data] = [:]
+    //Config and event writes are never coalesced or dropped (Android: non-coalescible BleOp.Write)
+    private var orderedWithoutResponseWrites: [(key: String, data: Data)] = []
+    //One entry per write with response in flight, in issue order: whether it counts towards pendingWrites
+    private var inFlightWithResponseIsData: [Bool] = []
 
     init(delegate: UpdateConnectedDeviceDelegate) {
         ExperimentBluetoothDevice.updateDelegate = delegate
@@ -358,6 +362,8 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         print("Connected: \(peripheral.name ?? "No Name")")
         pendingWrites = 0
         pendingWithoutResponseWrites.removeAll()
+        orderedWithoutResponseWrites.removeAll()
+        inFlightWithResponseIsData.removeAll()
         peripheral.readRSSI()
         peripheral.discoverServices(nil)
         after(10) {
@@ -436,27 +442,51 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         }
     }
     
-    public func writeCharacteristic(uuid: CBUUID, data: Data) throws {
+    //coalescible: output data only. Config and event writes (a puck.js script comes in ~20 chunks) go out in order,
+    //with response where the characteristic allows it, as on Android
+    public func writeCharacteristic(uuid: CBUUID, data: Data, coalescible: Bool = false) throws {
         if let char = characteristics_map[uuid.uuid128String] {
-            if char.properties.contains(.writeWithoutResponse) {
+            if !coalescible {
+                if char.properties.contains(.write) || !char.properties.contains(.writeWithoutResponse) {
+                    inFlightWithResponseIsData.append(false)
+                    peripheral?.writeValue(data, for: char, type: .withResponse)
+                } else {
+                    orderedWithoutResponseWrites.append((key: uuid.uuid128String, data: data))
+                    flushWithoutResponseWrites()
+                }
+            } else if char.properties.contains(.writeWithoutResponse) {
                 //No didWriteValueFor for writes without response, so pendingWrites would fill up and block
                 pendingWithoutResponseWrites[uuid.uuid128String] = data
                 flushWithoutResponseWrites()
             } else if pendingWrites < 10 {
                 pendingWrites += 1
+                inFlightWithResponseIsData.append(true)
                 peripheral?.writeValue(data, for: char, type: .withResponse)
             }
         } else {
             throw BluetoothDeviceError.generic(localize("bt_error_writing") + " \(uuid)")
         }
     }
-    
+
     func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: (any Error)?) {
-        pendingWrites -= 1
+        if let error = error {
+            print("Bluetooth write to \(characteristic.uuid) failed: \(error.localizedDescription)")
+        }
+        //CoreBluetooth completes writes with response in the order they were issued
+        guard !inFlightWithResponseIsData.isEmpty else { return }
+        if inFlightWithResponseIsData.removeFirst() {
+            pendingWrites -= 1
+        }
     }
 
     private func flushWithoutResponseWrites() {
-        while !pendingWithoutResponseWrites.isEmpty, let peripheral = peripheral, peripheral.canSendWriteWithoutResponse {
+        while !orderedWithoutResponseWrites.isEmpty, let peripheral = peripheral, peripheral.canSendWriteWithoutResponse {
+            let (key, data) = orderedWithoutResponseWrites.removeFirst()
+            if let char = characteristics_map[key] {
+                peripheral.writeValue(data, for: char, type: .withoutResponse)
+            }
+        }
+        while orderedWithoutResponseWrites.isEmpty, !pendingWithoutResponseWrites.isEmpty, let peripheral = peripheral, peripheral.canSendWriteWithoutResponse {
             guard let (key, data) = pendingWithoutResponseWrites.first else {
                 return
             }
