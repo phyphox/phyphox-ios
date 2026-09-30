@@ -12,10 +12,12 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     private let xLabel: String
     private let yLabel: String
     private let zLabel: String?
-    private let xUnit: String?
-    private let yUnit: String?
-    private let zUnit: String?
-    private let yxUnit: String?
+    //The axis units as parsed: a reference to a known unit or text; nil where the attribute is absent (the unit may
+    //then come from a "label (unit)" of an old file, see legacyXUnit)
+    private let xUnit: Unit?
+    private let yUnit: Unit?
+    private let zUnit: Unit?
+    private let yxUnit: Unit?
     
     let timeReference: ExperimentTimeReference
     let timeOnX: Bool
@@ -93,29 +95,66 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
         return translation?.localizeString(zLabel ?? "") ?? zLabel ?? ""
     }
     
+    //The experiment's unit symbols
     var localizedXUnit: String {
         if legacyXUnit != nil {
             return legacyXUnit!
         }
-        return translation?.localizeString(xUnit ?? "") ?? xUnit ?? ""
+        return xUnit?.symbol ?? ""
     }
     
     var localizedYUnit: String {
         if legacyYUnit != nil {
             return legacyYUnit!
         }
-        return translation?.localizeString(yUnit ?? "") ?? yUnit ?? ""
+        return yUnit?.symbol ?? ""
     }
     
     var localizedZUnit: String {
-        return translation?.localizeString(zUnit ?? "") ?? zUnit ?? ""
+        return zUnit?.symbol ?? ""
     }
     
     var localizedYXUnit: String {
         if let yxUnit = yxUnit {
-            return translation?.localizeString(yxUnit) ?? yxUnit
+            return yxUnit.symbol
         }
         return (localizedYUnit != "" ? localizedYUnit : "") + " / " + (localizedXUnit != "" ? localizedXUnit : "")
+    }
+
+    //An explicit unitYperX, used for the slope only while both axes show their experiment units (units.md, "Slopes")
+    var hasExplicitYXUnit: Bool {
+        return yxUnit != nil
+    }
+
+    //The logical units per axis (nil for text, and for a unit taken from a legacy label); the display unit of an axis
+    //is session state of the graph module, not of the descriptor
+    var unitIdX: String? { return legacyXUnit == nil ? xUnit?.id : nil }
+    var unitIdY: String? { return legacyYUnit == nil ? yUnit?.id : nil }
+    var unitIdZ: String? { return zUnit?.id }
+
+    //The axis units as logical units, a legacy "label (unit)" as text
+    var xAxisUnit: Unit { return legacyXUnit.map { Unit.text($0) } ?? xUnit ?? .empty }
+    var yAxisUnit: Unit { return legacyYUnit.map { Unit.text($0) } ?? yUnit ?? .empty }
+
+    func unitId(axis: Int) -> String? {
+        switch axis {
+        case 0: return unitIdX
+        case 1: return unitIdY
+        default: return unitIdZ
+        }
+    }
+
+    //The axis title as it is drawn, "label (unit)", for the unit currently shown
+    func localizedXLabel(withUnit unit: String) -> String {
+        return unit != "" ? localizedXLabel + " (" + unit + ")" : localizedXLabel
+    }
+
+    func localizedYLabel(withUnit unit: String) -> String {
+        return unit != "" ? localizedYLabel + " (" + unit + ")" : localizedYLabel
+    }
+
+    func localizedZLabel(withUnit unit: String) -> String {
+        return unit != "" ? localizedZLabel + " (" + unit + ")" : localizedZLabel
     }
     
     let logX: Bool
@@ -212,7 +251,7 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
     let translation: ExperimentTranslationCollection?
     var visibilityBuffer: DataBuffer?
 
-    init(label: String, visibilityBuffer: DataBuffer?, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, zLabel: String?, xUnit: String?, yUnit: String?, zUnit: String?, yxUnit: String?, timeReference: ExperimentTimeReference, timeOnX: Bool, timeOnY: Bool, systemTime: Bool, linearTime: Bool, hideTimeMarkers: Bool, xInputBuffers: [DataBuffer?], yInputBuffers: [DataBuffer], zInputBuffers: [DataBuffer?], logX: Bool, logY: Bool, logZ: Bool, xPrecision: Int, yPrecision: Int, zPrecision: Int, suppressScientificNotation: Bool, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, scaleMinZ: ScaleMode, scaleMaxZ: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, minZ: CGFloat, maxZ: CGFloat, followX: Bool, aspectRatio: CGFloat, partialUpdate: Bool, history: UInt, style: [GraphViewDescriptor.GraphStyle], lineWidth: [CGFloat], color: [UIColor], mapWidth: UInt, colorMap: [UIColor], showColorScale: Bool, interpolateMapColors: Bool, pickLabel: String, pickOutputs: [PickOutput?], plotLeft: CGFloat? = nil, plotTop: CGFloat? = nil, plotRight: CGFloat? = nil, plotBottom: CGFloat? = nil) {
+    init(label: String, visibilityBuffer: DataBuffer?, translation: ExperimentTranslationCollection?, xLabel: String, yLabel: String, zLabel: String?, xUnit: Unit?, yUnit: Unit?, zUnit: Unit?, yxUnit: Unit?, timeReference: ExperimentTimeReference, timeOnX: Bool, timeOnY: Bool, systemTime: Bool, linearTime: Bool, hideTimeMarkers: Bool, xInputBuffers: [DataBuffer?], yInputBuffers: [DataBuffer], zInputBuffers: [DataBuffer?], logX: Bool, logY: Bool, logZ: Bool, xPrecision: Int, yPrecision: Int, zPrecision: Int, suppressScientificNotation: Bool, scaleMinX: ScaleMode, scaleMaxX: ScaleMode, scaleMinY: ScaleMode, scaleMaxY: ScaleMode, scaleMinZ: ScaleMode, scaleMaxZ: ScaleMode, minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat, minZ: CGFloat, maxZ: CGFloat, followX: Bool, aspectRatio: CGFloat, partialUpdate: Bool, history: UInt, style: [GraphViewDescriptor.GraphStyle], lineWidth: [CGFloat], color: [UIColor], mapWidth: UInt, colorMap: [UIColor], showColorScale: Bool, interpolateMapColors: Bool, pickLabel: String, pickOutputs: [PickOutput?], plotLeft: CGFloat? = nil, plotTop: CGFloat? = nil, plotRight: CGFloat? = nil, plotBottom: CGFloat? = nil) {
         self.plotLeft = plotLeft
         self.plotTop = plotTop
         self.plotRight = plotRight
@@ -376,7 +415,11 @@ struct GraphViewDescriptor: ViewDescriptor, Equatable {
             ("unitX", text(localizedXUnit)),
             ("unitY", text(localizedYUnit)),
             ("unitZ", text(localizedZUnit)),
-            ("unitYX", yxUnit.map { translation?.localizeString($0) ?? $0 }),
+            ("unitYX", yxUnit?.symbol),
+            //The unit texts are the experiment's symbols; the ids let the interface convert (units.md)
+            ("unitIdX", unitIdX),
+            ("unitIdY", unitIdY),
+            ("unitIdZ", unitIdZ),
             ("logX", logX),
             ("logY", logY),
             ("logZ", logZ),

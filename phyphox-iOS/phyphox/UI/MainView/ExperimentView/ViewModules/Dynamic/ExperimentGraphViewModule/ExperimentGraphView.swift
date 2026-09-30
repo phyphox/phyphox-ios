@@ -50,6 +50,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
 
     //Data picker values written so far, aligned with descriptor.pickOutputs slots
     private var pickData: [Double?]
+
+    //The units shown per axis, x, y, z (session state, docs/file-format/units.md): the experiment's own unless the Unit
+    //system setting or the unit dialog switched them; nil for a text unit
+    private(set) var displayUnitIds: [String?] = [nil, nil, nil]
     var hasPickOutputs: Bool {
         return descriptor.pickOutputs.contains(where: { $0 != nil })
     }
@@ -92,6 +96,62 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         setupGestures()
         registerForBufferUpdates()
         attachDisplayLink(displayLink)
+
+        //The Unit system setting is applied on every load (units.md, "The unit-system setting")
+        let setting = SettingBundleHelper.getUnitSystem()
+        for axis in 0..<3 {
+            displayUnitIds[axis] = descriptor.unitId(axis: axis)
+            if let id = descriptor.unitId(axis: axis), isAxisConvertible(axis) {
+                displayUnitIds[axis] = Units.forSetting(id, setting)
+            }
+        }
+        applyDisplayUnits()
+    }
+
+    // MARK: - Display units
+
+    //A referenced unit with a quantity, unless the axis shows a clock (units.md, "Elements that are not converted")
+    func isAxisConvertible(_ axis: Int) -> Bool {
+        guard Units.isConvertible(descriptor.unitId(axis: axis)) else { return false }
+        let timeAxis = axis == 0 ? descriptor.timeOnX : (axis == 1 && descriptor.timeOnY)
+        return !(timeAxis && systemTime)
+    }
+
+    //The conversion and symbol per axis as currently shown
+    var displayUnits: GraphDisplayUnits {
+        var units = GraphDisplayUnits(descriptor: descriptor)
+        for axis in 0..<3 {
+            guard isAxisConvertible(axis), let from = descriptor.unitId(axis: axis), let to = displayUnitIds[axis], to != from else { continue }
+            units.conversions[axis] = UnitConversion(from: from, to: to)
+            units.symbols[axis] = Units.symbol(to)
+        }
+        return units
+    }
+
+    //What the unit dialog does for an axis: show it in another unit of the same quantity
+    func setDisplayUnit(axis: Int, id: String) {
+        guard Units.isConvertible(descriptor.unitId(axis: axis)), Units.sameQuantity(descriptor.unitId(axis: axis), id) else { return }
+        displayUnitIds[axis] = id
+        applyDisplayUnits()
+    }
+
+    //Tics, titles and read-outs follow the display units; the data and the ranges stay in the experiment's
+    private func applyDisplayUnits() {
+        let units = displayUnits
+        dataManager.setDisplayUnits(units)
+        markerSystem.displayUnits = units
+        layoutManager.updateAxisLabels(systemTime: systemTime, units: units)
+        setNeedsLayout()
+        dataManager.setNeedsUpdate()
+        markerSystem.refreshMarkers()
+    }
+
+    //A tap on an axis title in exclusive mode: the unit dialog for that axis (units.md, "Switching a unit by hand")
+    func showUnitDialog(axis: Int) {
+        guard isAxisConvertible(axis), let id = descriptor.unitId(axis: axis) else { return }
+        UnitDialog.show(from: hostingViewController, sourceView: layoutManager.axisLabelView(axis), experimentUnitId: id, currentUnitId: displayUnitIds[axis] ?? id) { [weak self] chosen in
+            self?.setDisplayUnit(axis: axis, id: chosen)
+        }
     }
     
     @available(*, unavailable)
@@ -277,6 +337,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         guard !isStatic else { return }
         if resizableState == .normal {
             layoutDelegate?.presentExclusiveLayout(self)
+        } else if let axis = layoutManager.axisLabel(at: sender.location(in: layoutManager.graphArea)), isAxisConvertible(axis) {
+            showUnitDialog(axis: axis)
         } else {
             handleExitExclusiveMode()
         }
@@ -291,9 +353,10 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     
     private func showZoomDialog() {
+        let units = displayUnits
         let dialog = ApplyZoomDialog(
-            labelX: descriptor.localizedXLabelWithUnit,
-            labelY: descriptor.localizedYLabelWithUnit,
+            labelX: descriptor.localizedXLabel(withUnit: units.symbols[0]),
+            labelY: descriptor.localizedYLabel(withUnit: units.symbols[1]),
             preselectKeep: zoomManager.previouslyKept
         )
         dialog.resultDelegate = self
@@ -305,9 +368,8 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         graphRenderer.systemTime = systemTime
         dataManager.systemTime = systemTime
         markerSystem.systemTime = systemTime
-        layoutManager.updateAxisLabels(systemTime: systemTime, descriptor: descriptor)
-        setNeedsLayout()
-        dataManager.setNeedsUpdate()
+        //A time axis converts only while it shows no clock
+        applyDisplayUnits()
     }
     
     private func handleResizableStateChange() {

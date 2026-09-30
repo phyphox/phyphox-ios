@@ -246,6 +246,19 @@ class GraphZoomManager {
         delegate?.zoomManagerDidUpdate(self)
     }
     
+    //A range received from another graph (already converted to this graph's units); an axis given as nil keeps its zoom
+    func applyExternalZoom(x: (min: Double, max: Double)?, y: (min: Double, max: Double)?) {
+        if let x = x, x.min.isFinite, x.max.isFinite, x.min < x.max {
+            zoomMin = GraphPoint3D(x: x.min, y: zoomMin?.y ?? Double.nan, z: zoomMin?.z ?? Double.nan)
+            zoomMax = GraphPoint3D(x: x.max, y: zoomMax?.y ?? Double.nan, z: zoomMax?.z ?? Double.nan)
+        }
+        if let y = y, y.min.isFinite, y.max.isFinite, y.min < y.max {
+            zoomMin = GraphPoint3D(x: zoomMin?.x ?? Double.nan, y: y.min, z: zoomMin?.z ?? Double.nan)
+            zoomMax = GraphPoint3D(x: zoomMax?.x ?? Double.nan, y: y.max, z: zoomMax?.z ?? Double.nan)
+        }
+        delegate?.zoomManagerDidUpdate(self)
+    }
+
     private func limitRange(_ v: Double?, isLog: Bool) -> Double {
         guard let v = v, v.isFinite else {
             return Double.nan
@@ -272,7 +285,7 @@ extension GraphZoomManager {
 
 // MARK: - ZoomableViewModule Implementation
 extension ExperimentGraphView {
-    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, unitX: Unit?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, unitY: Unit?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
         
         var applyX = false
         var applyY = false
@@ -281,7 +294,7 @@ extension ExperimentGraphView {
         case .this, .sameAxis:
             applyX = true
         case .sameUnit:
-            if targetX == descriptor.localizedXUnit {
+            if let unit = unitX, ExperimentGraphView.unitMatches(axisUnit: descriptor.xAxisUnit, unit) {
                 applyX = true
             }
         case .sameVariable:
@@ -296,7 +309,7 @@ extension ExperimentGraphView {
         case .this, .sameAxis:
             applyY = true
         case .sameUnit:
-            if targetY == descriptor.localizedYUnit {
+            if let unit = unitY, ExperimentGraphView.unitMatches(axisUnit: descriptor.yAxisUnit, unit) {
                 applyY = true
             }
         case .sameVariable:
@@ -310,10 +323,30 @@ extension ExperimentGraphView {
         if applyX || applyY {
             zoomManager.applyZoomSettings(modeX: applyX ? modeX : .none, applyToX: applyX ? applyToX : .none, modeY: applyY ? modeY : .none, applyToY: applyY ? applyToY : .none)
         }
+
+        //A kept or followed range from another graph, converted from the sending graph's unit into this one's where
+        //both are references (a log axis works in log space, where a unit conversion does not apply)
+        func range(_ min: Double, _ max: Double, from: Unit?, to: Unit, log: Bool) -> (min: Double, max: Double) {
+            guard !log, let from = from?.id, let to = to.id else { return (min, max) }
+            return (Units.convert(min, from: from, to: to), Units.convert(max, from: from, to: to))
+        }
+        let externalX = applyX && applyToX != .this && (modeX == .keep || modeX == .follow) ? range(zoomMin.x, zoomMax.x, from: unitX, to: descriptor.xAxisUnit, log: dataManager.logX) : nil
+        let externalY = applyY && applyToY != .this && modeY == .keep ? range(zoomMin.y, zoomMax.y, from: unitY, to: descriptor.yAxisUnit, log: dataManager.logY) : nil
+        if externalX != nil || externalY != nil {
+            zoomManager.applyExternalZoom(x: externalX, y: externalY)
+        }
         
         if (applyX && descriptor.timeOnX) || (applyY && descriptor.timeOnY) {
             self.systemTime = systemTime
         }
+    }
+
+    //A referenced unit matches every axis of the same quantity, text matches by equal text (units.md, "Linked zoom")
+    static func unitMatches(axisUnit: Unit, _ unit: Unit) -> Bool {
+        if unit.isReference {
+            return Units.sameQuantity(axisUnit.id, unit.id)
+        }
+        return axisUnit.id == nil && axisUnit.text == unit.text
     }
 }
 
@@ -339,35 +372,19 @@ extension ExperimentGraphView: ApplyZoomDialogResultDelegate {
     }
     
     private func propagateZoomToOtherGraphs(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget) {
-        let targetX: String?
-        let targetY: String?
-        
-        switch applyToX {
-        case .sameUnit:
-            targetX = descriptor.localizedXUnit
-        case .sameVariable:
-            targetX = descriptor.xInputBuffers[0]?.name
-        default:
-            targetX = nil
-        }
-        
-        switch applyToY {
-        case .sameUnit:
-            targetY = descriptor.localizedYUnit
-        case .sameVariable:
-            targetY = descriptor.yInputBuffers[0].name
-        default:
-            targetY = nil
-        }
+        let targetX = applyToX == .sameVariable ? descriptor.xInputBuffers[0]?.name : nil
+        let targetY = applyToY == .sameVariable ? descriptor.yInputBuffers[0].name : nil
         
         let zoomBounds = zoomManager.currentZoomBounds
         zoomDelegate?.applyZoom(
             modeX: applyToX == .this ? .none : modeX,
             applyToX: applyToX == .this ? .none : applyToX,
             targetX: targetX,
+            unitX: applyToX == .sameUnit ? descriptor.xAxisUnit : nil,
             modeY: applyToY == .this ? .none : modeY,
             applyToY: applyToY == .this ? .none : applyToY,
             targetY: targetY,
+            unitY: applyToY == .sameUnit ? descriptor.yAxisUnit : nil,
             zoomMin: GraphPoint2D(x: zoomBounds.min.x, y: zoomBounds.min.y),
             zoomMax: GraphPoint2D(x: zoomBounds.max.x, y: zoomBounds.max.y),
             systemTime: systemTime

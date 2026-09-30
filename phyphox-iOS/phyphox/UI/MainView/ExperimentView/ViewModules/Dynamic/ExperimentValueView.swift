@@ -23,6 +23,10 @@ final class ExperimentValueView: UIView, DynamicViewModule, ResizingViewModule, 
 
     var analysisRunning: Bool = false
     private let displayLink = DisplayLink(refreshRate: 0)
+
+    //The unit currently shown (session state, docs/file-format/units.md): the experiment's own unless the Unit system
+    //setting or the unit dialog switched it; only meaningful while the descriptor's unit is convertible
+    private(set) var displayUnitId: String?
     
 
     var active = false {
@@ -63,11 +67,21 @@ final class ExperimentValueView: UIView, DynamicViewModule, ResizingViewModule, 
         unitLabel.textColor = descriptor.color.autoLightColor()
         unitLabel.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.headline)
         unitLabel.textAlignment = .left
+        unitLabel.accessibilityIdentifier = "value.unit"
         labelOutOfBoundDict[descriptor.label] = false
 
         addSubview(valueLabel)
         addSubview(unitLabel)
         addSubview(label)
+
+        //The Unit system setting is applied on every load (units.md, "The unit-system setting")
+        displayUnitId = descriptor.unit.id
+        if let id = descriptor.unit.id, descriptor.isConvertible {
+            displayUnitId = Units.forSetting(id, SettingBundleHelper.getUnitSystem())
+            unitLabel.text = displayUnitSymbol
+            //A tap on the value and its unit offers the other units of the quantity
+            addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(unitTapped(_:))))
+        }
 
         registerForUpdatesFromBuffer(descriptor.buffer)
         attachDisplayLink(displayLink)
@@ -84,7 +98,58 @@ final class ExperimentValueView: UIView, DynamicViewModule, ResizingViewModule, 
         wantsUpdate = true
     }
 
-    private func update() {
+    //Conversion of the factored value into the display unit; nil while the experiment's unit is shown
+    private var conversion: UnitConversion? {
+        guard descriptor.isConvertible, let from = descriptor.unit.id, let to = displayUnitId, to != from else { return nil }
+        return UnitConversion(from: from, to: to)
+    }
+
+    //The symbol shown next to the value: the display unit's, or the experiment's
+    var displayUnitSymbol: String {
+        return conversion.map { Units.symbol($0.to) } ?? descriptor.localizedUnit
+    }
+
+    //What the unit dialog does: show the value in another unit of the same quantity
+    func setDisplayUnit(_ id: String) {
+        guard descriptor.isConvertible, Units.sameQuantity(descriptor.unit.id, id) else { return }
+        displayUnitId = id
+        update()
+    }
+
+    @objc private func unitTapped(_ sender: UITapGestureRecognizer) {
+        let point = sender.location(in: self)
+        guard valueLabel.frame.insetBy(dx: -spacing, dy: -spacing).contains(point) || unitLabel.frame.insetBy(dx: -spacing, dy: -spacing).contains(point) else { return }
+        guard let id = descriptor.unit.id else { return }
+        UnitDialog.show(from: hostingViewController, sourceView: unitLabel, experimentUnitId: id, currentUnitId: displayUnitId ?? id) { [weak self] chosen in
+            self?.setDisplayUnit(chosen)
+        }
+    }
+
+    //The number as the element shows it for a buffer value: factor, conversion and the precision rule (units.md,
+    //"Precision"): fixed point only, scientific stays as authored
+    func formatNumber(_ x: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = descriptor.scientific ? .scientific : .decimal
+        var precision = descriptor.precision
+        var value = x * descriptor.factor
+        if let conversion = conversion {
+            value = conversion.toDisplay(value)
+            if !descriptor.scientific {
+                precision = Units.precision(precision, factor: conversion.scale)
+            }
+        }
+        formatter.maximumFractionDigits = precision
+        formatter.minimumFractionDigits = precision
+        formatter.minimumIntegerDigits = 1
+        return formatter.string(from: NSNumber(value: value)) ?? "-"
+    }
+
+    //The text of the element, number and unit, as the user reads it (for the tests)
+    var displayedText: String {
+        return ((valueLabel.text ?? "") + (unitLabel.text ?? "")).trimmingCharacters(in: .whitespaces)
+    }
+
+    func update() {
         if let last = descriptor.buffer.last, !last.isNaN {
             var mapped = false
 
@@ -105,26 +170,23 @@ final class ExperimentValueView: UIView, DynamicViewModule, ResizingViewModule, 
                     unitLabel.text = descriptor.localizedNegativeUnit
                     
                 } else {
-                    unitLabel.text = descriptor.localizedUnit
+                    unitLabel.text = displayUnitSymbol
                 }
                
-                let formatter = NumberFormatter()
-                formatter.numberStyle = descriptor.scientific ? .scientific : .decimal
-                formatter.maximumFractionDigits = descriptor.precision
-                formatter.minimumFractionDigits = descriptor.precision
-                formatter.minimumIntegerDigits = 1
-
-                let number = NSNumber(value: last * descriptor.factor)
-            
-                if let format = descriptor.valueFormat {
+                if let format = descriptor.valueFormat, format != .FLOAT {
+                    let formatter = NumberFormatter()
+                    formatter.numberStyle = descriptor.scientific ? .scientific : .decimal
+                    formatter.maximumFractionDigits = descriptor.precision
+                    formatter.minimumFractionDigits = descriptor.precision
+                    formatter.minimumIntegerDigits = 1
                     if(format == .ASCII_){
                         valueLabel.text = convertDecimalToAscii(decimals: descriptor.buffer.toArray())
                     } else {
-                        valueLabel.text = formatGeoCoordinates(coordinate: Double(number), outputFormat: format, formatter: formatter)
+                        valueLabel.text = formatGeoCoordinates(coordinate: last * descriptor.factor, outputFormat: format, formatter: formatter)
                     }
                     
                 } else {
-                    valueLabel.text = (formatter.string(from: number) ?? "-") + " "
+                    valueLabel.text = formatNumber(last) + " "
                 }
                 
             }

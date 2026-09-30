@@ -118,6 +118,10 @@ final class WebServerUtilities {
         raw.replaceOccurrences(of: "<!-- [[fontSizeTranslation]] -->", with: localize("fontSize"), options: [], range: NSMakeRange(0, raw.length))
         //The placeholder sits on a line of its own inside the script block, so the assignment replaces it in place
         raw.replaceOccurrences(of: "<!-- [[graphStrings]] -->", with: "graphStrings = Object.assign(graphStrings, \(graphStringsJSON()));", options: [], range: NSMakeRange(0, raw.length))
+        //The Unit system setting and the translated unit symbols, so the browser converts and shows the units as the app
+        //does (docs/file-format/units.md, webinterface readme.md "Units")
+        raw.replaceOccurrences(of: "<!-- [[unitSystem]] -->", with: "var unitSystem = \(WebJSON.string(SettingBundleHelper.getUnitSystem().rawValue));", options: [], range: NSMakeRange(0, raw.length))
+        raw.replaceOccurrences(of: "<!-- [[unitStrings]] -->", with: "unitStrings = \(unitStringsJSON());", options: [], range: NSMakeRange(0, raw.length))
         
         var viewLayout = "var views = ["
         var viewOptions = ""
@@ -214,10 +218,12 @@ final class WebServerUtilities {
                         json += ", \"updateMode\": \"none\""
                     }
                     else if let value = element as? ValueViewDescriptor {
-                        json += ", \"updateMode\": \"\(value.updateMode())\", \"dataInput\":[\"\(value.buffer.name)\"], \"dataInputFunction\":\n\(value.setDataHTMLWithID(idx))\n"
+                        //The "value" object lets the interface render (and convert) the element itself; the generated
+                        //function stays for an interface without it
+                        json += ", \"updateMode\": \"\(value.updateMode())\", \"dataInput\":[\"\(value.buffer.name)\"], \"dataInputFunction\":\n\(value.setDataHTMLWithID(idx))\n, \"value\":\(value.webValueConfig())"
                     }
                     else if let edit = element as? EditViewDescriptor {
-                        json += ", \"updateMode\": \"input\", \"dataInput\":[\"\(edit.buffer.name)\"], \"dataInputFunction\":\n\(edit.setDataHTMLWithID(idx))\n"
+                        json += ", \"updateMode\": \"input\", \"dataInput\":[\"\(edit.buffer.name)\"], \"dataInputFunction\":\n\(edit.setDataHTMLWithID(idx))\n, \"edit\":\(edit.webEditConfig())"
                     }
                     else if let button = element as? ButtonViewDescriptor {
                         json += ", \"updateMode\": \"single\", \"dataInput\": [\"\(button.buffer?.name ?? "")\"], \"dataInputFunction\":\n\(button.setDataHTMLWithID(idx))\n "
@@ -307,8 +313,22 @@ final class WebServerUtilities {
             ("cancel", localize("cancel")),
             ("invalidValue", localize("invalidValue")),
             ("zoomHint", localize("remoteGraphZoomHint")),
-            ("colorMapWarning", localize("remoteColorMapWarning"))
+            ("colorMapWarning", localize("remoteColorMapWarning")),
+            ("unit", localize("unit_dialog_title")),
+            ("unitExperimentDefault", localize("unit_dialog_experiment_default")),
+            ("metric", localize("settingsUnitSystemMetric")),
+            ("imperial", localize("settingsUnitSystemImperial")),
+            ("other", localize("unit_dialog_other"))
         ]
+        return WebJSON.encode(strings)
+    }
+
+    //The translated unit symbols, {id: symbol}, so the browser shows the same designations as the app
+    private class func unitStringsJSON() -> String {
+        var strings: WebJSON.Object = []
+        for unit in Units.all {
+            strings.append((unit.id, Units.symbol(unit.id)))
+        }
         return WebJSON.encode(strings)
     }
 

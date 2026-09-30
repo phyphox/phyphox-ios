@@ -236,11 +236,11 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
         present(dialog, animated: true, completion: nil)
     }
     
-    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, unitX: Unit?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, unitY: Unit?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
         
         for view in modules.flatMap({ $0.moduleTree }) {
             if let zoomableViewModule = view as? ZoomableViewModule {
-                zoomableViewModule.applyZoom(modeX: modeX, applyToX: applyToX, targetX: targetX, modeY: modeY, applyToY: applyToY, targetY: targetY, zoomMin: zoomMin, zoomMax: zoomMax, systemTime: systemTime)
+                zoomableViewModule.applyZoom(modeX: modeX, applyToX: applyToX, targetX: targetX, unitX: unitX, modeY: modeY, applyToY: applyToY, targetY: targetY, unitY: unitY, zoomMin: zoomMin, zoomMax: zoomMax, systemTime: systemTime)
             }
         }
     }

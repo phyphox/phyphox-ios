@@ -76,8 +76,10 @@ extension ResizableViewModule {
     }
 }
 
+//targetX/targetY name the buffer for sameVariable; unitX/unitY carry the sending graph's logical units for sameUnit,
+//where a reference matches every axis of the same quantity and text matches by equal text (units.md, "Linked zoom")
 protocol ApplyZoomDelegate {
-    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool)
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, unitX: Unit?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, unitY: Unit?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool)
 }
 
 protocol ZoomableViewModule : AnyObject, ApplyZoomDelegate {

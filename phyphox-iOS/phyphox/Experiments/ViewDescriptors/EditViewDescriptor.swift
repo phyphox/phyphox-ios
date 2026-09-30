@@ -12,7 +12,7 @@ import CoreGraphics
 struct EditViewDescriptor: ViewDescriptor, Equatable {
     let signed: Bool
     let decimal: Bool
-    let unit: String?
+    let unit: Unit //The experiment's unit: a reference to a known unit or text
     let factor: Double
     
     let min: Double
@@ -21,11 +21,13 @@ struct EditViewDescriptor: ViewDescriptor, Equatable {
     let defaultValue: Double
     let buffer: DataBuffer
     
-    var localizedUnit: String? {
-        if unit == nil {
-            return nil
-        }
-        return translation?.localizeString(unit!) ?? unit!
+    var localizedUnit: String {
+        return unit.symbol
+    }
+
+    //A referenced unit with a quantity and decimal input (an integer restriction in ft is not one in m)
+    var isConvertible: Bool {
+        return unit.isConvertible && decimal
     }
     
     var value: Double {
@@ -40,7 +42,7 @@ struct EditViewDescriptor: ViewDescriptor, Equatable {
     
     var visibilityBuffer : DataBuffer?
 
-    init(label: String, visibilityBuffer : DataBuffer?, translation: ExperimentTranslationCollection?, signed: Bool, decimal: Bool, unit: String?, factor: Double, min: Double, max: Double, defaultValue: Double, buffer: DataBuffer, verticalLayout: Bool = false, align: InfoViewElementDescriptor.TextAlignment = .left) {
+    init(label: String, visibilityBuffer : DataBuffer?, translation: ExperimentTranslationCollection?, signed: Bool, decimal: Bool, unit: Unit, factor: Double, min: Double, max: Double, defaultValue: Double, buffer: DataBuffer, verticalLayout: Bool = false, align: InfoViewElementDescriptor.TextAlignment = .left) {
         self.verticalLayout = verticalLayout
         self.align = align
         self.signed = signed
@@ -73,7 +75,22 @@ struct EditViewDescriptor: ViewDescriptor, Equatable {
             restrictions += "step=\"1\" "
         }
         
-        return "<div style=\"font-size: 105%;\" class=\"editElement\(labelLayoutClass(verticalLayout: verticalLayout, align: align))\" id=\"element\(id)\">\(labelSpanHTML())<input onchange=\"ajax('control?cmd=set&buffer=\(buffer.name)&value='+this.value/\(factor))\" type=\"number\" class=\"value\" \(restrictions) /><span class=\"unit\">\(localizedUnit ?? "")</span></div>"
+        return "<div style=\"font-size: 105%;\" class=\"editElement\(labelLayoutClass(verticalLayout: verticalLayout, align: align))\" id=\"element\(id)\">\(labelSpanHTML())<input onchange=\"ajax('control?cmd=set&buffer=\(buffer.name)&value='+this.value/\(factor))\" type=\"number\" class=\"value\" \(restrictions) /><span class=\"unit\">\(localizedUnit)</span></div>"
+    }
+
+    //The remote interface handles the field itself from this (webinterface readme.md, "Value and edit elements"); the
+    //limits are in buffer units, as in the file
+    func webEditConfig() -> String {
+        let config: WebJSON.Object = [
+            ("unit", unit.webJSON),
+            ("factor", factor),
+            ("min", min.isFinite ? min : nil),
+            ("max", max.isFinite ? max : nil),
+            ("signed", signed),
+            ("decimal", decimal),
+            ("default", defaultValue.isFinite ? defaultValue : nil)
+        ]
+        return WebJSON.encode(config)
     }
 
     func setDataHTMLWithID(_ id: Int) -> String {

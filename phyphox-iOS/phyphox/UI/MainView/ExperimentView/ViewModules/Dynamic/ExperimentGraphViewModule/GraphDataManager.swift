@@ -39,6 +39,10 @@ class GraphDataManager {
 
     //The range actually shown in the last update: headroom and the opened zero range included
     private var displayedBounds: GraphBounds? = nil
+
+    //The units the tics are labelled in (docs/file-format/units.md): the data, the range and the zoom state stay in
+    //the experiment's unit, only the tic labels convert. Touched on the graph queue only.
+    private var displayUnits: GraphDisplayUnits
     
     var wantsUpdate = false
     var active = false
@@ -56,7 +60,20 @@ class GraphDataManager {
             self.logZ = descriptor.logZ
             self.systemTime = descriptor.systemTime
             self.hasZData = descriptor.style[0] == .map
+            self.displayUnits = GraphDisplayUnits(descriptor: descriptor)
         }
+
+    func setDisplayUnits(_ units: GraphDisplayUnits) {
+        queue.async { [weak self] in
+            self?.displayUnits = units
+        }
+    }
+
+    //A plot-space value (log-converted on a log axis) in the display unit of its axis
+    private func displayPlotValue(_ v: Double, axis: Int, log isLog: Bool) -> Double {
+        guard let conversion = displayUnits.conversions[axis] else { return v }
+        return isLog ? log(conversion.toDisplay(exp(v))) : conversion.toDisplay(v)
+    }
     
     func setNeedsUpdate() {
         wantsUpdate = true
@@ -368,19 +385,19 @@ class GraphDataManager {
             var singleTics: (x: GraphGridLine?, y: GraphGridLine?, z: GraphGridLine?) = (nil, nil, nil)
             if finalMin.x.isFinite && finalMin.x == finalMax.x {
                 let range = GraphDataManager.openZeroRange(finalMin.x, log: logX)
-                singleTics.x = GraphDataManager.singleTic(finalMin.x, log: logX)
+                singleTics.x = GraphDataManager.singleTic(displayPlotValue(finalMin.x, axis: 0, log: logX), log: logX)
                 finalMin = GraphPoint3D(x: range.min, y: finalMin.y, z: finalMin.z)
                 finalMax = GraphPoint3D(x: range.max, y: finalMax.y, z: finalMax.z)
             }
             if finalMin.y.isFinite && finalMin.y == finalMax.y {
                 let range = GraphDataManager.openZeroRange(finalMin.y, log: logY)
-                singleTics.y = GraphDataManager.singleTic(finalMin.y, log: logY)
+                singleTics.y = GraphDataManager.singleTic(displayPlotValue(finalMin.y, axis: 1, log: logY), log: logY)
                 finalMin = GraphPoint3D(x: finalMin.x, y: range.min, z: finalMin.z)
                 finalMax = GraphPoint3D(x: finalMax.x, y: range.max, z: finalMax.z)
             }
             if hasZData && finalMin.z.isFinite && finalMin.z == finalMax.z {
                 let range = GraphDataManager.openZeroRange(finalMin.z, log: logZ)
-                singleTics.z = GraphDataManager.singleTic(finalMin.z, log: logZ)
+                singleTics.z = GraphDataManager.singleTic(displayPlotValue(finalMin.z, axis: 2, log: logZ), log: logZ)
                 finalMin = GraphPoint3D(x: finalMin.x, y: finalMin.y, z: range.min)
                 finalMax = GraphPoint3D(x: finalMax.x, y: finalMax.y, z: range.max)
             }
@@ -675,63 +692,34 @@ class GraphDataManager {
         }
         
         private func generateGrid(min minValue: GraphPoint3D<Double>, max maxValue: GraphPoint3D<Double>, singleTics: (x: GraphGridLine?, y: GraphGridLine?, z: GraphGridLine?)) -> GraphGrid {
-            let minX = minValue.x
-            let maxX = maxValue.x
-            let minY = minValue.y
-            let maxY = maxValue.y
-            let minZ = minValue.z
-            let maxZ = maxValue.z
-            let xRange = maxX - minX
-            let yRange = maxY - minY
-            let zRange = maxZ - minZ
-
-            let xTicks = ExperimentGraphUtilities.getTicks(
-                minX, max: maxX,
+            let mappedXTicks = axisGridLines(
+                min: minValue.x, max: maxValue.x,
                 maxTicks: descriptor.timeOnX && systemTime ? 4 : 5,
                 log: logX,
                 isTime: descriptor.timeOnX,
-                systemTimeOffset: systemTimeOffset(timeOnAxis: descriptor.timeOnX)
+                systemTimeOffset: systemTimeOffset(timeOnAxis: descriptor.timeOnX),
+                conversion: displayUnits.conversions[0],
+                single: singleTics.x
             )
-            let yTicks = ExperimentGraphUtilities.getTicks(
-                minY, max: maxY,
+            let mappedYTicks = axisGridLines(
+                min: minValue.y, max: maxValue.y,
                 maxTicks: 5,
                 log: logY,
                 isTime: descriptor.timeOnY,
-                systemTimeOffset: systemTimeOffset(timeOnAxis: descriptor.timeOnY)
+                systemTimeOffset: systemTimeOffset(timeOnAxis: descriptor.timeOnY),
+                conversion: displayUnits.conversions[1],
+                single: singleTics.y
             )
-            let zTicks = ExperimentGraphUtilities.getTicks(
-                minZ, max: maxZ,
+            let mappedZTicks = axisGridLines(
+                min: minValue.z, max: maxValue.z,
                 maxTicks: 5,
                 log: logZ,
                 isTime: false,
-                systemTimeOffset: 0.0
+                systemTimeOffset: 0.0,
+                conversion: displayUnits.conversions[2],
+                single: singleTics.z
             )
 
-            let mappedXTicks = singleTics.x.map { [$0] } ?? xTicks.map { tick in
-                GraphGridLine(
-                    absoluteValue: tick.value,
-                    relativeValue: CGFloat(((logX ? log(tick.value) : tick.value) - minX) / xRange),
-                    precision: tick.precision
-                )
-            }
-
-            let mappedYTicks = singleTics.y.map { [$0] } ?? yTicks.map { tick in
-                GraphGridLine(
-                    absoluteValue: tick.value,
-                    relativeValue: CGFloat(((logY ? log(tick.value) : tick.value) - minY) / yRange),
-                    precision: tick.precision
-                )
-            }
-            
-            let mappedZTicks = singleTics.z.map { [$0] } ?? zTicks.map { tick in
-                GraphGridLine(
-                    absoluteValue: tick.value,
-                    relativeValue: CGFloat(((logZ ? log(tick.value) : tick.value) - minZ) / zRange),
-                    precision: tick.precision
-                )
-            }
-
-           
             return GraphGrid(
                 xGridLines: mappedXTicks,
                 yGridLines: mappedYTicks,
@@ -741,6 +729,34 @@ class GraphDataManager {
             )
         }
         
+        //The tics of an axis. On an axis shown in another unit they are nice numbers in that unit (the label shows
+        //absoluteValue), placed at the matching positions of the experiment's unit, in which the range is given
+        private func axisGridLines(min: Double, max: Double, maxTicks: Int, log isLog: Bool, isTime: Bool, systemTimeOffset: Double, conversion: UnitConversion?, single: GraphGridLine?) -> [GraphGridLine] {
+            if let single = single {
+                return [single]
+            }
+            let range = max - min
+            guard let conversion = conversion else {
+                return ExperimentGraphUtilities.getTicks(min, max: max, maxTicks: maxTicks, log: isLog, isTime: isTime, systemTimeOffset: systemTimeOffset).map { tick in
+                    GraphGridLine(
+                        absoluteValue: tick.value,
+                        relativeValue: CGFloat(((isLog ? log(tick.value) : tick.value) - min) / range),
+                        precision: tick.precision
+                    )
+                }
+            }
+            let displayMin = isLog ? log(conversion.toDisplay(exp(min))) : conversion.toDisplay(min)
+            let displayMax = isLog ? log(conversion.toDisplay(exp(max))) : conversion.toDisplay(max)
+            return ExperimentGraphUtilities.getTicks(displayMin, max: displayMax, maxTicks: maxTicks, log: isLog, isTime: false, systemTimeOffset: 0.0).map { tick in
+                let position = conversion.fromDisplay(tick.value)
+                return GraphGridLine(
+                    absoluteValue: tick.value,
+                    relativeValue: CGFloat(((isLog ? log(position) : position) - min) / range),
+                    precision: tick.precision
+                )
+            }
+        }
+
         private func generatePauseMarkers(min minValue: GraphPoint3D<Double>, max maxValue: GraphPoint3D<Double>) -> PauseRanges {
             let minX = minValue.x
             let maxX = maxValue.x

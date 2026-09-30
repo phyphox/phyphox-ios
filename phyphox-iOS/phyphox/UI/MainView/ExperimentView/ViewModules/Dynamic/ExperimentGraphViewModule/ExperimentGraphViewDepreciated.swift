@@ -1775,7 +1775,7 @@ extension ExperimentGraphViewDepreciated {
     }
     
     private var markerLabels: GraphMarkerLabels {
-        return GraphMarkerLabels(descriptor: descriptor, logX: logX, logY: logY, logZ: logZ, hasZData: hasZData)
+        return GraphMarkerLabels(descriptor: descriptor, logX: logX, logY: logY, logZ: logZ, hasZData: hasZData, displayUnits: GraphDisplayUnits(descriptor: descriptor))
     }
 
     private func createLinearFitMarkerData(slope: GLfloat, intercept: GLfloat) -> MarkerData {
@@ -1932,7 +1932,7 @@ extension ExperimentGraphViewDepreciated: ResizableViewModule {
 
 extension ExperimentGraphViewDepreciated: ApplyZoomDelegate, ZoomableViewModule, ApplyZoomDialogResultDelegate {
     
-    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
+    func applyZoom(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, targetX: String?, unitX: Unit?, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, targetY: String?, unitY: Unit?, zoomMin: GraphPoint2D<Double>, zoomMax: GraphPoint2D<Double>, systemTime: Bool) {
         
         var applyX = false
         var applyY = false
@@ -1943,7 +1943,7 @@ extension ExperimentGraphViewDepreciated: ApplyZoomDelegate, ZoomableViewModule,
         case .sameAxis:
             applyX = true
         case .sameUnit:
-            if targetX == descriptor.localizedXUnit {
+            if let unit = unitX, ExperimentGraphView.unitMatches(axisUnit: descriptor.xAxisUnit, unit) {
                 applyX = true
             }
         case .sameVariable:
@@ -1960,7 +1960,7 @@ extension ExperimentGraphViewDepreciated: ApplyZoomDelegate, ZoomableViewModule,
         case .sameAxis:
             applyY = true
         case .sameUnit:
-            if targetY == descriptor.localizedYUnit {
+            if let unit = unitY, ExperimentGraphView.unitMatches(axisUnit: descriptor.yAxisUnit, unit) {
                 applyY = true
             }
         case .sameVariable:
@@ -2031,30 +2031,12 @@ extension ExperimentGraphViewDepreciated: ApplyZoomDelegate, ZoomableViewModule,
             }
         }
         
-        applyZoom(modeX: modeX, applyToX: .this, targetX: nil, modeY: modeY, applyToY: .this, targetY: nil, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y), systemTime: systemTime)
+        applyZoom(modeX: modeX, applyToX: .this, targetX: nil, unitX: nil, modeY: modeY, applyToY: .this, targetY: nil, unitY: nil, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y), systemTime: systemTime)
         if (applyToX != .this || applyToY != .this) {
-            let targetX: String?
-            let targetY: String?
-            
-            switch applyToX {
-            case .sameUnit:
-                targetX = descriptor.localizedXUnit
-            case .sameVariable:
-                targetX = descriptor.xInputBuffers[0]?.name
-            default:
-                targetX = nil
-            }
-            
-            switch applyToY {
-            case .sameUnit:
-                targetY = descriptor.localizedYUnit
-            case .sameVariable:
-                targetY = descriptor.yInputBuffers[0].name
-            default:
-                targetY = nil
-            }
+            let targetX = applyToX == .sameVariable ? descriptor.xInputBuffers[0]?.name : nil
+            let targetY = applyToY == .sameVariable ? descriptor.yInputBuffers[0].name : nil
 
-            zoomDelegate?.applyZoom(modeX: applyToX == .this ? .none : modeX, applyToX: applyToX == .this ? .none : applyToX, targetX: targetX, modeY: applyToY == .this ? .none : modeY, applyToY: applyToY == .this ? .none : applyToY, targetY: targetY, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y), systemTime: systemTime)
+            zoomDelegate?.applyZoom(modeX: applyToX == .this ? .none : modeX, applyToX: applyToX == .this ? .none : applyToX, targetX: targetX, unitX: applyToX == .sameUnit ? descriptor.xAxisUnit : nil, modeY: applyToY == .this ? .none : modeY, applyToY: applyToY == .this ? .none : applyToY, targetY: targetY, unitY: applyToY == .sameUnit ? descriptor.yAxisUnit : nil, zoomMin: GraphPoint2D(x: zoomMin!.x, y: zoomMin!.y), zoomMax: GraphPoint2D(x: zoomMax!.x, y: zoomMax!.y), systemTime: systemTime)
         }
     }
     

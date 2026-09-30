@@ -146,13 +146,36 @@ class GraphLayoutManager {
         }
     }
     
-    func updateAxisLabels(systemTime: Bool, descriptor: GraphViewDescriptor) {
-        if descriptor.timeOnX {
-            xLabel.text = systemTime ? descriptor.localizedXLabelWithTimezone : descriptor.localizedXLabelWithUnit
+    //The axis titles: a time axis showing a clock names the time zone, every other axis the unit currently shown
+    func updateAxisLabels(systemTime: Bool, units: GraphDisplayUnits) {
+        xLabel.text = descriptor.timeOnX && systemTime ? descriptor.localizedXLabelWithTimezone : descriptor.localizedXLabel(withUnit: units.symbols[0])
+        yLabel.text = descriptor.timeOnY && systemTime ? descriptor.localizedYLabelWithTimezone : descriptor.localizedYLabel(withUnit: units.symbols[1])
+        zLabel?.text = descriptor.localizedZLabel(withUnit: units.symbols[2])
+    }
+
+    //The axis titles as drawn (for the tests)
+    var xAxisTitle: String? { return xLabel.text }
+    var yAxisTitle: String? { return yLabel.text }
+    var zAxisTitle: String? { return zLabel?.text }
+
+    func axisLabelView(_ axis: Int) -> UIView? {
+        switch axis {
+        case 0: return xLabel
+        case 1: return yLabel
+        default: return zLabel
         }
-        if descriptor.timeOnY {
-            yLabel.text = systemTime ? descriptor.localizedYLabelWithTimezone : descriptor.localizedYLabelWithUnit
+    }
+
+    //The axis (0 x, 1 y, 2 z) whose title the point (in graphArea coordinates) hits, with some slop around the text
+    func axisLabel(at point: CGPoint) -> Int? {
+        let slop: CGFloat = 12.0
+        for axis in 0..<3 {
+            guard let label = axisLabelView(axis), !label.isHidden, label.superview === graphArea else { continue }
+            if label.frame.insetBy(dx: -slop, dy: -slop).contains(point) {
+                return axis
+            }
         }
+        return nil
     }
     
     func createMarkerLabelFrame(){

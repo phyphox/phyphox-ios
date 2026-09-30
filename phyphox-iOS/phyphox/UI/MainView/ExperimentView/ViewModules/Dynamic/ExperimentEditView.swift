@@ -28,6 +28,10 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
 
     private var edited = false
 
+    //The unit currently shown (session state, docs/file-format/units.md): the experiment's own unless the Unit system
+    //setting or the unit dialog switched it
+    private(set) var displayUnitId: String?
+
     //Edit-state backgrounds like Android's phyphox_yellow (changed, uncommitted) and phyphox_green (commit flash)
     private static let changedColor = UIColor(red: 0xed/255.0, green: 0xf6/255.0, blue: 0x68/255.0, alpha: 1.0)
     private static let committedColor = UIColor(red: 0x2b/255.0, green: 0xfb/255.0, blue: 0x4c/255.0, alpha: 1.0)
@@ -71,22 +75,28 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
             textField.textAlignment = descriptor.align.textAlignment
         }
         
-        if descriptor.unit != nil {
-            unitLabel = {
-                let l = UILabel()
-                l.text = descriptor.localizedUnit
-                l.textColor = UIColor(named: "textColor")
-                
-                l.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.subheadline)
-                
-                return l
-            }()
-        }
-        else {
-            unitLabel = nil
-        }
+        unitLabel = {
+            let l = UILabel()
+            l.text = descriptor.localizedUnit
+            l.textColor = UIColor(named: "textColor")
+            l.accessibilityIdentifier = "edit.unit"
+            
+            l.font = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.subheadline)
+            
+            return l
+        }()
         
         super.init(frame: .zero)
+
+        //The Unit system setting is applied on every load (units.md, "The unit-system setting")
+        displayUnitId = descriptor.unit.id
+        if let id = descriptor.unit.id, descriptor.isConvertible {
+            displayUnitId = Units.forSetting(id, SettingBundleHelper.getUnitSystem())
+            unitLabel?.text = displayUnitSymbol
+            //A tap on the unit offers the other units of the quantity
+            unitLabel?.isUserInteractionEnabled = true
+            unitLabel?.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(unitTapped)))
+        }
         
         
         let toolbar = UIToolbar()
@@ -130,9 +140,58 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         fatalError("init(coder:) has not been implemented")
     }
 
+    //What the field shows for a factored buffer value; a converted value is rounded to six significant digits, as the
+    //conversion factors would otherwise fill the field with digits
     private func formattedValue(_ raw: Double) -> String {
+        if let conversion = conversion {
+            let significant = NumberFormatter()
+            significant.numberStyle = .decimal
+            significant.groupingSeparator = ""
+            significant.usesSignificantDigits = true
+            significant.maximumSignificantDigits = 6
+            return significant.string(from: conversion.toDisplay(raw) as NSNumber) ?? "0"
+        }
         let value = descriptor.decimal ? (raw as NSNumber) : (Int(raw) as NSNumber)
         return formatter.string(from: value) ?? "0"
+    }
+
+    //Conversion between the factored buffer value and the shown number; nil while the experiment's unit is shown
+    private var conversion: UnitConversion? {
+        guard descriptor.isConvertible, let from = descriptor.unit.id, let to = displayUnitId, to != from else { return nil }
+        return UnitConversion(from: from, to: to)
+    }
+
+    var displayUnitSymbol: String {
+        return conversion.map { Units.symbol($0.to) } ?? descriptor.localizedUnit
+    }
+
+    //The limits as they apply to the shown number: (min, max) in the display unit (buffer units in the file)
+    var displayedLimits: (min: Double, max: Double) {
+        func shown(_ limit: Double) -> Double {
+            guard limit.isFinite else { return limit }
+            return conversion?.toDisplay(limit * descriptor.factor) ?? limit * descriptor.factor
+        }
+        return (shown(descriptor.min), shown(descriptor.max))
+    }
+
+    //What the unit dialog does: show the field in another unit of the same quantity; uncommitted text is discarded
+    func setDisplayUnit(_ id: String) {
+        guard descriptor.isConvertible, Units.sameQuantity(descriptor.unit.id, id) else { return }
+        displayUnitId = id
+        if textField.isFirstResponder {
+            edited = false //the text typed in the old unit is dropped, not committed
+            textField.endEditing(true)
+        }
+        unitLabel?.text = displayUnitSymbol
+        update()
+        setNeedsLayout()
+    }
+
+    @objc private func unitTapped() {
+        guard let id = descriptor.unit.id else { return }
+        UnitDialog.show(from: hostingViewController, sourceView: unitLabel, experimentUnitId: id, currentUnitId: displayUnitId ?? id) { [weak self] chosen in
+            self?.setDisplayUnit(chosen)
+        }
     }
     
     @objc func hideKeyboard(_: UITextField) {
@@ -187,7 +246,9 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
                 }
             }
 
-            var value = rawValue/descriptor.factor
+            //The typed number is converted back to the experiment's unit before the factor (units.md); the limits are in
+            //buffer units
+            var value = (conversion?.fromDisplay(rawValue) ?? rawValue)/descriptor.factor
 
             if descriptor.min.isFinite && value < descriptor.min {
                 value = descriptor.min
@@ -220,7 +281,7 @@ final class ExperimentEditView: UIView, DynamicViewModule, DescriptorBoundViewMo
         wantsUpdate = true
     }
 
-    private func update() {
+    func update() {
         //Seeded by Experiment.seedInputDefaults(): this display link only turns over for the active view collection
         //(input-defaults-on-hidden-view)
 

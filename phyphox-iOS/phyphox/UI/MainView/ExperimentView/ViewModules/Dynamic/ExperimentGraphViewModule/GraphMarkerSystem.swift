@@ -21,6 +21,8 @@ class GraphMarkerSystem {
     private var currentDataSets: [GraphDataSet] = []
     private var currentBounds: GraphBounds = GraphBounds(min: GraphPoint3D.zero, max: GraphPoint3D.zero)
     var systemTime: Bool = false
+    //The units the read-outs show, set by the graph view (docs/file-format/units.md)
+    var displayUnits: GraphDisplayUnits
 
     //Persistent annotation for a value written through the data picker: a line across the graph with the output's label
     struct PickAnnotation {
@@ -35,6 +37,7 @@ class GraphMarkerSystem {
             self.descriptor = descriptor
             self.dataManager = dataManager
             self.timeReference = timeReference
+            self.displayUnits = GraphDisplayUnits(descriptor: descriptor)
             self.markerOverlayView = MarkerOverlayView()
             self.markerOverlayView.clipsToBounds = true
             self.markerOverlayView.isUserInteractionEnabled = false
@@ -521,7 +524,7 @@ extension GraphMarkerSystem {
     }
     
     private var markerLabels: GraphMarkerLabels {
-        return GraphMarkerLabels(descriptor: descriptor, logX: dataManager.logX, logY: dataManager.logY, logZ: dataManager.logZ, hasZData: descriptor.style[0] == .map)
+        return GraphMarkerLabels(descriptor: descriptor, logX: dataManager.logX, logY: dataManager.logY, logZ: dataManager.logZ, hasZData: descriptor.style[0] == .map, displayUnits: displayUnits)
     }
 
     private func createLinearFitMarkerData(slope: GLfloat, intercept: GLfloat) -> MarkerData {

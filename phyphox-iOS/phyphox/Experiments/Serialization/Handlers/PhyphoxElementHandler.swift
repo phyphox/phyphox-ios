@@ -391,7 +391,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
         let viewCollectionDescriptors = try viewsHandler.expectOptionalResult()
 
-        let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations) })  }
+        let viewDescriptors = try viewCollectionDescriptors?.map { ExperimentViewCollectionDescriptor(label: $0.label, translation: translations, views: try $0.views.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations, version: version) })  }
 
         if !isLink {
             guard viewDescriptors != nil else {
@@ -406,7 +406,11 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
 
     /// MARK: - Helpers required for the initialization of an `Experiment` instance and for the creation of properties of `Experiment` from intermediate element handler results.
 
-    private func makeViewDescriptor(from descriptor: ViewElementDescriptor, timeReference: ExperimentTimeReference, buffers: [String: DataBuffer], translations: ExperimentTranslationCollection?) throws -> ViewDescriptor {
+    private func makeViewDescriptor(from descriptor: ViewElementDescriptor, timeReference: ExperimentTimeReference, buffers: [String: DataBuffer], translations: ExperimentTranslationCollection?, version: SemanticVersion) throws -> ViewDescriptor {
+        //The unit attributes become logical units here, where the file version is known (Unit.parse)
+        func unit(_ raw: String?) -> Unit? {
+            return raw.map { Unit.parse($0, version: version, translation: translations) }
+        }
         switch descriptor {
         case .separator(let descriptor):
 
@@ -430,7 +434,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "value")
 
-            return ValueViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, color: descriptor.color, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: descriptor.unit, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings, positiveUnit: descriptor.positiveUnit, negativeUnit: descriptor.negativeUnit, valueFormat: descriptor.valueFormat, verticalLayout: descriptor.verticalLayout, align: descriptor.align)
+            return ValueViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, color: descriptor.color, translation: translations, size: descriptor.size, scientific: descriptor.scientific, precision: descriptor.precision, unit: unit(descriptor.unit) ?? .empty, factor: descriptor.factor, buffer: buffer, mappings: descriptor.mappings, positiveUnit: descriptor.positiveUnit, negativeUnit: descriptor.negativeUnit, valueFormat: descriptor.valueFormat, verticalLayout: descriptor.verticalLayout, align: descriptor.align)
                 
         case .edit(let descriptor):
             guard let buffer = buffers[descriptor.outputBufferName] else {
@@ -443,7 +447,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "edit")
 
-            return EditViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, translation: translations, signed: descriptor.signed, decimal: descriptor.decimal, unit: descriptor.unit, factor: descriptor.factor, min: descriptor.min, max: descriptor.max, defaultValue: descriptor.defaultValue, buffer: buffer, verticalLayout: descriptor.verticalLayout, align: descriptor.align)
+            return EditViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, translation: translations, signed: descriptor.signed, decimal: descriptor.decimal, unit: unit(descriptor.unit) ?? .empty, factor: descriptor.factor, min: descriptor.min, max: descriptor.max, defaultValue: descriptor.defaultValue, buffer: buffer, verticalLayout: descriptor.verticalLayout, align: descriptor.align)
 
         case .button(let descriptor):
             let dataFlow = try descriptor.dataFlow.map { flow -> (ExperimentAnalysisDataInput, DataBuffer) in
@@ -525,7 +529,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "graph")
             
 
-            return GraphViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer,  translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: descriptor.xUnit, yUnit: descriptor.yUnit, zUnit: descriptor.zUnit, yxUnit: descriptor.yxUnit, timeReference: timeReference, timeOnX: descriptor.timeOnX, timeOnY: descriptor.timeOnY, systemTime: descriptor.systemTime, linearTime: descriptor.linearTime, hideTimeMarkers: descriptor.hideTimeMarkers, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, suppressScientificNotation: descriptor.suppressScientificNotation, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, followX: descriptor.followX, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap, showColorScale: descriptor.showColorScale, interpolateMapColors: descriptor.interpolateMapColors, pickLabel: descriptor.pickLabel, pickOutputs: pickOutputs, plotLeft: descriptor.plotLeft, plotTop: descriptor.plotTop, plotRight: descriptor.plotRight, plotBottom: descriptor.plotBottom)
+            return GraphViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer,  translation: translations, xLabel: descriptor.xLabel, yLabel: descriptor.yLabel, zLabel: descriptor.zLabel, xUnit: unit(descriptor.xUnit), yUnit: unit(descriptor.yUnit), zUnit: unit(descriptor.zUnit), yxUnit: unit(descriptor.yxUnit), timeReference: timeReference, timeOnX: descriptor.timeOnX, timeOnY: descriptor.timeOnY, systemTime: descriptor.systemTime, linearTime: descriptor.linearTime, hideTimeMarkers: descriptor.hideTimeMarkers, xInputBuffers: xBuffers, yInputBuffers: yBuffers, zInputBuffers: zBuffers, logX: descriptor.logX, logY: descriptor.logY, logZ: descriptor.logZ, xPrecision: descriptor.xPrecision, yPrecision: descriptor.yPrecision, zPrecision: descriptor.zPrecision, suppressScientificNotation: descriptor.suppressScientificNotation, scaleMinX: descriptor.scaleMinX, scaleMaxX: descriptor.scaleMaxX, scaleMinY: descriptor.scaleMinY, scaleMaxY: descriptor.scaleMaxY, scaleMinZ: descriptor.scaleMinZ, scaleMaxZ: descriptor.scaleMaxZ, minX: descriptor.minX, maxX: descriptor.maxX, minY: descriptor.minY, maxY: descriptor.maxY, minZ: descriptor.minZ, maxZ: descriptor.maxZ, followX: descriptor.followX, aspectRatio: descriptor.aspectRatio, partialUpdate: descriptor.partialUpdate, history: descriptor.history, style: descriptor.style, lineWidth: descriptor.lineWidth, color: descriptor.color, mapWidth: descriptor.mapWidth, colorMap: descriptor.colorMap, showColorScale: descriptor.showColorScale, interpolateMapColors: descriptor.interpolateMapColors, pickLabel: descriptor.pickLabel, pickOutputs: pickOutputs, plotLeft: descriptor.plotLeft, plotTop: descriptor.plotTop, plotRight: descriptor.plotRight, plotBottom: descriptor.plotBottom)
             
         case .depthGUI(let descriptor):
             
@@ -610,25 +614,25 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         //The view groups of file format 1.21 (groups.md): their children are made the same way, recursively
         case .vertical(let descriptor):
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "vertical")
-            let children = try descriptor.children.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations) }
+            let children = try descriptor.children.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations, version: version) }
 
             return VerticalViewDescriptor(visibilityBuffer: visibilityBuffer, children: children, spacing: descriptor.spacing)
 
         case .horizontal(let descriptor):
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "horizontal")
-            let children = try descriptor.children.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations) }
+            let children = try descriptor.children.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations, version: version) }
 
             return HorizontalViewDescriptor(visibilityBuffer: visibilityBuffer, children: children, weights: descriptor.weights, spacing: descriptor.spacing)
 
         case .grid(let descriptor):
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "grid")
-            let children = try descriptor.children.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations) }
+            let children = try descriptor.children.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations, version: version) }
 
             return GridViewDescriptor(visibilityBuffer: visibilityBuffer, children: children, maxWidth: descriptor.maxWidth, maxWidthUnit: descriptor.maxWidthUnit, fillLastRow: descriptor.fillLastRow, spacing: descriptor.spacing)
 
         case .stack(let descriptor):
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "stack")
-            let children = try descriptor.children.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations) }
+            let children = try descriptor.children.map { try makeViewDescriptor(from: $0, timeReference: timeReference, buffers: buffers, translations: translations, version: version) }
 
             return StackViewDescriptor(visibilityBuffer: visibilityBuffer, children: children)
 
@@ -644,7 +648,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
                 }
                 return TransformInput(property: input.property, buffer: buffer, value: input.value, min: input.min, max: input.max, mapMin: input.mapMin, mapMax: input.mapMax, clamp: input.clamp)
             }
-            let child = try makeViewDescriptor(from: descriptor.child, timeReference: timeReference, buffers: buffers, translations: translations)
+            let child = try makeViewDescriptor(from: descriptor.child, timeReference: timeReference, buffers: buffers, translations: translations, version: version)
 
             return TransformViewDescriptor(visibilityBuffer: visibilityBuffer, originX: descriptor.originX, originY: descriptor.originY, inputs: inputs, child: child)
         }

@@ -18,7 +18,7 @@ struct ValueViewMap: Equatable {
 struct ValueViewDescriptor: ViewDescriptor, Equatable {
     let scientific: Bool
     let precision: Int
-    let unit: String?
+    let unit: Unit //The experiment's unit: a reference to a known unit or text
     let factor: Double
     let buffer: DataBuffer
     let size: Double
@@ -38,11 +38,14 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
     let translation: ExperimentTranslationCollection?
     let visibilityBuffer: DataBuffer?
 
-    var localizedUnit: String? {
-        if unit == nil {
-            return nil
-        }
-        return translation?.localizeString(unit!) ?? unit!
+    //The symbol of the experiment's unit (a reference is already resolved, text already translated)
+    var localizedUnit: String {
+        return unit.symbol
+    }
+
+    //A referenced unit with a quantity, a plain float and no direction labels (units.md, "Elements that are not converted")
+    var isConvertible: Bool {
+        return unit.isConvertible && (valueFormat == nil || valueFormat == .FLOAT) && positiveUnit == nil && negetiveUnit == nil
     }
     
     var localizedPositiveUnit: String? {
@@ -59,7 +62,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
         return translation?.localizeString(negetiveUnit!) ?? negetiveUnit!
     }
     
-    init(label: String, visibilityBuffer: DataBuffer?, color: UIColor, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: String?, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap], positiveUnit: String?, negativeUnit: String?, valueFormat: String?, verticalLayout: Bool = false, align: InfoViewElementDescriptor.TextAlignment = .left) {
+    init(label: String, visibilityBuffer: DataBuffer?, color: UIColor, translation: ExperimentTranslationCollection?, size: Double, scientific: Bool, precision: Int, unit: Unit, factor: Double, buffer: DataBuffer, mappings: [ValueViewMap], positiveUnit: String?, negativeUnit: String?, valueFormat: String?, verticalLayout: Bool = false, align: InfoViewElementDescriptor.TextAlignment = .left) {
         self.verticalLayout = verticalLayout
         self.align = align
         self.scientific = scientific
@@ -100,9 +103,30 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
     
     
     func generateViewHTMLWithID(_ id: Int) -> String {
-        return "<div style=\"font-size:105%;color:#\(color.webHexString)\" class=\"valueElement adjustableColor\(labelLayoutClass(verticalLayout: verticalLayout, align: align))\" id=\"element\(id)\">\(labelSpanHTML())<span class=\"value\"><span class=\"valueNumber\" style=\"font-size:\(100*size)%;\"></span> <span class=\"valueUnit\">\(localizedUnit ?? "")</span></span></div>"
+        return "<div style=\"font-size:105%;color:#\(color.webHexString)\" class=\"valueElement adjustableColor\(labelLayoutClass(verticalLayout: verticalLayout, align: align))\" id=\"element\(id)\">\(labelSpanHTML())<span class=\"value\"><span class=\"valueNumber\" style=\"font-size:\(100*size)%;\"></span> <span class=\"valueUnit\">\(localizedUnit)</span></span></div>"
     }
     
+    //The remote interface builds the value display itself from this (webinterface readme.md, "Value and edit elements")
+    func webValueConfig() -> String {
+        let map: [WebJSON.Object] = mappings.map { mapping in
+            [("min", mapping.range.lowerBound.isFinite ? mapping.range.lowerBound : nil),
+             ("max", mapping.range.upperBound.isFinite ? mapping.range.upperBound : nil),
+             ("str", mapping.replacement)]
+        }
+        let config: WebJSON.Object = [
+            ("unit", unit.webJSON),
+            ("precision", precision),
+            ("scientific", scientific),
+            ("factor", factor),
+            ("size", size),
+            ("format", valueFormatString ?? "float"),
+            ("positiveUnit", localizedPositiveUnit),
+            ("negativeUnit", localizedNegativeUnit),
+            ("map", map)
+        ]
+        return WebJSON.encode(config)
+    }
+
     func updateMode() -> String {
         if(self.valueFormat == .ASCII_){
             return "full"
@@ -165,7 +189,7 @@ struct ValueViewDescriptor: ViewDescriptor, Equatable {
                                 } else if(\"\(negetiveUnit ?? "null")\" != \"null\" && x < 0 ) {
                                     unitLabel = \"\(localizedNegativeUnit ?? "")\"
                                 } else {
-                                    unitLabel = \"\(localizedUnit ?? "")\"
+                                    unitLabel = \"\(localizedUnit)\"
                                 }
                             """
     }

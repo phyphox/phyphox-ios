@@ -25,12 +25,14 @@ class SettingBundleHelper {
     enum UserDefaultKeys: String {
         case APP_MODE = "appModeKey"
         case GRAPH_SIZE = "graphSizeKey"
+        case UNIT_SYSTEM = "unitSystem"
     }
     
     static func registerDefaults(){
         var appDefaults = Dictionary<String, Any>()
         appDefaults[UserDefaultKeys.APP_MODE.rawValue] = "1"
         appDefaults[UserDefaultKeys.GRAPH_SIZE.rawValue] = 2
+        appDefaults[UserDefaultKeys.UNIT_SYSTEM.rawValue] = Units.Setting.experiment.rawValue
         UserDefaults.standard.register(defaults: appDefaults)
         UserDefaults.standard.synchronize()
         
@@ -61,6 +63,12 @@ class SettingBundleHelper {
         }
     }
     
+    //The Unit system setting (docs/file-format/units.md), read whenever an experiment is loaded: the Settings app can
+    //change it while phyphox is suspended
+    static func getUnitSystem() -> Units.Setting {
+        return Units.Setting.from(UserDefaults.standard.string(forKey: UserDefaultKeys.UNIT_SYSTEM.rawValue))
+    }
+
     static func getGraphSize() -> Int{
         return UserDefaults.standard.integer(forKey: SettingBundleHelper.UserDefaultKeys.GRAPH_SIZE.rawValue)
     }
