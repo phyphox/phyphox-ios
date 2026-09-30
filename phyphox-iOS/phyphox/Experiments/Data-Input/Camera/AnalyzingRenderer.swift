@@ -65,16 +65,47 @@ class AnalyzingRenderer {
         
         exposureAnalyzer.loadMetal()
         
-        if(cameraBuffers?.luminanceBuffer != nil){
-            if(feature == CameraFeature.PHOTOMETRIC){
-                analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.luminanceBuffer))
-            } else if(feature == CameraFeature.SPECTROSCOPY){
-                analysingModules.append(SpectroscopyAnalyzer(result: cameraBuffers?.luminanceBuffer, xAxis: cameraBuffers?.pixelPosition))
-            }
+        //Same wiring as Android's AnalyzingOpenGLRenderer: the gamma-encoded outputs (luma, red, green, blue) and the HSV
+        //outputs are per-frame scalars under every feature; luminance and the linear colour channels are scalars under
+        //photometry and spectra under spectroscopy. Every mapped output is one compute pass, an unmapped one costs nothing.
+        if(cameraBuffers?.luminanceBuffer != nil && feature == CameraFeature.PHOTOMETRIC){
+            analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.luminanceBuffer, linear: true, channel: .luma))
         }
         
         if(cameraBuffers?.lumaBuffer != nil){
-            analysingModules.append(LumaAnalyzer(result: cameraBuffers?.lumaBuffer))
+            analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.lumaBuffer, linear: false, channel: .luma))
+        }
+        
+        //Colour channels (file format 1.21)
+        if(cameraBuffers?.redBuffer != nil){
+            analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.redBuffer, linear: false, channel: .red))
+        }
+        
+        if(cameraBuffers?.greenBuffer != nil){
+            analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.greenBuffer, linear: false, channel: .green))
+        }
+        
+        if(cameraBuffers?.blueBuffer != nil){
+            analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.blueBuffer, linear: false, channel: .blue))
+        }
+        
+        if(feature == CameraFeature.PHOTOMETRIC){
+            if(cameraBuffers?.linearRedBuffer != nil){
+                analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.linearRedBuffer, linear: true, channel: .red))
+            }
+            if(cameraBuffers?.linearGreenBuffer != nil){
+                analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.linearGreenBuffer, linear: true, channel: .green))
+            }
+            if(cameraBuffers?.linearBlueBuffer != nil){
+                analysingModules.append(LuminanceAnalyzer(result: cameraBuffers?.linearBlueBuffer, linear: true, channel: .blue))
+            }
+        }
+        
+        if(feature == CameraFeature.SPECTROSCOPY){
+            let spectrumMapped = cameraBuffers?.pixelPosition != nil || cameraBuffers?.luminanceBuffer != nil || cameraBuffers?.linearRedBuffer != nil || cameraBuffers?.linearGreenBuffer != nil || cameraBuffers?.linearBlueBuffer != nil
+            if spectrumMapped {
+                analysingModules.append(SpectroscopyAnalyzer(result: cameraBuffers?.luminanceBuffer, xAxis: cameraBuffers?.pixelPosition, linearRed: cameraBuffers?.linearRedBuffer, linearGreen: cameraBuffers?.linearGreenBuffer, linearBlue: cameraBuffers?.linearBlueBuffer))
+            }
         }
         
         if(cameraBuffers?.hueBuffer != nil){
@@ -125,7 +156,7 @@ class AnalyzingRenderer {
                 autoreleasepool(invoking: {
                     let b = self.cameraBuffers
                     //One frame's outputs update atomically so a remote /get never sees them half-advanced (issue 22)
-                    synchronizedBufferWrite([b?.tBuffer, b?.shutterSpeedBuffer, b?.isoBuffer, b?.apertureBuffer, b?.luminanceBuffer, b?.lumaBuffer, b?.hueBuffer, b?.saturationBuffer, b?.valueBuffer, b?.pixelPosition]) {
+                    synchronizedBufferWrite([b?.tBuffer, b?.shutterSpeedBuffer, b?.isoBuffer, b?.apertureBuffer, b?.luminanceBuffer, b?.lumaBuffer, b?.hueBuffer, b?.saturationBuffer, b?.valueBuffer, b?.pixelPosition, b?.redBuffer, b?.greenBuffer, b?.blueBuffer, b?.linearRedBuffer, b?.linearGreenBuffer, b?.linearBlueBuffer]) {
                         if let tBuffer = b?.tBuffer {
                             tBuffer.append(t)
                         }

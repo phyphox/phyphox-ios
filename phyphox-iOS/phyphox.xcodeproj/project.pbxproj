@@ -171,10 +171,10 @@
 		8A5A0167000000000000AA77 /* UnitConversionDisplayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0166000000000000AA76 /* UnitConversionDisplayTests.swift */; };
 		8A5A0165000000000000AA75 /* UnitReferenceParseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0164000000000000AA74 /* UnitReferenceParseTests.swift */; };
 		8A5A0147000000000000AA57 /* ViewGroupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0146000000000000AA56 /* ViewGroupTests.swift */; };
+		8A5A0171000000000000AA81 /* CameraAnalyzerMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0170000000000000AA80 /* CameraAnalyzerMathTests.swift */; };
 		8A5A0145000000000000AA55 /* ExperimentGroupViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0144000000000000AA54 /* ExperimentGroupViews.swift */; };
 		8A5A0143000000000000AA53 /* GroupViewDescriptors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0142000000000000AA52 /* GroupViewDescriptors.swift */; };
 		8A5A0141000000000000AA51 /* ViewGroupElementHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0140000000000000AA50 /* ViewGroupElementHandlers.swift */; };
-		86E752132CC2552600E9E9C8 /* LumaAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E752102CC2552600E9E9C8 /* LumaAnalyzer.swift */; };
 		86E752142CC2552600E9E9C8 /* HSVAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E7520F2CC2552600E9E9C8 /* HSVAnalyzer.swift */; };
 		86E752152CC2552600E9E9C8 /* LuminanceAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E752112CC2552600E9E9C8 /* LuminanceAnalyzer.swift */; };
 		86E752162CC2552600E9E9C8 /* AnalyzingModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E7520E2CC2552600E9E9C8 /* AnalyzingModule.swift */; };
@@ -518,12 +518,12 @@
 		8A5A0166000000000000AA76 /* UnitConversionDisplayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitConversionDisplayTests.swift; sourceTree = "<group>"; };
 		8A5A0164000000000000AA74 /* UnitReferenceParseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitReferenceParseTests.swift; sourceTree = "<group>"; };
 		8A5A0146000000000000AA56 /* ViewGroupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewGroupTests.swift; sourceTree = "<group>"; };
+		8A5A0170000000000000AA80 /* CameraAnalyzerMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraAnalyzerMathTests.swift; sourceTree = "<group>"; };
 		8A5A0144000000000000AA54 /* ExperimentGroupViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentGroupViews.swift; sourceTree = "<group>"; };
 		8A5A0142000000000000AA52 /* GroupViewDescriptors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupViewDescriptors.swift; sourceTree = "<group>"; };
 		8A5A0140000000000000AA50 /* ViewGroupElementHandlers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewGroupElementHandlers.swift; sourceTree = "<group>"; };
 		86E7520E2CC2552600E9E9C8 /* AnalyzingModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyzingModule.swift; sourceTree = "<group>"; };
 		86E7520F2CC2552600E9E9C8 /* HSVAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HSVAnalyzer.swift; sourceTree = "<group>"; };
-		86E752102CC2552600E9E9C8 /* LumaAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LumaAnalyzer.swift; sourceTree = "<group>"; };
 		86E752112CC2552600E9E9C8 /* LuminanceAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LuminanceAnalyzer.swift; sourceTree = "<group>"; };
 		86E752172CC2556700E9E9C8 /* EventStreamAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStreamAnalysis.swift; sourceTree = "<group>"; };
 		86E752182CC2556700E9E9C8 /* SplitAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplitAnalysis.swift; sourceTree = "<group>"; };
@@ -1271,7 +1271,6 @@
 				86E7520E2CC2552600E9E9C8 /* AnalyzingModule.swift */,
 				86BEF3382D7F2BEF000283DF /* ExposureAnalyzer.swift */,
 				86E7520F2CC2552600E9E9C8 /* HSVAnalyzer.swift */,
-				86E752102CC2552600E9E9C8 /* LumaAnalyzer.swift */,
 				86E752112CC2552600E9E9C8 /* LuminanceAnalyzer.swift */,
 			);
 			path = Analysers;
@@ -1346,6 +1345,7 @@
 				8A5A0166000000000000AA76 /* UnitConversionDisplayTests.swift */,
 				8A5A0164000000000000AA74 /* UnitReferenceParseTests.swift */,
 				8A5A0146000000000000AA56 /* ViewGroupTests.swift */,
+				8A5A0170000000000000AA80 /* CameraAnalyzerMathTests.swift */,
 				A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */,
 				A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */,
 				A1FA9A2E2E42BB0100000006 /* graph-input-orders.phyphox */,
@@ -1604,7 +1604,6 @@
 				4B47B02F1DA6A1FC00CCBA6E /* AtanAnalysis.swift in Sources */,
 				C063C660238ECBC500327AE7 /* NetworkConnection.swift in Sources */,
 				6B612FE2207E5A24001DA8D9 /* PhyphoxElementHandler.swift in Sources */,
-				86E752132CC2552600E9E9C8 /* LumaAnalyzer.swift in Sources */,
 				86E752142CC2552600E9E9C8 /* HSVAnalyzer.swift in Sources */,
 				86E752152CC2552600E9E9C8 /* LuminanceAnalyzer.swift in Sources */,
 				86E752162CC2552600E9E9C8 /* AnalyzingModule.swift in Sources */,
@@ -1881,6 +1880,7 @@
 				8A5A0167000000000000AA77 /* UnitConversionDisplayTests.swift in Sources */,
 				8A5A0165000000000000AA75 /* UnitReferenceParseTests.swift in Sources */,
 				8A5A0147000000000000AA57 /* ViewGroupTests.swift in Sources */,
+				8A5A0171000000000000AA81 /* CameraAnalyzerMathTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -78,4 +78,11 @@ struct MinMax {
     float max;
 };
 
+//Per-pixel dot product of the camera analyzers: BT.709 weights for luma/luminance, a unit vector for a single colour
+//channel; linear selects the sRGB-linearized channels (luminance and the linear colour channels)
+struct ChannelWeights {
+    vector_float3 weights;
+    unsigned int linear;
+};
+
 #endif /* ShaderTypes_h */

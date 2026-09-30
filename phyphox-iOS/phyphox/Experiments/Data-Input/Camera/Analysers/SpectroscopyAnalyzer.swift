@@ -6,6 +6,8 @@
 //  Copyright © 2025 RWTH Aachen. All rights reserved.
 //
 
+//One spectrum per mapped output - luminance and, since file format 1.21, linearRed/linearGreen/linearBlue - all along the
+//same pixelPosition axis: one compute pass per spectrum with its channel weights, written together so the lengths match.
 class SpectroscopyAnalyzer: AnalyzingModule {
 
 
@@ -15,12 +17,25 @@ class SpectroscopyAnalyzer: AnalyzingModule {
         static let threadGroupWidth = 256
     }
 
-    var analysisResult: DataBuffer?
+    //A mapped spectrum: its data container, the channel weights of its pass and the GPU buffer holding the last result
+    private class Spectrum {
+        let result: DataBuffer
+        let channel: LuminanceAnalyzer.Channel
+        var metalOutputBuffer: MTLBuffer?
+        var latestResults: [Double] = []
+
+        init(result: DataBuffer, channel: LuminanceAnalyzer.Channel) {
+            self.result = result
+            self.channel = channel
+        }
+    }
+
+    var analysisResult: DataBuffer? { spectra.first(where: { $0.channel == .luma })?.result }
     var xAxis: DataBuffer?
 
+    private var spectra: [Spectrum] = []
+
     var analyzisPipelineState : MTLComputePipelineState?
-    var metalOutputBuffer: MTLBuffer?
-    private var latestResults: [Double] = []
     private var latestxAxis: [Double] = []
 
     var dispersionWidth: Int = 0
@@ -29,9 +44,13 @@ class SpectroscopyAnalyzer: AnalyzingModule {
     var computedWidth: Int = 0
     var analysisOrientation: SpectrumOrientation = .landscape
 
-    init(result: DataBuffer?, xAxis: DataBuffer?) {
-        self.analysisResult = result
+    init(result: DataBuffer?, xAxis: DataBuffer?, linearRed: DataBuffer? = nil, linearGreen: DataBuffer? = nil, linearBlue: DataBuffer? = nil) {
         self.xAxis = xAxis
+        for (buffer, channel) in [(result, LuminanceAnalyzer.Channel.luma), (linearRed, .red), (linearGreen, .green), (linearBlue, .blue)] {
+            if let buffer = buffer {
+                spectra.append(Spectrum(result: buffer, channel: channel))
+            }
+        }
     }
 
     override func loadMetal() {
@@ -94,22 +113,28 @@ class SpectroscopyAnalyzer: AnalyzingModule {
         }
 
         let requiredBytes = dispersionWidth * MemoryLayout<Float>.stride
-        if metalOutputBuffer == nil || metalOutputBuffer!.length < requiredBytes {
-            metalOutputBuffer = metalDevice.makeBuffer(length: requiredBytes, options: .storageModeShared)
-        }
-
         let selectionBuffer = metalDevice.makeBuffer(bytes: &selectionState, length: MemoryLayout<SelectionState>.size, options: .storageModeShared)
-
-        computeEncoder.setTexture(cameraImageTextureY, index: 0)
-        computeEncoder.setTexture(cameraImageTextureCbCr, index: 1)
-        computeEncoder.setBuffer(metalOutputBuffer, offset: 0, index: 0)
-        computeEncoder.setBuffer(selectionBuffer, offset: 0, index: 1)
 
         //One thread per pixel along the dispersion axis, each averaging across the other axis
         let threadsPerThreadgroup = MTLSize(width: Constants.threadGroupWidth, height: 1, depth: 1)
         let threadgroups = MTLSize(width: (dispersionWidth + Constants.threadGroupWidth - 1) / Constants.threadGroupWidth, height: 1, depth: 1)
 
-        computeEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup: threadsPerThreadgroup)
+        computeEncoder.setTexture(cameraImageTextureY, index: 0)
+        computeEncoder.setTexture(cameraImageTextureCbCr, index: 1)
+        computeEncoder.setBuffer(selectionBuffer, offset: 0, index: 1)
+
+        //One pass per mapped spectrum; only the weights and the output buffer change between them
+        for spectrum in spectra {
+            if spectrum.metalOutputBuffer == nil || spectrum.metalOutputBuffer!.length < requiredBytes {
+                spectrum.metalOutputBuffer = metalDevice.makeBuffer(length: requiredBytes, options: .storageModeShared)
+            }
+            var channelWeights = ChannelWeights(weights: spectrum.channel.weights, linear: 1)
+            let weightsBuffer = metalDevice.makeBuffer(bytes: &channelWeights, length: MemoryLayout<ChannelWeights>.size, options: .storageModeShared)
+
+            computeEncoder.setBuffer(spectrum.metalOutputBuffer, offset: 0, index: 0)
+            computeEncoder.setBuffer(weightsBuffer, offset: 0, index: 2)
+            computeEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup: threadsPerThreadgroup)
+        }
         computeEncoder.endEncoding()
 
     }
@@ -117,8 +142,10 @@ class SpectroscopyAnalyzer: AnalyzingModule {
     override func prepareWriteToBuffers(cameraSettings: CameraSettingsModel) {
 
         //Like on Android, a spectrum without any contributing pixels yields empty output arrays
-        guard let buffer = metalOutputBuffer, dispersionWidth > 0, computedWidth > 0 else {
-            latestResults = []
+        guard !selectionIsEmpty, dispersionWidth > 0, computedWidth > 0 else {
+            for spectrum in spectra {
+                spectrum.latestResults = []
+            }
             latestxAxis = []
             return
         }
@@ -126,26 +153,34 @@ class SpectroscopyAnalyzer: AnalyzingModule {
         //Same exposure normalization as the luminance analyzer and Android's SpectroscopyAnalyzer
         let exposureFactor = pow(2.0, Double(cameraSettings.currentApertureValue))/2.0 * 100.0/Double(cameraSettings.currentIso) * (1.0/60.0)/(Double(cameraSettings.currentShutterSpeed.value)/Double(cameraSettings.currentShutterSpeed.timescale))
 
-        let luminancePointer = buffer.contents().bindMemory(to: Float.self, capacity: computedWidth)
-
         //Fresh arrays assigned in one go: writeToBuffers may still read the previous frame's arrays on the data queue
-        var results = [Double](repeating: 0.0, count: computedWidth)
         var xValues = [Double](repeating: 0.0, count: computedWidth)
-
         for i in 0..<computedWidth {
-            results[i] = Double(luminancePointer[i]) * exposureFactor
             //Absolute pixel position along the dispersion axis (like Android), so a calibration survives moving the area
             xValues[i] = Double(spectrumStartIndex + i)
         }
-
-        latestResults = results
         latestxAxis = xValues
+
+        for spectrum in spectra {
+            guard let buffer = spectrum.metalOutputBuffer else {
+                spectrum.latestResults = []
+                continue
+            }
+            let valuePointer = buffer.contents().bindMemory(to: Float.self, capacity: computedWidth)
+            var results = [Double](repeating: 0.0, count: computedWidth)
+            for i in 0..<computedWidth {
+                results[i] = Double(valuePointer[i]) * exposureFactor
+            }
+            spectrum.latestResults = results
+        }
     }
 
     override func writeToBuffers() {
         //Swapped in atomically (not clear + append) so observers never see an empty or half-written buffer
         self.xAxis?.replaceValues(latestxAxis)
-        self.analysisResult?.replaceValues(latestResults)
+        for spectrum in spectra {
+            spectrum.result.replaceValues(spectrum.latestResults)
+        }
 
     }
 

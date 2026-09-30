@@ -229,6 +229,11 @@ class HSVAnalyzer: AnalyzingModule {
     
     override func prepareWriteToBuffers(cameraSettings: CameraSettingsModel) {
         
+        guard !selectionIsEmpty else {
+            latestResult = .nan
+            return
+        }
+        
         if(mode == .Hue){
             
             let resultYBuffer = valueY?.contents().bindMemory(to: Float.self, capacity: 0)

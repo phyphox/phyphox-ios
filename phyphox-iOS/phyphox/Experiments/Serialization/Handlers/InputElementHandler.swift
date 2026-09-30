@@ -32,7 +32,8 @@ private let depthComponents = [
     AnalysisIOSlot(name: "z", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1),
     AnalysisIOSlot(name: "t", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
 ]
-private let cameraComponents = ["t", "luma", "luminance", "hue", "saturation", "value", "shutterSpeed", "iso", "aperture", "pixelPosition"].map {
+//red..linearBlue are the colour channels of file format 1.21 (spec/input.yml, camera components)
+private let cameraComponents = ["t", "luma", "luminance", "hue", "saturation", "value", "shutterSpeed", "iso", "aperture", "pixelPosition", "red", "green", "blue", "linearRed", "linearGreen", "linearBlue"].map {
     AnalysisIOSlot(name: $0, asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
 }
 

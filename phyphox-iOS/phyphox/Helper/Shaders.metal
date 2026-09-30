@@ -15,12 +15,15 @@ using namespace metal;
 
 
 // Convert from YCbCr to rgb.
+//BT.601 full range (kCVPixelFormatType_420YpCbCr8BiPlanarFullRange). The chroma zero of an 8-bit plane is 128, i.e.
+//128/255 of the normalized texture value, not 0.5: with 0.5 a neutral grey came out with a hue of 68 degrees and a
+//saturation of 0.014 (the last column is -128/255 times the chroma coefficients; found by CameraAnalyzerMathTests).
 float4 ycbcrToRGBTransform(float4 y, float4 CbCr) {
     const float4x4 ycbcrToRGBTransform = float4x4(
                                                   float4(+1.0000f, +1.0000f, +1.0000f, +0.0000f),
                                                   float4(+0.0000f, -0.3441f, +1.7720f, +0.0000f),
                                                   float4(+1.4020f, -0.7141f, +0.0000f, +0.0000f),
-                                                  float4(-0.7010f, +0.5291f, -0.8860f, +1.0000f)
+                                                  float4(-0.70374902f, +0.53117490f, -0.88947451f, +1.0000f)
                                                   );
     
     float4 ycbcr = float4(y.r, CbCr.rg, 1.0);

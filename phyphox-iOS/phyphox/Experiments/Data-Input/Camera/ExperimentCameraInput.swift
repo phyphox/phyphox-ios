@@ -32,7 +32,7 @@ final class ExperimentCameraInput {
     let session: ExperimentCameraInputSession
     
    
-    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, pixelPosition: DataBuffer?, x1: Float, x2: Float, y1: Float, y2: Float, autoExposure: Bool, aeStrategy: AutoExposureStrategy, aeFPSTarget: Double, locked: [String:Float?], feature: CameraFeature) {
+    init(timeReference: ExperimentTimeReference, luminanceBuffer: DataBuffer?, lumaBuffer: DataBuffer?, hueBuffer: DataBuffer?, saturationBuffer: DataBuffer?, valueBuffer: DataBuffer?, shutterSpeedBuffer: DataBuffer?, isoBuffer: DataBuffer?, apertureBuffer: DataBuffer?, tBuffer: DataBuffer?, pixelPosition: DataBuffer?, redBuffer: DataBuffer? = nil, greenBuffer: DataBuffer? = nil, blueBuffer: DataBuffer? = nil, linearRedBuffer: DataBuffer? = nil, linearGreenBuffer: DataBuffer? = nil, linearBlueBuffer: DataBuffer? = nil, x1: Float, x2: Float, y1: Float, y2: Float, autoExposure: Bool, aeStrategy: AutoExposureStrategy, aeFPSTarget: Double, locked: [String:Float?], feature: CameraFeature) {
                 
         experimentCameraBuffers = ExperimentCameraBuffers(
             luminanceBuffer: luminanceBuffer,
@@ -44,7 +44,13 @@ final class ExperimentCameraInput {
             isoBuffer: isoBuffer,
             apertureBuffer: apertureBuffer,
             tBuffer: tBuffer,
-            pixelPosition: pixelPosition
+            pixelPosition: pixelPosition,
+            redBuffer: redBuffer,
+            greenBuffer: greenBuffer,
+            blueBuffer: blueBuffer,
+            linearRedBuffer: linearRedBuffer,
+            linearGreenBuffer: linearGreenBuffer,
+            linearBlueBuffer: linearBlueBuffer
         )
         
         self.initx1 = x1
@@ -97,8 +103,10 @@ final class ExperimentCameraInput {
 
 class ExperimentCameraBuffers {
     var luminanceBuffer, lumaBuffer, hueBuffer, saturationBuffer, valueBuffer, shutterSpeedBuffer, isoBuffer, apertureBuffer, pixelPosition, tBuffer: DataBuffer?
+    //Colour channels (file format 1.21): gamma-encoded red/green/blue and the linearized, exposure-normalized triple
+    var redBuffer, greenBuffer, blueBuffer, linearRedBuffer, linearGreenBuffer, linearBlueBuffer: DataBuffer?
 
-    init(luminanceBuffer: DataBuffer? = nil, lumaBuffer: DataBuffer? = nil, hueBuffer: DataBuffer? = nil, saturationBuffer: DataBuffer? = nil, valueBuffer: DataBuffer? = nil, shutterSpeedBuffer: DataBuffer? = nil, isoBuffer: DataBuffer? = nil, apertureBuffer: DataBuffer? = nil, tBuffer: DataBuffer? = nil, pixelPosition: DataBuffer? = nil) {
+    init(luminanceBuffer: DataBuffer? = nil, lumaBuffer: DataBuffer? = nil, hueBuffer: DataBuffer? = nil, saturationBuffer: DataBuffer? = nil, valueBuffer: DataBuffer? = nil, shutterSpeedBuffer: DataBuffer? = nil, isoBuffer: DataBuffer? = nil, apertureBuffer: DataBuffer? = nil, tBuffer: DataBuffer? = nil, pixelPosition: DataBuffer? = nil, redBuffer: DataBuffer? = nil, greenBuffer: DataBuffer? = nil, blueBuffer: DataBuffer? = nil, linearRedBuffer: DataBuffer? = nil, linearGreenBuffer: DataBuffer? = nil, linearBlueBuffer: DataBuffer? = nil) {
         self.luminanceBuffer = luminanceBuffer
         self.lumaBuffer = lumaBuffer
         self.hueBuffer = hueBuffer
@@ -109,6 +117,12 @@ class ExperimentCameraBuffers {
         self.apertureBuffer = apertureBuffer
         self.tBuffer = tBuffer
         self.pixelPosition = pixelPosition
+        self.redBuffer = redBuffer
+        self.greenBuffer = greenBuffer
+        self.blueBuffer = blueBuffer
+        self.linearRedBuffer = linearRedBuffer
+        self.linearGreenBuffer = linearGreenBuffer
+        self.linearBlueBuffer = linearBlueBuffer
     }
 }
 
@@ -128,6 +142,12 @@ extension ExperimentCameraInput: Equatable {
                 lhs.experimentCameraBuffers?.isoBuffer == rhs.experimentCameraBuffers?.isoBuffer &&
                 lhs.experimentCameraBuffers?.apertureBuffer == rhs.experimentCameraBuffers?.apertureBuffer &&
                 lhs.experimentCameraBuffers?.tBuffer == rhs.experimentCameraBuffers?.tBuffer &&
-                lhs.experimentCameraBuffers?.pixelPosition == rhs.experimentCameraBuffers?.pixelPosition
+                lhs.experimentCameraBuffers?.pixelPosition == rhs.experimentCameraBuffers?.pixelPosition &&
+                lhs.experimentCameraBuffers?.redBuffer == rhs.experimentCameraBuffers?.redBuffer &&
+                lhs.experimentCameraBuffers?.greenBuffer == rhs.experimentCameraBuffers?.greenBuffer &&
+                lhs.experimentCameraBuffers?.blueBuffer == rhs.experimentCameraBuffers?.blueBuffer &&
+                lhs.experimentCameraBuffers?.linearRedBuffer == rhs.experimentCameraBuffers?.linearRedBuffer &&
+                lhs.experimentCameraBuffers?.linearGreenBuffer == rhs.experimentCameraBuffers?.linearGreenBuffer &&
+                lhs.experimentCameraBuffers?.linearBlueBuffer == rhs.experimentCameraBuffers?.linearBlueBuffer
     }
 }

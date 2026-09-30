@@ -51,8 +51,14 @@ private extension ExperimentCameraInput {
         let isoBuffer = descriptor.buffer(for: "iso", from: buffers)
         let apertureBuffer = descriptor.buffer(for: "aperture", from: buffers)
         let pixelPosition = descriptor.buffer(for: "pixelPosition", from: buffers)
+        let redBuffer = descriptor.buffer(for: "red", from: buffers)
+        let greenBuffer = descriptor.buffer(for: "green", from: buffers)
+        let blueBuffer = descriptor.buffer(for: "blue", from: buffers)
+        let linearRedBuffer = descriptor.buffer(for: "linearRed", from: buffers)
+        let linearGreenBuffer = descriptor.buffer(for: "linearGreen", from: buffers)
+        let linearBlueBuffer = descriptor.buffer(for: "linearBlue", from: buffers)
 
-        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, pixelPosition: pixelPosition, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, autoExposure: descriptor.autoExposure, aeStrategy: descriptor.aeStrategy, aeFPSTarget: descriptor.aeFPSTarget, locked: descriptor.locked, feature: descriptor.feature)
+        self.init(timeReference: timeReference, luminanceBuffer: luminanceBuffer, lumaBuffer: lumaBuffer, hueBuffer: hueBuffer, saturationBuffer: saturationBuffer, valueBuffer: valueBuffer, shutterSpeedBuffer: shutterSpeedBuffer, isoBuffer: isoBuffer, apertureBuffer: apertureBuffer, tBuffer: tBuffer, pixelPosition: pixelPosition, redBuffer: redBuffer, greenBuffer: greenBuffer, blueBuffer: blueBuffer, linearRedBuffer: linearRedBuffer, linearGreenBuffer: linearGreenBuffer, linearBlueBuffer: linearBlueBuffer, x1: descriptor.x1, x2: descriptor.x2, y1: descriptor.y1, y2: descriptor.y2, autoExposure: descriptor.autoExposure, aeStrategy: descriptor.aeStrategy, aeFPSTarget: descriptor.aeFPSTarget, locked: descriptor.locked, feature: descriptor.feature)
     }
 }
 

@@ -13,6 +13,8 @@ using namespace metal;
 #import "../../../../Helper/ShaderTypes.h"
 #import "../../../../Helper/Shaders.h"
 
+//Mean of the camera's Y plane over the selected area. Only the auto-exposure statistic uses it; the luma OUTPUT is the
+//BT.709 combination of the gamma-encoded channels (computeWeightedChannelSum), as the file format defines it.
 kernel void computeLuma(texture2d<float, access::read> yTexture [[ texture(0) ]],
                         device float *partialSums [[ buffer(0) ]],
                         constant SelectionState& selectionState [[ buffer(1) ]],
@@ -28,7 +30,7 @@ kernel void computeLuma(texture2d<float, access::read> yTexture [[ texture(0) ]]
     threadgroup float localSums[256]; // Assuming maximum threadgroup size of 16x16 (256 threads)
     
     uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
-    if(globalID.x > selectionState.x2 || globalID.y > selectionState.y2){
+    if(globalID.x >= uint(selectionState.x2) || globalID.y >= uint(selectionState.y2)){
         luma = 0.0;
     } else {
         luma = yTexture.read(globalID).r;
@@ -61,13 +63,15 @@ kernel void computeLuma(texture2d<float, access::read> yTexture [[ texture(0) ]]
 
 }
 
-//Spectroscopy: one value per pixel along the dispersion axis, averaging the linear luminance of the selected area
-//across the other axis. Textures are sensor-oriented: AlongX = device held landscape to the spectrum, AlongY = portrait.
+//Spectroscopy: one value per pixel along the dispersion axis, averaging a weighted sum of the linearized channels
+//(luminance or one linear colour channel, see ChannelWeights) of the selected area across the other axis.
+//Textures are sensor-oriented: AlongX = device held landscape to the spectrum, AlongY = portrait.
 kernel void computeSpectrumAlongX(
      texture2d<float, access::read> yTexture [[texture(0)]],
      texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],
      device float *outBuffer [[buffer(0)]],
      constant SelectionState& selectionState [[buffer(1)]],
+     constant ChannelWeights& channel [[buffer(2)]],
      uint gid [[thread_position_in_grid]]
                             )
 {
@@ -89,7 +93,7 @@ kernel void computeSpectrumAlongX(
                                          yTexture.read(pixelCoord),
                                          cameraImageTextureCbCr.read(pixelCoord/2)
                                          );
-        sum += 0.2126 * linearizeGamma(rgb.r) + 0.7152 * linearizeGamma(rgb.g) + 0.0722 * linearizeGamma(rgb.b);
+        sum += dot(float3(linearizeGamma(rgb.r), linearizeGamma(rgb.g), linearizeGamma(rgb.b)), channel.weights);
     }
 
     outBuffer[gid] = y2 > y1 ? sum / float(y2 - y1) : 0.0;
@@ -101,6 +105,7 @@ kernel void computeSpectrumAlongY(
      texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],
      device float *outBuffer [[buffer(0)]],
      constant SelectionState& selectionState [[buffer(1)]],
+     constant ChannelWeights& channel [[buffer(2)]],
      uint gid [[thread_position_in_grid]]
                             )
 {
@@ -122,7 +127,7 @@ kernel void computeSpectrumAlongY(
                                          yTexture.read(pixelCoord),
                                          cameraImageTextureCbCr.read(pixelCoord/2)
                                          );
-        sum += 0.2126 * linearizeGamma(rgb.r) + 0.7152 * linearizeGamma(rgb.g) + 0.0722 * linearizeGamma(rgb.b);
+        sum += dot(float3(linearizeGamma(rgb.r), linearizeGamma(rgb.g), linearizeGamma(rgb.b)), channel.weights);
     }
 
     outBuffer[gid] = x2 > x1 ? sum / float(x2 - x1) : 0.0;
@@ -130,25 +135,29 @@ kernel void computeSpectrumAlongY(
 }
 
 
-kernel void computeLuminance(texture2d<float, access::read> cameraImageTextureY [[ texture(0) ]],
-                             texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],
-                             device float *partialSums [[ buffer(0) ]],
-                             constant SelectionState& selectionState [[ buffer(1) ]],
-                             constant PartialBufferLength& partialBufferLength [[ buffer(2) ]],
-                             uint2 gid2D [[ thread_position_in_grid ]],
-                             uint2 tid [[ thread_position_in_threadgroup ]],
-                             uint2 groupSize [[ threads_per_threadgroup ]],
-                             uint2 groupId [[ threadgroup_position_in_grid ]],
-                             uint2 groupsPerGrid [[ threadgroups_per_grid ]]) {
+//Mean of a per-pixel dot product over the selected area: luma, luminance and the six colour channels (file format 1.21)
+//differ only in the weights and in whether the channels are linearized first, so one kernel serves all of them and the
+//BT.709 identities luma = 0.2126 red + 0.7152 green + 0.0722 blue (and the same for the linear triple) hold exactly.
+kernel void computeWeightedChannelSum(texture2d<float, access::read> cameraImageTextureY [[ texture(0) ]],
+                                      texture2d<float, access::read> cameraImageTextureCbCr [[ texture(1) ]],
+                                      device float *partialSums [[ buffer(0) ]],
+                                      constant SelectionState& selectionState [[ buffer(1) ]],
+                                      constant PartialBufferLength& partialBufferLength [[ buffer(2) ]],
+                                      constant ChannelWeights& channel [[ buffer(3) ]],
+                                      uint2 gid2D [[ thread_position_in_grid ]],
+                                      uint2 tid [[ thread_position_in_threadgroup ]],
+                                      uint2 groupSize [[ threads_per_threadgroup ]],
+                                      uint2 groupId [[ threadgroup_position_in_grid ]],
+                                      uint2 groupsPerGrid [[ threadgroups_per_grid ]]) {
     
     
-    float luminance;
+    float value;
     threadgroup float localSums[256];
     
     uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
     
-    if (globalID.x > selectionState.x2 || globalID.y > selectionState.y2) {
-        luminance = 0.0;
+    if (globalID.x >= uint(selectionState.x2) || globalID.y >= uint(selectionState.y2)) {
+        value = 0.0;
     } else {
         // Sample this pixel's camera image color.
         float4 rgb = ycbcrToRGBTransform(
@@ -156,15 +165,15 @@ kernel void computeLuminance(texture2d<float, access::read> cameraImageTextureY 
                                          cameraImageTextureCbCr.read(globalID/2)
                                          );
         
-        float red = rgb.r;
-        float green = rgb.g;
-        float blue = rgb.b;
-            
-        luminance = 0.2126 * linearizeGamma(red) + 0.7152 * linearizeGamma(green) + 0.0722 * linearizeGamma(blue);
+        if (channel.linear) {
+            value = dot(float3(linearizeGamma(rgb.r), linearizeGamma(rgb.g), linearizeGamma(rgb.b)), channel.weights);
+        } else {
+            value = dot(rgb.rgb, channel.weights);
+        }
     }
     
     uint index = (tid.x + tid.y * groupSize.x);
-    localSums[index] = luminance;
+    localSums[index] = value;
     threadgroup_barrier(mem_flags::mem_threadgroup);
     
     if (tid.x == 0) {
@@ -207,7 +216,7 @@ kernel void computeMinMaxRGB(texture2d<float, access::read> cameraImageTextureY 
     threadgroup float localMaxs[256];
     
     uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
-    if(globalID.x > selectionState.x2 || globalID.y > selectionState.y2){
+    if(globalID.x >= uint(selectionState.x2) || globalID.y >= uint(selectionState.y2)){
         min = INFINITY;
         max = -INFINITY;
     } else {
@@ -276,7 +285,7 @@ kernel void computeHue(texture2d<float, access::read> cameraImageTextureY [[ tex
     
     uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
         
-    if (globalID.x > selectionState.x2 || globalID.y > selectionState.y2) {
+    if (globalID.x >= uint(selectionState.x2) || globalID.y >= uint(selectionState.y2)) {
         x = 0.0;
         y = 0.0;
     } else {
@@ -291,7 +300,9 @@ kernel void computeHue(texture2d<float, access::read> cameraImageTextureY [[ tex
         float d = rgbMax - rgbMin;
         float hue;
         
-        if(rgbMax == rgbMin){
+        //Grey has hue 0. The YCbCr conversion leaves the channels of a grey pixel equal only up to float rounding, so
+        //the test is a tolerance far below one 8-bit step, not exact equality.
+        if(d < 1e-5){
             hue = 0.0;
         } else if(rgbMax == rgb.r) {
             hue = (rgb.g - rgb.b + d * (rgb.g < rgb.b ? 6.0 : 0.0)) / (6.0 * d);
@@ -358,7 +369,7 @@ kernel void computeSaturationAndValue(texture2d<float, access::read> cameraImage
     
     uint2 globalID = gid2D + uint2(selectionState.x1, selectionState.y1);
     
-    if (globalID.x > selectionState.x2 || globalID.y > selectionState.y2) {
+    if (globalID.x >= uint(selectionState.x2) || globalID.y >= uint(selectionState.y2)) {
         result = 0.0;
     } else {
         // Sample this pixel's camera image color.

@@ -32,15 +32,30 @@ class AnalyzingModule {
         let w = cameraImageTextureY.width
         let h = cameraImageTextureY.height
         
+        //Whole pixels, half-open: the kernels process [x1, x2) x [y1, y2) and the means divide by exactly that count.
+        //(Fractional bounds with an inclusive x2 used to count one row and one column too many - 0.7 % low on a
+        //typical region, an out-of-bounds read at the frame edge - which the synthetic-frame tests exposed.)
+        func pixelBound(_ fraction: CGFloat, _ size: Int, roundingUp: Bool) -> Float {
+            let clamped = min(max(fraction, 0.0), 1.0) * CGFloat(size)
+            return Float(roundingUp ? ceil(clamped) : floor(clamped))
+        }
         self.selectionState = SelectionState(
-            x1: min(max(Float(selectionArea.minX) * Float(w), 0.0), Float(w)),
-            x2: min(max(Float(selectionArea.maxX) * Float(w), 0.0), Float(w)),
-            y1: min(max(Float(selectionArea.minY) * Float(h), 0.0), Float(h)),
-            y2: min(max(Float(selectionArea.maxY) * Float(h), 0.0), Float(h)),
+            x1: pixelBound(selectionArea.minX, w, roundingUp: false),
+            x2: pixelBound(selectionArea.maxX, w, roundingUp: true),
+            y1: pixelBound(selectionArea.minY, h, roundingUp: false),
+            y2: pixelBound(selectionArea.maxY, h, roundingUp: true),
             editable: false
         )
                 
+        //Nothing to dispatch for an empty selection (x1 == x2 or y1 == y2); the analyzers then report NaN or empty spectra
+        guard !selectionIsEmpty else { return }
+        
         doUpdate(metalCommandBuffer: metalCommandBuffer, cameraImageTextureY: cameraImageTextureY, cameraImageTextureCbCr: cameraImageTextureCbCr)
+    }
+    
+    var selectionIsEmpty: Bool {
+        let area = getSelectedArea()
+        return area.width == 0 || area.height == 0
     }
     
     func doUpdate(metalCommandBuffer: MTLCommandBuffer,
@@ -59,8 +74,8 @@ class AnalyzingModule {
     }
     
     func getSelectedArea() -> (width: Int, height: Int){
-        let _width = Int((selectionState.x2 - selectionState.x1 + 1))
-        let _height = Int((selectionState.y2 - selectionState.y1 + 1))
+        let _width = max(0, Int(selectionState.x2) - Int(selectionState.x1))
+        let _height = max(0, Int(selectionState.y2) - Int(selectionState.y1))
         
         return (width: _width, height: _height)
     }
