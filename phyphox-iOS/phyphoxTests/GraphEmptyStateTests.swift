@@ -86,13 +86,21 @@ final class GraphEmptyStateTests: XCTestCase {
         show(x: [0, 1, 2, 3, 4, 5, 6, 7, 8], y: [1, 3, 5, 7, 9, 11, 13, 15, 17])
     }
 
-    //One update of the data manager, delivered to the spy
+    //One update of the data manager, delivered to the spy. performUpdate is asked again until it takes, the way the
+    //graph view's display link does: the manager clears its busy flag on its own queue after it has enqueued the
+    //delivery on the main thread, so a single call right after a delivery can still find it busy and is dropped
+    //(seen on a slow CI runner, 2026-09-30).
     @discardableResult private func update(file: StaticString = #filePath, line: UInt = #line) -> GraphDataResult? {
-        let expectation = expectation(description: "graph data delivered")
+        let expectation = XCTestExpectation(description: "graph data delivered")
         spy.expectation = expectation
         manager.setNeedsUpdate()
-        manager.performUpdate()
-        wait(for: [expectation], timeout: 5)
+        let deadline = Date().addingTimeInterval(5)
+        var outcome = XCTWaiter.Result.timedOut
+        repeat {
+            manager.performUpdate()
+            outcome = XCTWaiter.wait(for: [expectation], timeout: 0.05)
+        } while outcome == .timedOut && Date() < deadline
+        XCTAssertEqual(outcome, .completed, "the data manager did not deliver within 5 s", file: file, line: line)
         spy.expectation = nil
         return spy.result
     }
