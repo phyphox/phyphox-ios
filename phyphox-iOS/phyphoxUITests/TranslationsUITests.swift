@@ -83,16 +83,18 @@ final class TranslationsUITests: XCTestCase {
     }
 
     ///The last button of the screen (the actions menu), resolved against a fresh hierarchy right before use
+    //The actions button is the last one of the navigation bar (the page below may end in a tappable unit, which
+    //reads as a button too)
     private func lastButton(of app: XCUIApplication) -> XCUIElement? {
         for _ in 0..<5 {
-            let count = app.buttons.count
+            let count = app.navigationBars.buttons.count
             if count > 0 {
-                let candidate = app.buttons.element(boundBy: count - 1)
+                let candidate = app.navigationBars.buttons.element(boundBy: count - 1)
                 if candidate.exists && candidate.isHittable {
                     return candidate
                 }
             }
-            _ = app.buttons.firstMatch.waitForExistence(timeout: 1)
+            _ = app.navigationBars.buttons.firstMatch.waitForExistence(timeout: 1)
         }
         return nil
     }
