@@ -81,10 +81,8 @@ final class UnitReferenceParseTests: XCTestCase {
 
     func testAnUnknownIdIsTextInA121File() throws {
         assertAll(try load(version: "1.21", unit: "@metre"), id: nil, text: "@metre")
-        //an unknown placeholder is text through the translation path, as before: on iOS that path resolves a [[...]]
-        //placeholder to the string key, so the key is shown (Android shows the placeholder verbatim - a pre-existing
-        //difference of the placeholder path, not of unit references)
-        assertAll(try load(version: "1.21", unit: "[[unit_short_metre]]"), id: nil, text: "common_unit_short_metre")
+        //an unknown placeholder is text through the translation path, shown verbatim (as on Android)
+        assertAll(try load(version: "1.21", unit: "[[unit_short_metre]]"), id: nil, text: "[[unit_short_metre]]")
     }
 
     func testTheTableAgreesWithTheSpecification() {

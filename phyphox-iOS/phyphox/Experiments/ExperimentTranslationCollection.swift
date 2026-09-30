@@ -89,10 +89,13 @@ struct ExperimentTranslationCollection: Equatable {
         if let translated = selectedTranslation?.translatedStrings[string] {
             return translated
         }
+        //A [[...]] placeholder resolves to the app's common string; an unknown one is shown verbatim, as on Android
         if string.hasPrefix("[[") && string.hasSuffix("]]") {
             let start = string.index(string.startIndex, offsetBy: 2)
             let stop = string.index(string.endIndex, offsetBy: -2)
-            return localize("common_" + string[start ..< stop])
+            let key = "common_" + string[start ..< stop]
+            let resolved = localize(key)
+            return resolved == key ? string : resolved
         }
         return string
     }
