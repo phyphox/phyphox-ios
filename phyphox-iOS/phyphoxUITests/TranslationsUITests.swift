@@ -169,8 +169,12 @@ final class TranslationsUITests: XCTestCase {
                 XCTAssertGreaterThanOrEqual(entries, 6,
                                             "the actions menu lost entries in \(language): \(entries)")
                 attachScreenshot(app, name: "menu-\(language)")
-                //Dismiss it again: the cancel entry is the last one whatever it is called
-                app.sheets.buttons.element(boundBy: entries - 1).tap()
+                //Dismiss it again without choosing anything: on iOS 26 the menu is a popover without a cancel entry
+                //(its last button is "Save state", whose name prompt would bring up the keyboard), so tap the bottom
+                //of the screen - outside the popover, and on the cancel button of a bottom sheet
+                app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)).tap()
+                XCTAssertTrue(app.sheets.firstMatch.waitForNonExistence(timeout: 5),
+                              "the actions menu does not close again in \(language)")
             }
 
             app.buttons.element(boundBy: 0).tap()
