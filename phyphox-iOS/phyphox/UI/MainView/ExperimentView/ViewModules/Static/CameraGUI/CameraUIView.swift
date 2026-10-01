@@ -333,7 +333,9 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             let columnX = frame.width - controlColumnWidth - (controlColumnWidth > 0 ? spacing : 0) - subControlColumnWidth
             let columnTop = headSize.height + spacing
             let columnHeight = frame.height - columnTop - spacing
+            //The items stand close together in the column; their size follows the direction in sizeForItemAt
             listLayout?.scrollDirection = .vertical
+            listLayout?.minimumLineSpacing = 4
             collectionView.contentInset = .zero
             let listWidth = zoomShown ? subControlColumnWidth / 2 : subControlColumnWidth
             collectionView.frame = CGRect(x: columnX, y: columnTop, width: listWidth, height: columnHeight)
@@ -347,6 +349,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             whiteBalanceControl?.frame = CGRect(x: columnX, y: columnTop, width: subControlColumnWidth, height: columnHeight)
         } else {
             listLayout?.scrollDirection = .horizontal
+            listLayout?.minimumLineSpacing = 10
             //The zoom list starts from the middle so that its first preset can be centred
             let listInset = cameraSettingMode == .ZOOM ? bottomWidth / 2 : 0
             collectionView.contentInset = UIEdgeInsets(top: 0, left: listInset, bottom: 0, right: listInset)
@@ -1003,6 +1006,10 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        //In the landscape column the items are just the buttons, centred in the list's width
+        if (collectionView.collectionViewLayout as? UICollectionViewFlowLayout)?.scrollDirection == .vertical {
+            return CGSize(width: collectionView.bounds.width, height: ExperimentCameraUIView.controlExtraHeight)
+        }
         return CGSize(width: 40, height: ExperimentCameraUIView.controlExtraHeight + 20)
 
     }
@@ -1110,8 +1117,14 @@ class CameraSettingValueViewCell: UICollectionViewCell {
     
     private func setupUI(){
         self.addSubview(self.settingValueView)
-        self.settingValueView.frame = CGRect(x: 0, y: 10, width: frame.width, height: ExperimentCameraUIView.controlExtraHeight)
-        
+        setNeedsLayout()
+    }
+
+    //The button is 40 wide and vertically centred: with the 10 pt top margin in the rows, without any in the column
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        let height = ExperimentCameraUIView.controlExtraHeight
+        self.settingValueView.frame = CGRect(x: (bounds.width - 40) / 2, y: (bounds.height - height) / 2, width: 40, height: height)
     }
     
     override func prepareForReuse() {

@@ -200,7 +200,15 @@ final class CameraWhiteBalanceTests: XCTestCase {
         panel.vertical = true
         panel.frame = CGRect(x: 0, y: 0, width: WhiteBalanceControlView.verticalWidth, height: 300)
         panel.layoutSubviews()
-        for view in [panel.modeControl, panel.temperatureLabel, panel.temperatureSlider, panel.tintLabel, panel.tintSlider] {
+        XCTAssertTrue(panel.modeControl.isHidden, "the column uses the stacked buttons instead of the segmented control")
+        XCTAssertEqual(panel.modeButtons.count, 3)
+        for button in panel.modeButtons {
+            let frame = button.convert(button.bounds, to: panel)
+            XCTAssertTrue(panel.bounds.insetBy(dx: -1, dy: -1).contains(frame), "\(button.currentTitle ?? "") in the column: \(frame)")
+            XCTAssertLessThan(frame.maxX, panel.temperatureSlider.frame.minX, "the toggle stands left of the sliders")
+        }
+        XCTAssertLessThan(panel.modeButtons[0].frame.maxY, panel.modeButtons[1].frame.minY + 1, "the buttons are stacked")
+        for view in [panel.temperatureLabel, panel.temperatureSlider, panel.tintLabel, panel.tintSlider] {
             XCTAssertTrue(panel.bounds.insetBy(dx: -1, dy: -1).contains(view.frame), "\(view) in columns: \(view.frame)")
         }
         XCTAssertGreaterThan(panel.temperatureSlider.frame.height, panel.temperatureSlider.frame.width, "the sliders stand in the column")
