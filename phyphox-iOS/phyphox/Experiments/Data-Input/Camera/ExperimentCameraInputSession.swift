@@ -54,6 +54,7 @@ class ExperimentCameraInputSession: NSObject, CameraModelOwner {
         
         cameraModel?.autoExposureEnabled = autoExposure
         cameraModel?.locked = locked
+        cameraModel?.cameraSettingsModel.applyFileWhiteBalance(locked: locked)
         cameraModel?.aeStrategy = aeStrategy
         cameraModel?.aeFPSTarget = aeFPSTarget
         cameraModel?.feature = feature

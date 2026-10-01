@@ -286,10 +286,9 @@
 "notSet" = "Not set";
 "preview" = "Preview";
 "wb_auto" = "Auto";
-"wb_incandescent" = "Incandescent";
-"wb_fluorescent" = "Fluorescent";
-"wb_daylight" = "Daylight";
-"wb_cloudy" = "Cloudy";
+"wb_locked" = "Locked";
+"wb_temperature" = "Temperature";
+"wb_tint" = "Tint";
 "permission_microphone_required" = "Microphone required";
 "permission_microphone_denied" = "This experiment requires access to the Microphone, but the access has been denied. Please enable access to the microphone in Settings->Privacy->Microphone";
 "permission_microphone_restricted" = "This experiment requires access to the Microphone, but the access has been restricted. Please enable access to the microphone in Settings->Screen Time->Restrictions->Microphone";

@@ -237,10 +237,6 @@
 "cameraFront" = "Ön";
 "cameraZoom" = "Miqyas";
 "wb_auto" = "Avtomatik";
-"wb_incandescent" = "Közərmə lampası";
-"wb_fluorescent" = "Flüoressent işıq";
-"wb_daylight" = "Gün işığı";
-"wb_cloudy" = "Buludlu";
 "common_unit_short_arbitrary_unit" = "şərti vahid";
 "common_unit_short_second" = "s";
 "common_unit_short_milli_second" = "ms";

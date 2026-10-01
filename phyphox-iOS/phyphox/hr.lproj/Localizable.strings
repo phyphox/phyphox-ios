@@ -353,10 +353,6 @@
 "notSet" = "Nije postavljeno";
 "preview" = "Pregled";
 "wb_auto" = "Automatski";
-"wb_incandescent" = "Žarulja";
-"wb_fluorescent" = "Fluorescentna svjetiljka";
-"wb_daylight" = "Dnevno svijetlo";
-"wb_cloudy" = "Oblačno";
 "common_quantity_short_luminance" = "Lv";
 "common_quantity_short_luma" = "Y'";
 "cameraNotAvailableWarningText" = "Ovaj pokus nije dostupan, jer Vaš uređaj nije kompatibilan s minimalnom inačicom iOS-a za izvršavanje analize s kamerom.";

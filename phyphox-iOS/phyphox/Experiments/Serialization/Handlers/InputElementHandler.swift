@@ -217,9 +217,15 @@ private final class CameraElementHandler: ResultElementHandler, LookupElementHan
                 } else {
                     value = Float(String(parts[1].trimmingCharacters(in: .whitespaces)))
                 }
-                locked[setting] = value
+                //An unreadable value is ignored with a log line, not taken as a value-less lock
+                guard let readable = value else {
+                    print("Ignoring locked camera setting \(setting): its value '\(parts[1].trimmingCharacters(in: .whitespaces))' is not a number.")
+                    continue
+                }
+                locked[setting] = readable
             } else {
-                locked[String(lockedSetting.trimmingCharacters(in: .whitespaces)).lowercased()] = nil
+                //The key with no value (a plain nil would remove the key from a dictionary of optionals)
+                locked.updateValue(nil, forKey: String(lockedSetting.trimmingCharacters(in: .whitespaces)).lowercased())
             }
         }
         

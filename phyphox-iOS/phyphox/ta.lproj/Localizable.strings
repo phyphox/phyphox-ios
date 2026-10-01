@@ -353,10 +353,6 @@
 "notSet" = "அமைக்கப்படவில்லை";
 "preview" = "வெள்ளோட்டம்";
 "wb_auto" = "Auto";
-"wb_incandescent" = "இழைவிளக்கு";
-"wb_fluorescent" = "குழல்விளக்கு";
-"wb_daylight" = "பகல்";
-"wb_cloudy" = "மேகமூட்டம்";
 "common_quantity_short_luminance" = "Lv";
 "common_quantity_short_luma" = "Y'";
 "cameraNotAvailableWarningText" = "ஒளிப்படவி மூலம் பகுப்பாய்வை இயக்குவதற்கான குறைந்தபட்ச iOS பதிப்புடன் உங்கள் சாதனம் இல்லாததால், இந்தப் பரிசோதனை செயல்படவில்லை.";

@@ -212,7 +212,9 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         let minExposure = videoDevice.minExposureTargetBias
         let maxExposure = videoDevice.maxExposureTargetBias
         cameraSettingsModel.exposureCompensationRange = minExposure...maxExposure
-        
+
+        cameraSettingsModel.whiteBalanceGainsSupported = videoDevice.isWhiteBalanceModeSupported(.locked) && videoDevice.isLockingWhiteBalanceWithCustomDeviceGainsSupported
+
         setValuesForCameraSettingsList()
     }
     
@@ -390,9 +392,8 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                                         
                 self.session.commitConfiguration()
                 
-                self.setWhiteBalancePreset(index: self.cameraModelOwner?.cameraModel?.cameraSettingsModel.currentWhiteBalancePreset ?? 0)
-                
                 self.applyLockedSettings();
+                self.applyWhiteBalance()
                 
                 afterCommit?()
             } catch {
@@ -536,9 +537,10 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         session.commitConfiguration()
         
         self.isConfigured = true
-        
+
         applyLockedSettings()
-                
+        applyWhiteBalance()
+
         self.start()
         
     }
@@ -699,6 +701,7 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
                 case "iso": lockedIso = Int(value)
                 case "shutter_speed": lockedShutterSpeed = value
                 case "focus_distance": setFocusDistanceLock(value)
+                case "white_balance", "white_balance_tint": break //state set from the file at session start, applied by applyWhiteBalance
                 default: print("Unknown locked setting: \(lockedSetting)")
                 }
             }
@@ -941,18 +944,79 @@ public class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         return [-1.0, -0.7, -0.3, 0.0, 0.3, 0.7, 1.0]
     }
     
-    func setWhiteBalancePreset(index: Int) {
+    //MARK: White balance (file format 1.21, phyphox-docs docs/file-format/input.md "White balance")
+
+    //The camera-gui's choice: a lock engages at once, automatic releases it
+    func setWhiteBalanceMode(_ mode: WhiteBalanceMode) {
+        cameraModelOwner?.cameraModel?.cameraSettingsModel.selectWhiteBalanceMode(mode)
+        applyWhiteBalance()
+    }
+
+    func setWhiteBalanceTemperature(_ kelvin: Int) {
+        cameraModelOwner?.cameraModel?.cameraSettingsModel.selectWhiteBalanceTemperature(kelvin)
+        applyWhiteBalance()
+    }
+
+    func setWhiteBalanceTint(_ duv: Float) {
+        cameraModelOwner?.cameraModel?.cameraSettingsModel.selectWhiteBalanceTint(duv)
+        applyWhiteBalance()
+    }
+
+    //Called at every start of the measurement; only the first one with a pending lock changes anything
+    func freezeWhiteBalanceAtStart() {
         guard let cameraSettingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
+        if cameraSettingsModel.freezeWhiteBalanceAtStart() {
+            applyWhiteBalance()
+        }
+    }
+
+    //Gains outside 1...maxWhiteBalanceGain (or NaN) raise an Objective-C exception in setWhiteBalanceModeLocked, so
+    //they are clamped first; the second value tells whether the request was out of reach
+    static func sanitizedGains(_ gains: AVCaptureDevice.WhiteBalanceGains, maxGain: Float) -> (gains: AVCaptureDevice.WhiteBalanceGains, clamped: Bool) {
+        var clamped = false
+        func sanitize(_ gain: Float) -> Float {
+            if gain.isNaN || gain < 1.0 || gain > maxGain {
+                clamped = true
+                return gain.isNaN ? 1.0 : min(max(1.0, gain), maxGain)
+            }
+            return gain
+        }
+        let result = AVCaptureDevice.WhiteBalanceGains(redGain: sanitize(gains.redGain), greenGain: sanitize(gains.greenGain), blueGain: sanitize(gains.blueGain))
+        return (result, clamped)
+    }
+
+    //Pushes the white balance state to the device: a temperature as custom gains for its chromaticity, the lock as
+    //the device's own lock, otherwise the continuous automatic white balance. Works without a camera as far as the
+    //state goes, so the camera-gui shows the value in effect on any device.
+    func applyWhiteBalance() {
+        guard let cameraSettingsModel = cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
+        cameraSettingsModel.updateWhiteBalanceInEffect()
         lockConfig { (_ camera: AVCaptureDevice) -> () in
-            let preset = cameraSettingsModel.whiteBalanceColorTemperaturePresets[index]
-            if let temperature = preset.temperature {
-                let tempAndTint = AVCaptureDevice.WhiteBalanceTemperatureAndTintValues(temperature: temperature, tint: 0.0)
-                let gains = camera.deviceWhiteBalanceGains(for: tempAndTint)
-                camera.setWhiteBalanceModeLocked(with: gains)
+            if cameraSettingsModel.whiteBalanceMode == .temperature && cameraSettingsModel.whiteBalanceGainsSupported {
+                let xy = WhiteBalance.chromaticity(temperature: Double(cameraSettingsModel.whiteBalanceTemperatureInEffect), duv: Double(cameraSettingsModel.whiteBalanceTintInEffect))
+                let requested = camera.deviceWhiteBalanceGains(for: AVCaptureDevice.WhiteBalanceChromaticityValues(x: Float(xy.x), y: Float(xy.y)))
+                let (gains, clamped) = CameraService.sanitizedGains(requested, maxGain: camera.maxWhiteBalanceGain)
+                camera.setWhiteBalanceModeLocked(with: gains, completionHandler: nil)
+                if clamped {
+                    //Report the white point the device actually reached
+                    let reached = camera.chromaticityValues(for: gains)
+                    let inEffect = WhiteBalance.temperatureAndTint(x: Double(reached.x), y: Double(reached.y))
+                    cameraSettingsModel.whiteBalanceTemperatureInEffect = Int(inEffect.temperature.rounded())
+                    cameraSettingsModel.whiteBalanceTintInEffect = Float(inEffect.duv)
+                    print("White balance of \(cameraSettingsModel.whiteBalanceTemperature) K is out of reach for this camera, holding \(cameraSettingsModel.whiteBalanceTemperatureInEffect) K instead.")
+                }
+            } else if cameraSettingsModel.whiteBalanceFrozen && cameraSettingsModel.whiteBalanceNeedsLock {
+                if camera.isWhiteBalanceModeSupported(.locked) {
+                    camera.whiteBalanceMode = .locked
+                }
             } else {
-                camera.whiteBalanceMode = .continuousAutoWhiteBalance
+                if camera.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
+                    camera.whiteBalanceMode = .continuousAutoWhiteBalance
+                } else if camera.isWhiteBalanceModeSupported(.autoWhiteBalance) {
+                    camera.whiteBalanceMode = .autoWhiteBalance
+                }
             }
         }
-        cameraSettingsModel.currentWhiteBalancePreset = index
+        cameraSettingsModel.whiteBalanceChanged()
     }
 }

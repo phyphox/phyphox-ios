@@ -351,10 +351,6 @@
 "notSet" = "未设置";
 "preview" = "预览";
 "wb_auto" = "自动";
-"wb_incandescent" = "白炽灯";
-"wb_fluorescent" = "日光灯";
-"wb_daylight" = "自然光";
-"wb_cloudy" = "阴天";
 "common_quantity_short_luminance" = "辉度 (Lv)";
 "common_quantity_short_luma" = "Y'";
 "cameraNotAvailableWarningText" = "此实验不可用，因为您的设备不符合基于摄像头的分析运行所需的最低 iOS 版本要求。";

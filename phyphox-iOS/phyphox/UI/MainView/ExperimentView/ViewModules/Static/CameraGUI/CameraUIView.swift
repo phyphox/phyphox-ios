@@ -73,6 +73,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     private let previewResizingButton : UIButton
     private var headerView: UIView!
     private var zoomSlider: ZoomSlider?
+    //Automatic / locked / temperature with tint, shown in place of the value list
+    private(set) var whiteBalanceControl: WhiteBalanceControlView?
     
     //Metal
     private let metalView = MTKView()
@@ -289,42 +291,86 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             }
             controlColumnWidth = controlButtonWidth + maxLabelWidth + 6.0
         }
-        let bottomWidth = frame.width - 2*sideMargins - (controlColumnWidth > 0 ? controlColumnWidth + spacing : 0)
+        //The open sub-control: the value list, the zoom list with its slider, or the white balance panel. Rows under
+        //the preview, or in fullscreen landscape a column beside the main controls (like Android) so the preview keeps
+        //the full height.
+        let listShown = !collectionView.isHidden
+        let zoomShown = !(zoomSlider?.isHidden ?? true)
+        let whiteBalanceShown = !(whiteBalanceControl?.isHidden ?? true)
+        let subControlColumnWidth: CGFloat
+        if isFullscreenLandscape && whiteBalanceShown {
+            subControlColumnWidth = WhiteBalanceControlView.verticalWidth
+        } else if isFullscreenLandscape && (listShown || zoomShown) {
+            subControlColumnWidth = zoomShown ? 100.0 : 60.0
+        } else {
+            subControlColumnWidth = 0.0
+        }
+        let rightColumnsWidth = (controlColumnWidth > 0 ? controlColumnWidth + spacing : 0) + (subControlColumnWidth > 0 ? subControlColumnWidth + spacing : 0)
+        let bottomWidth = frame.width - 2*sideMargins - rightColumnsWidth
 
         //The spectrum orientation row (spectroscopy only) is only reserved while the button is shown
         let spectrumButtonShown = dialogButton.superview != nil && !dialogButton.isHidden
 
         let controlSize = controlsVisible && !isFullscreenLandscape ? CGSize(width: frame.width-2*sideMargins, height: ExperimentCameraUIView.controlHeight) : .zero
-        let controlExtraSize = collectionView.isHidden ? .zero : CGSize(width: bottomWidth, height: ExperimentCameraUIView.controlExtraHeight)
-        let controlZoomSize = (zoomSlider?.isHidden ?? true) ? .zero : CGSize(width: bottomWidth, height: ExperimentCameraUIView.controlZoomHeight)
+        let controlExtraSize = listShown && !isFullscreenLandscape ? CGSize(width: bottomWidth, height: ExperimentCameraUIView.controlExtraHeight) : .zero
+        let controlZoomSize = zoomShown && !isFullscreenLandscape ? CGSize(width: bottomWidth, height: ExperimentCameraUIView.controlZoomHeight) : .zero
+        let controlWhiteBalanceSize = whiteBalanceShown && !isFullscreenLandscape ? CGSize(width: bottomWidth, height: WhiteBalanceControlView.horizontalHeight) : .zero
+        let subControlRowsHeight = controlExtraSize.height + controlZoomSize.height + controlWhiteBalanceSize.height
         let controlSpectrumOrientationAnalysisSize = spectrumButtonShown ? CGSize(width: bottomWidth, height: ExperimentCameraUIView.controlSpectrumOrientationHeight) : .zero
         //Height reduced by spacing to leave a gap to the camera controls below
-        dialogButton.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - controlZoomSize.height - controlSize.height - controlSpectrumOrientationAnalysisSize.height - 2*spacing, width: bottomWidth, height: max(controlSpectrumOrientationAnalysisSize.height - spacing, 0.0))
+        dialogButton.frame = CGRect(x: sideMargins, y: frame.height - subControlRowsHeight - controlSize.height - controlSpectrumOrientationAnalysisSize.height - 2*spacing, width: bottomWidth, height: max(controlSpectrumOrientationAnalysisSize.height - spacing, 0.0))
         if isFullscreenLandscape, controlsVisible, let settings = cameraSettingUIView {
             //Top-aligned with the headline and pushed to the right edge, like on Android
             settings.frame = CGRect(x: frame.width - controlColumnWidth,
                                     y: spacing,
                                     width: controlColumnWidth, height: frame.height - 2*spacing)
         } else {
-            cameraSettingUIView?.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - controlZoomSize.height - controlSize.height - 2*spacing, width: frame.width - 2*sideMargins, height: controlSize.height)
+            cameraSettingUIView?.frame = CGRect(x: sideMargins, y: frame.height - subControlRowsHeight - controlSize.height - 2*spacing, width: frame.width - 2*sideMargins, height: controlSize.height)
         }
-        collectionView.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - spacing - controlZoomSize.height, width: bottomWidth, height: controlExtraSize.height)
-        self.zoomSlider?.frame = CGRect(x: sideMargins, y: frame.height - controlZoomSize.height - spacing, width: bottomWidth, height: controlZoomSize.height)
+        let listLayout = collectionView.collectionViewLayout as? UICollectionViewFlowLayout
+        if subControlColumnWidth > 0 {
+            //The column stands below the header and beside the main controls; lists run vertically, sliders stand
+            let columnX = frame.width - controlColumnWidth - (controlColumnWidth > 0 ? spacing : 0) - subControlColumnWidth
+            let columnTop = headSize.height + spacing
+            let columnHeight = frame.height - columnTop - spacing
+            listLayout?.scrollDirection = .vertical
+            collectionView.contentInset = .zero
+            let listWidth = zoomShown ? subControlColumnWidth / 2 : subControlColumnWidth
+            collectionView.frame = CGRect(x: columnX, y: columnTop, width: listWidth, height: columnHeight)
+            if let zoomSlider = zoomSlider {
+                zoomSlider.transform = .identity
+                zoomSlider.bounds = CGRect(x: 0, y: 0, width: columnHeight, height: ExperimentCameraUIView.controlZoomHeight)
+                zoomSlider.transform = CGAffineTransform(rotationAngle: -.pi / 2)
+                zoomSlider.center = CGPoint(x: columnX + listWidth + (subControlColumnWidth - listWidth) / 2, y: columnTop + columnHeight / 2)
+            }
+            whiteBalanceControl?.vertical = true
+            whiteBalanceControl?.frame = CGRect(x: columnX, y: columnTop, width: subControlColumnWidth, height: columnHeight)
+        } else {
+            listLayout?.scrollDirection = .horizontal
+            //The zoom list starts from the middle so that its first preset can be centred
+            let listInset = cameraSettingMode == .ZOOM ? bottomWidth / 2 : 0
+            collectionView.contentInset = UIEdgeInsets(top: 0, left: listInset, bottom: 0, right: listInset)
+            collectionView.frame = CGRect(x: sideMargins, y: frame.height - controlExtraSize.height - spacing - controlZoomSize.height, width: bottomWidth, height: controlExtraSize.height)
+            zoomSlider?.transform = .identity
+            zoomSlider?.frame = CGRect(x: sideMargins, y: frame.height - controlZoomSize.height - spacing, width: bottomWidth, height: controlZoomSize.height)
+            whiteBalanceControl?.vertical = false
+            whiteBalanceControl?.frame = CGRect(x: sideMargins, y: frame.height - controlWhiteBalanceSize.height - spacing, width: bottomWidth, height: controlWhiteBalanceSize.height)
+        }
 
         //Metal view
         let h, w: CGFloat
         let metalTop: CGFloat
         let metalAvailableHeight: CGFloat
         if isFullscreenLandscape {
-            //Height is scarce: the preview reaches from below the header to the bottom edge (or the open picker rows)
-            let bottomRows = controlExtraSize.height + controlZoomSize.height + controlSpectrumOrientationAnalysisSize.height
+            //Height is scarce: the preview reaches from below the header to the bottom edge (or the spectrum row)
+            let bottomRows = controlSpectrumOrientationAnalysisSize.height
             metalTop = headSize.height + spacing
             metalAvailableHeight = frame.height - metalTop - bottomRows - (bottomRows > 0 ? spacing : 0)
         } else {
             metalTop = headSize.height + 2*spacing
-            metalAvailableHeight = frame.height - 5*spacing - headSize.height - controlSize.height - controlExtraSize.height - controlZoomSize.height - controlSpectrumOrientationAnalysisSize.height
+            metalAvailableHeight = frame.height - 5*spacing - headSize.height - controlSize.height - subControlRowsHeight - controlSpectrumOrientationAnalysisSize.height
         }
-        let metalAvailableWidth = frame.width - 2*sideMargins - (controlColumnWidth > 0 ? controlColumnWidth + spacing : 0)
+        let metalAvailableWidth = frame.width - 2*sideMargins - rightColumnsWidth
         let actualAspect = metalAvailableWidth / metalAvailableHeight
         let aspect = if orientation == .landscapeRight || orientation == .landscapeLeft {
             imageResolution.width / imageResolution.height
@@ -356,6 +402,11 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             }
             
             addSubview(zoomSlider!)
+
+            let whiteBalanceControl = WhiteBalanceControlView(settings: cameraModel.cameraSettingsModel)
+            whiteBalanceControl.isHidden = true
+            addSubview(whiteBalanceControl)
+            self.whiteBalanceControl = whiteBalanceControl
         }
     }
     
@@ -371,9 +422,8 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             
             exposureText?.text = String(cameraSettingsModel.currentExposureValue)+"EV"
             
-            whiteBalanceText?.text = localize( "wb_"+cameraSettingsModel.whiteBalanceColorTemperaturePresets[cameraSettingsModel.currentWhiteBalancePreset].label
-            )
-            
+            whiteBalanceText?.text = cameraSettingsModel.whiteBalanceLabel
+
             if let aeState = cameraModelOwner?.cameraModel?.autoExposureEnabled {
                 autoExposureText?.text = aeState ? localize("on") : localize("off")
             } else {
@@ -404,6 +454,15 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     func onApertureChange(newValue: Float) {
         DispatchQueue.main.async {
             self.apertureText?.text = "f/"+String(newValue)
+        }
+    }
+
+    func onWhiteBalanceChange() {
+        DispatchQueue.main.async {
+            guard let cameraSettingsModel = self.cameraModelOwner?.cameraModel?.cameraSettingsModel else { return }
+            self.whiteBalanceText?.text = cameraSettingsModel.whiteBalanceLabel
+            self.whiteBalanceControl?.update()
+            self.setNeedsLayout()
         }
     }
 
@@ -646,17 +705,13 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     @objc private func whiteBalanceButtonTapped(_ sender: UIButton) {
         handleButtonTapped(mode: .WHITE_BALANCE, additionalActions: {
-            self.selectDefaultItemInCollectionView()
-            self.updateContentInset(startListFromMiddle: false)
+            self.whiteBalanceControl?.update()
         })
     }
-    
+
+    //The list insets follow the mode and orientation in layoutSubviews
     private func updateContentInset(startListFromMiddle: Bool){
-        if(startListFromMiddle){
-            self.collectionView.contentInset = UIEdgeInsets(top: 0, left: self.frame.width / 2, bottom: 0, right: self.frame.width / 2)
-        } else{
-            self.collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
-        }
+        self.setNeedsLayout()
     }
     
     private func handleButtonTapped(mode: CameraSettingMode, additionalActions: (() -> Void)?) {
@@ -685,9 +740,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         else if(cameraSettingMode == .ZOOM){
             let currentZoom = self.cameraModelOwner?.cameraModel?.cameraSettingsModel.currentZoom ?? 1.0
             currentSelectionIndex = cameraSettingValues.firstIndex(where: { $0 == Float(currentZoom)}) ?? -1
-        }
-        else if(cameraSettingMode == .WHITE_BALANCE){
-            currentSelectionIndex = self.cameraModelOwner?.cameraModel?.cameraSettingsModel.currentWhiteBalancePreset ?? 0
         }
         else {
             currentSelectionIndex = 0
@@ -821,8 +873,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             return cameraSettingsModel.exposureValues
         case .ZOOM:
             return cameraSettingsModel.currentZoomParameters.zoomPresets
-        case .WHITE_BALANCE:
-            return Array(stride(from: 0.0, to: Float(cameraSettingsModel.whiteBalanceColorTemperaturePresets.count), by: 1.0))
         default:
             return []
         }
@@ -912,10 +962,15 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         case .ZOOM:
             showZoomSlider = true
             isListVisible = true
-        case .ISO, .SHUTTER_SPEED, .EXPOSURE, .WHITE_BALANCE:
+        case .ISO, .SHUTTER_SPEED, .EXPOSURE:
             isListVisible = true
             showZoomSlider = false
+        case .WHITE_BALANCE:
+            isListVisible = false
+            showZoomSlider = false
         }
+        whiteBalanceControl?.isHidden = cameraSettingMode != .WHITE_BALANCE
+        setNeedsLayout()
     }
     
     private func manageLockedButtons(){
@@ -933,6 +988,10 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         isoText.setLocked(autoExposure || lockedControls.contains("iso"))
         exposureButton.setLocked(lockedControls.contains("exposure"))
         exposureText.setLocked(lockedControls.contains("exposure"))
+        //Either white balance form in the file disables the control
+        let whiteBalanceLocked = cameraModel.cameraSettingsModel.whiteBalanceLockedByFile
+        whiteBalanceButton.setLocked(whiteBalanceLocked)
+        whiteBalanceText.setLocked(whiteBalanceLocked)
     }
     
     //MARK: Collection views functions
@@ -944,7 +1003,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: cameraSettingMode == .WHITE_BALANCE ? 100 : 40, height: ExperimentCameraUIView.controlExtraHeight + 20)
+        return CGSize(width: 40, height: ExperimentCameraUIView.controlExtraHeight + 20)
 
     }
     
@@ -965,12 +1024,6 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
             value = String(self.cameraSettingValues[indexPath.row]) + "EV"
         case .SHUTTER_SPEED:
             value = "1/\(Int(self.cameraSettingValues[indexPath.row]))"
-        case .WHITE_BALANCE:
-            if let settings = cameraModelOwner?.cameraModel?.cameraSettingsModel {
-                value = localize("wb_" + settings.whiteBalanceColorTemperaturePresets[indexPath.row].label)
-            } else {
-                value = String(Int(self.cameraSettingValues[indexPath.row]))
-            }
         default:
             value = String(Int(self.cameraSettingValues[indexPath.row]))
         }
@@ -1007,7 +1060,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
                 service.setExposureValue(currentCameraSettingValue)
                 self.exposureText?.text = String(currentCameraSettingValue)+"EV"
             case .WHITE_BALANCE:
-                service.setWhiteBalancePreset(index: Int(currentCameraSettingValue))
+                break //its own control, no list
             }
         }
     }

@@ -343,10 +343,6 @@
 "cameraFront" = "Фронтальная";
 "cameraZoom" = "Зум";
 "wb_auto" = "Авто";
-"wb_incandescent" = "Лампа накаливания";
-"wb_fluorescent" = "Люминесцентная лампа";
-"wb_daylight" = "Дневной свет";
-"wb_cloudy" = "Облачно";
 "common_quantity_short_luminance" = "Lv";
 "common_quantity_short_luma" = "Y'";
 "clear_data_question_select" = "Удалить записанные данные и следующие дополнительные элементы?";

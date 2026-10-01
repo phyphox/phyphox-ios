@@ -342,10 +342,6 @@
 "showQRCodeForRemoteURL" = "Κωδικός QR για την πρόσβαση σε URL";
 "cameraZoom" = "Μεγέθυνση";
 "wb_auto" = "Αυτόματα";
-"wb_incandescent" = "Πυρακτώσεως";
-"wb_fluorescent" = "Φθορισμού";
-"wb_daylight" = "Ημερήσιο Φως";
-"wb_cloudy" = "Συννεφιά";
 "common_quantity_short_luma" = "Y'";
 "select" = "--επιλέξτε--";
 "chooseOption" = "Επιλέξτε";

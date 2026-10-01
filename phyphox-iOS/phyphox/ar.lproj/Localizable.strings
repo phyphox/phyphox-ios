@@ -368,10 +368,6 @@
 "cameraFront" = "الأماميّة";
 "cameraZoom" = "التقريب";
 "wb_auto" = "تلقائي";
-"wb_incandescent" = "متوهّج";
-"wb_fluorescent" = "فلورسنت";
-"wb_daylight" = "ضوء النهار";
-"wb_cloudy" = "غائم";
 "common_quantity_short_luminance" = "Lv";
 "common_quantity_short_luma" = "Y'";
 "cameraNotAvailableWarningText" = "هذه التجربة غير متاحة، لأن جهازك غير متوافق مع الحد الأدنى من إصدار نظام IOS اللازم لتشغيل التحليل باستخدام الكاميرا.";

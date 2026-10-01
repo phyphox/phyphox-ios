@@ -43,7 +43,7 @@
             <output>buffer</output>
             <output component="rate">buffer</output>
         </audio>
-        <camera x1="0.4" x2="0.6" y1="0.4" y2="0.6" auto_exposure="true" aeStrategy="prioritizeFramerate" aeFPSTarget="30" locked="focus_distance=0" feature="photometric">
+        <camera x1="0.4" x2="0.6" y1="0.4" y2="0.6" auto_exposure="true" aeStrategy="prioritizeFramerate" aeFPSTarget="30" locked="focus_distance=0,white_balance=5600,white_balance_tint=0.002" feature="photometric">
             <output component="luminance">buffer</output>
             <output component="t">buffer2</output>
             <output component="red">buffer</output>

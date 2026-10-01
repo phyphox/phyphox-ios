@@ -379,10 +379,6 @@
 "notSet" = "Nieustawione";
 "preview" = "Podgląd";
 "wb_auto" = "Automatycznie";
-"wb_incandescent" = "Żarowy";
-"wb_fluorescent" = "Fluorescencyjny";
-"wb_daylight" = "Światło dzienne";
-"wb_cloudy" = "Pochmurne";
 "common_quantity_short_luminance" = "Lv";
 "common_quantity_short_luma" = "Y'";
 "cameraNotAvailableWarningText" = "Ta aktywność nie jest dostępna, ponieważ urządzenie nie spełnia minimalnych wymagań dotyczących wersji systemu iOS niezbędnej do przeprowadzania analizy z użyciem kamery.";

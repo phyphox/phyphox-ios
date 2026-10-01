@@ -361,10 +361,6 @@
 "notSet" = "N/A";
 "preview" = "Vorschau";
 "wb_auto" = "Auto";
-"wb_incandescent" = "Glühlampe";
-"wb_fluorescent" = "Leuchtstoffröhre";
-"wb_daylight" = "Tageslicht";
-"wb_cloudy" = "Bewölkt";
 "common_quantity_short_luminance" = "Lv";
 "common_quantity_short_luma" = "Y'";
 "cameraNotAvailableWarningText" = "Dieses Experiment ist nicht verfügbar, da eine neuere iOS-Version für die Auswertung der Kamera benötigt wird.";

@@ -224,10 +224,6 @@
 "cameraFront" = "ફ્રન્ટ";
 "cameraZoom" = "ઝૂમ કરો";
 "wb_auto" = "ઑટો";
-"wb_incandescent" = "અગ્નિથી પ્રકાશિત";
-"wb_fluorescent" = "ફ્લોરોસન્ટ";
-"wb_daylight" = "સૂર્યપ્રકાશ";
-"wb_cloudy" = "વાદળછાયું";
 "common_unit_short_arbitrary_unit" = "arb. unit";
 "common_unit_short_second" = "s";
 "common_unit_short_milli_second" = "ms";

@@ -25,6 +25,7 @@ class CameraSettingsModel {
         func onShutterSpeedChange(newValue: CMTime)
         func onIsoChange(newValue: Int)
         func onApertureChange(newValue: Float)
+        func onWhiteBalanceChange()
     }
     
     
@@ -109,15 +110,82 @@ class CameraSettingsModel {
     var maxExposureValue: Float = 1.0
     var currentExposureValue: Float = 0.0
     
-    let whiteBalanceColorTemperaturePresets:[(label: String, temperature: Float?)] = [
-        ("auto",            nil),
-        ("incandescent", 2600.0),
-        ("fluorescent",  4200.0),
-        ("daylight",     5600.0),
-        ("cloudy",       6500.0)
-    ]
-    var currentWhiteBalancePreset: Int = 0
-    
+    //White balance by white point (file format 1.21): the request, the value in effect after clamping, and the flags
+    //the camera-gui needs. CameraService pushes this state to the device; the state itself needs no camera.
+    var whiteBalanceMode: WhiteBalanceMode = .auto
+    var whiteBalanceTemperature: Int = WhiteBalance.defaultTemperature //Kelvin
+    var whiteBalanceTint: Float = 0.0 //Duv
+    var whiteBalanceTemperatureInEffect: Int = WhiteBalance.defaultTemperature
+    var whiteBalanceTintInEffect: Float = 0.0
+    var whiteBalanceTemperatureRange: ClosedRange<Int> = WhiteBalance.minTemperature...WhiteBalance.maxTemperature
+    var whiteBalanceLockedByFile = false //set by the experiment file: the camera-gui control is disabled
+    var whiteBalanceFrozen = false //the automatic result is held by the device
+    //Whether the device takes custom gains; without them a temperature falls back to holding the automatic result
+    var whiteBalanceGainsSupported = true
+
+    //The lock holds the automatic result for the plain lock, and for a temperature on a camera without custom gains
+    var whiteBalanceNeedsLock: Bool {
+        return whiteBalanceMode == .locked || (whiteBalanceMode == .temperature && !whiteBalanceGainsSupported)
+    }
+
+    //The request against what can be reached; the device may narrow the temperature further when it clamps the gains
+    func updateWhiteBalanceInEffect() {
+        whiteBalanceTemperatureInEffect = min(max(whiteBalanceTemperatureRange.lowerBound, whiteBalanceTemperature), whiteBalanceTemperatureRange.upperBound)
+        whiteBalanceTintInEffect = min(max(-WhiteBalance.maxTint, whiteBalanceTint), WhiteBalance.maxTint)
+    }
+
+    //The white balance from the camera input's locked attribute; a lock from the file engages at the first start
+    func applyFileWhiteBalance(locked: [String: Float?]) {
+        let settings = WhiteBalance.settings(fromLocked: locked)
+        whiteBalanceMode = settings.mode
+        whiteBalanceTemperature = settings.temperature
+        whiteBalanceTint = settings.tint
+        whiteBalanceLockedByFile = settings.mode != .auto
+        whiteBalanceFrozen = false
+        updateWhiteBalanceInEffect()
+    }
+
+    //The camera-gui's choice: a lock engages at once, automatic releases it
+    func selectWhiteBalanceMode(_ mode: WhiteBalanceMode) {
+        whiteBalanceMode = mode
+        whiteBalanceFrozen = whiteBalanceNeedsLock
+        updateWhiteBalanceInEffect()
+    }
+
+    func selectWhiteBalanceTemperature(_ kelvin: Int) {
+        whiteBalanceTemperature = kelvin
+        updateWhiteBalanceInEffect()
+    }
+
+    func selectWhiteBalanceTint(_ duv: Float) {
+        whiteBalanceTint = duv
+        updateWhiteBalanceInEffect()
+    }
+
+    //Engages the lock when the measurement is first started; true when the device has to follow
+    func freezeWhiteBalanceAtStart() -> Bool {
+        if whiteBalanceFrozen || !whiteBalanceNeedsLock {
+            return false
+        }
+        whiteBalanceFrozen = true
+        return true
+    }
+
+    //The text of the camera-gui's white balance button: the mode, or the temperature in effect
+    var whiteBalanceLabel: String {
+        switch whiteBalanceMode {
+        case .auto: return localize("wb_auto")
+        case .locked: return localize("wb_locked")
+        case .temperature: return "\(whiteBalanceTemperatureInEffect) K"
+        }
+    }
+
+    func whiteBalanceChanged() {
+        for changeObserver in changeObservers {
+            changeObserver.onWhiteBalanceChange()
+        }
+    }
+
     var exposureCompensationRange: ClosedRange<Float>?
     
     var service: CameraService?
@@ -209,6 +277,8 @@ final class CameraModel {
     func startSession(queue: DispatchQueue){
         service.analyzingRenderer?.queue = queue
         service.analyzingRenderer?.measuring = true
+        //A white balance lock from the file engages at the first start and is never released
+        service.freezeWhiteBalanceAtStart()
     }
     
     
