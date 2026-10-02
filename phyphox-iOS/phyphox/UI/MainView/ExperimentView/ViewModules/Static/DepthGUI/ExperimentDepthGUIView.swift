@@ -155,9 +155,10 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         }
     }
     
-    //The collapse icon of the maximized preview is drawn at twice the size of the expand icon (the whole view takes the tap)
+    //The collapse icon of the maximized preview is drawn one and a half times the size of the expand icon (the whole view
+    //takes the tap)
     private static let unfoldRect = CGRect(x: 5, y: 5, width: 20, height: 20)
-    private static let exclusiveUnfoldRect = CGRect(x: 5, y: 5, width: 40, height: 40)
+    private static let exclusiveUnfoldRect = CGRect(x: 5, y: 3, width: 30, height: 30)
 
     override func layoutSubviews() {
         super.layoutSubviews()

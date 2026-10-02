@@ -67,9 +67,9 @@ class GraphLayoutManager {
         self.descriptor = descriptor
         
         let config = UIImage.SymbolConfiguration(pointSize: 25, weight: .regular, scale: .default)
-        //The collapse icon of a maximized graph is drawn at twice the size of the expand icon (its hit area is the whole
-        //margin around the plot, see ExperimentGraphView.handleTapp)
-        let exclusiveConfig = UIImage.SymbolConfiguration(pointSize: 50, weight: .regular, scale: .default)
+        //The collapse icon of a maximized graph is drawn one and a half times the size of the expand icon (its hit area is
+        //the whole margin around the plot, see ExperimentGraphView.handleTapp); the title row grows to hold it
+        let exclusiveConfig = UIImage.SymbolConfiguration(pointSize: 38, weight: .regular, scale: .default)
         self.unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: exclusiveConfig))
         self.unfoldMoreImageView = UIImageView(image: UIImage(systemName: "arrow.up.left.and.arrow.down.right", withConfiguration: config))
         self.unfoldLessImageView.contentMode = .scaleAspectFit
@@ -113,7 +113,12 @@ class GraphLayoutManager {
     }
 
     private static let unfoldRect = CGRect(x: 5, y: 5, width: 20, height: 20)
-    private static let exclusiveUnfoldRect = CGRect(x: 5, y: 5, width: 40, height: 40)
+    private static let exclusiveUnfoldRect = CGRect(x: 5, y: 3, width: 30, height: 30)
+
+    //The title row of a maximized graph is at least as tall as its collapse icon, so the icon never overlaps the plot
+    private func titleRowHeight(_ titleHeight: CGFloat, resizableState: ResizableViewModuleState) -> CGFloat {
+        return resizableState == .exclusive ? Swift.max(titleHeight, GraphLayoutManager.exclusiveUnfoldRect.maxY + 3) : titleHeight
+    }
 
     //The title is centred; next to the large collapse icon of a maximized graph it starts right of the icon instead
     private func titleFrame(_ size: CGSize, contentWidth: CGFloat, y: CGFloat, resizableState: ResizableViewModuleState) -> CGRect {
@@ -407,7 +412,8 @@ class GraphLayoutManager {
 
         // Layout labels
         let s1 = titleSize(bounds.size)
-        label.frame = titleFrame(s1, contentWidth: contentWidth, y: spacing, resizableState: resizableState)
+        let titleRow = titleRowHeight(s1.height, resizableState: resizableState)
+        label.frame = titleFrame(s1, contentWidth: contentWidth, y: spacing + (titleRow - s1.height) / 2.0, resizableState: resizableState)
 
         let s2 = xLabel.sizeThatFits(bounds.size)
         let s3 = yLabel.sizeThatFits(bounds.size).applying(yLabel.transform)
@@ -421,17 +427,17 @@ class GraphLayoutManager {
         if let zLabel = zLabel {
             let s4 = zLabel.sizeThatFits(bounds.size)
             zLabel.frame = CGRect(x: (contentWidth + s3.width - s4.width) / 2.0,
-                                 y: s1.height + spacing + zScaleHeight,
+                                 y: titleRow + spacing + zScaleHeight,
                                  width: s4.width, height: s4.height)
         }
 
-        let yCoord = s1.height + spacing + (showColorScale ? zScaleHeight + (zLabel?.frame.height ?? 0) + spacing : 0)
-        let graphHeight = bounds.height - s1.height - spacing - bottom - (showColorScale ? zScaleHeight + spacing + (zLabel?.frame.height ?? 0) : 0)
+        let yCoord = titleRow + spacing + (showColorScale ? zScaleHeight + (zLabel?.frame.height ?? 0) + spacing : 0)
+        let graphHeight = bounds.height - titleRow - spacing - bottom - (showColorScale ? zScaleHeight + spacing + (zLabel?.frame.height ?? 0) : 0)
 
         gridView.frame = CGRect(x: sideMargins + s3.width + spacing, y: yCoord, width: contentWidth - s3.width - spacing - 2*sideMargins, height:  graphHeight)
 
         if(showColorScale){
-            zGridView?.frame = CGRect(x: sideMargins + s3.width + spacing, y: s1.height+spacing, width: contentWidth - s3.width - spacing - 2*sideMargins, height: zScaleHeight)
+            zGridView?.frame = CGRect(x: sideMargins + s3.width + spacing, y: titleRow+spacing, width: contentWidth - s3.width - spacing - 2*sideMargins, height: zScaleHeight)
         }
 
         yLabel.frame = CGRect(x: sideMargins,

@@ -186,6 +186,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         questionView.numberOfLines = 0
 
         axisControlUITableView.isScrollEnabled = false
+        axisControlUITableView.sectionHeaderTopPadding = 0
         axisControlUITableView.dataSource = self
         axisControlUITableView.delegate = self
         axisControlUITableView.isHidden = true
@@ -273,8 +274,10 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        //Three buttons side by side where they fit, stacked on a narrow phone or with a large text size
-        let fitting = actionRow.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).width
+        //Three buttons side by side where they fit, stacked on a narrow phone or with a large text size. Measured as a
+        //row whatever the current axis, or the choice would flip on every pass and the row could end up clipped.
+        let visible = actionRow.arrangedSubviews.filter { !$0.isHidden }
+        let fitting = visible.reduce(CGFloat(0)) { $0 + $1.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).width } + CGFloat(Swift.max(visible.count - 1, 0)) * actionRow.spacing
         let available = dialogView.bounds.width - 2 * margin
         let axis: NSLayoutConstraint.Axis = fitting > available ? .vertical : .horizontal
         if actionRow.axis != axis {
@@ -432,7 +435,12 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
     }
 
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return margin
+        return margin / 2
+    }
+
+    //Compact action rows; the apply-to row takes the height of its two lines
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return indexPath.row < axes[indexPath.section].actions.count ? 36 : UITableView.automaticDimension
     }
 
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {

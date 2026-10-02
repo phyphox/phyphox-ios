@@ -637,13 +637,13 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
         }
     }
 
-    //The collapse icon of the maximized preview is drawn at twice the size of the expand icon, with a 44 pt touch target;
+    //The collapse icon of the maximized preview is drawn one and a half times the size of the expand icon, with a 44 pt touch target;
     //the header row grows with it, nothing else moves
     private lazy var resizeButtonHeight: NSLayoutConstraint = previewResizingButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
     private func updateResizeButtonIcon() {
         if resizableState == .exclusive {
             previewResizingButton.setImage(UIImage(systemName: "arrow.down.right.and.arrow.up.left"), for: .normal)
-            previewResizingButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 34), forImageIn: .normal)
+            previewResizingButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 26), forImageIn: .normal)
             resizeButtonHeight.isActive = true
         } else {
             previewResizingButton.setImage(UIImage(systemName: "arrow.up.left.and.arrow.down.right"), for: .normal)

@@ -106,7 +106,13 @@ class GraphZoomManager {
         delegate?.zoomManagerDidUpdate(self)
     }
     
+    //A plot without a range (no data yet) has nothing to pan or zoom: the gesture must not leave a zoom behind
+    private func hasRange(_ bounds: GraphBounds) -> Bool {
+        return bounds.max.x > bounds.min.x && bounds.max.y > bounds.min.y && bounds.max.x.isFinite && bounds.min.x.isFinite && bounds.max.y.isFinite && bounds.min.y.isFinite
+    }
+
     func applyPanGesture(translation: CGPoint, bounds: GraphBounds, frameSize: CGSize, state: UIGestureRecognizer.State) {
+        guard hasRange(bounds) else { return }
         zoomFollows = false
         
         let min = GraphPoint2D(x: bounds.min.x, y: bounds.min.y)
@@ -137,6 +143,7 @@ class GraphZoomManager {
     }
     
     func applyPinchGesture(scale: CGFloat, center: CGPoint, touches: (CGPoint, CGPoint), bounds: GraphBounds, frameSize: CGSize, state: UIGestureRecognizer.State) {
+        guard hasRange(bounds) else { return }
         zoomFollows = false
         
         let min = bounds.min
@@ -190,6 +197,7 @@ class GraphZoomManager {
     func applyZPanGesture(translation: CGPoint, bounds: GraphBounds, frameSize: CGSize, state: UIGestureRecognizer.State) {
         let min = bounds.min.z
         let max = bounds.max.z
+        guard max > min, min.isFinite, max.isFinite else { return }
         
         if state == .began {
             zPanStartMin = min
@@ -217,6 +225,7 @@ class GraphZoomManager {
     func applyZPinchGesture(scale: CGFloat, center: CGPoint, touches: (CGPoint, CGPoint), bounds: GraphBounds, frameSize: CGSize, state: UIGestureRecognizer.State) {
         let min = bounds.min.z
         let max = bounds.max.z
+        guard max > min, min.isFinite, max.isFinite else { return }
         
         let centerX = (touches.0.x + touches.1.x) / 2.0
         
