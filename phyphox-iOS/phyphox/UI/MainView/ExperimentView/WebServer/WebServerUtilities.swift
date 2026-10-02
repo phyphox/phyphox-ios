@@ -318,7 +318,20 @@ final class WebServerUtilities {
             ("unitExperimentDefault", localize("unit_dialog_experiment_default")),
             ("metric", localize("settingsUnitSystemMetric")),
             ("imperial", localize("settingsUnitSystemImperial")),
-            ("other", localize("unit_dialog_other"))
+            ("other", localize("unit_dialog_other")),
+            //"Keep this view?" when a zoomed maximized graph is left; the interface accepts the Swift placeholders as they are
+            ("applyZoomQuestionTitle", localize("applyZoomQuestionTitle")),
+            ("applyZoomQuestion", localize("applyZoomQuestion")),
+            ("applyZoomRange", localize("applyZoomRange")),
+            ("applyZoomActionReset", localize("applyZoomActionReset")),
+            ("applyZoomActionKeep", localize("applyZoomActionKeep")),
+            ("applyZoomActionFollow", localize("applyZoomActionFollow")),
+            ("applyZoomMoreOptions", localize("applyZoomMoreOptions")),
+            ("applyZoomAlsoApply", localize("applyZoomAlsoApply")),
+            ("applyZoomTargetThis", localize("applyZoomTargetThis")),
+            ("applyZoomTargetSameData", localize("applyZoomTargetSameData")),
+            ("applyZoomTargetSameUnit", localize("applyZoomTargetSameUnit")),
+            ("applyZoomTargetSameAxis", localize("applyZoomTargetSameAxis"))
         ]
         return WebJSON.encode(strings)
     }
