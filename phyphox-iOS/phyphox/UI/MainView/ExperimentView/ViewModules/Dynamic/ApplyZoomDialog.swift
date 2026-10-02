@@ -129,6 +129,7 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         super.init(nibName: nil, bundle: nil)
 
         self.modalPresentationStyle = .overFullScreen
+        self.modalTransitionStyle = .crossDissolve //fades in like an alert instead of sliding up with its dimmed background
 
         moreButton.addTarget(self, action: #selector(expandOptions), for: .touchUpInside)
         cancelButton.addTarget(self, action: #selector(cancelDialog), for: .touchUpInside)
@@ -272,18 +273,24 @@ class ApplyZoomDialog: UIViewController, UITableViewDataSource, UITableViewDeleg
         preferredWidth.isActive = true
     }
 
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        //Three buttons side by side where they fit, stacked on a narrow phone or with a large text size. Measured as a
-        //row whatever the current axis, or the choice would flip on every pass and the row could end up clipped.
+    //Three buttons side by side where they fit, stacked on a narrow phone or with a large text size. Decided before the
+    //layout pass from the width the dialog will get, and measured as a row whatever the current axis: decided afterwards
+    //(viewDidLayoutSubviews) iOS 26 ran no further pass, and the stacked buttons stayed clipped below Cancel.
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
         let visible = actionRow.arrangedSubviews.filter { !$0.isHidden }
         let fitting = visible.reduce(CGFloat(0)) { $0 + $1.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).width } + CGFloat(Swift.max(visible.count - 1, 0)) * actionRow.spacing
-        let available = dialogView.bounds.width - 2 * margin
-        let axis: NSLayoutConstraint.Axis = fitting > available ? .vertical : .horizontal
+        let dialogWidth = Swift.min(600, view.bounds.inset(by: view.safeAreaInsets).width - 2 * outerMargin)
+        let axis: NSLayoutConstraint.Axis = fitting > dialogWidth - 2 * margin ? .vertical : .horizontal
         if actionRow.axis != axis {
             actionRow.axis = axis
             actionRow.alignment = axis == .vertical ? .trailing : .center
+            view.setNeedsLayout()
         }
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
         if axisControlUITableView.bounds.width != tableWidthLaidOut {
             tableWidthLaidOut = axisControlUITableView.bounds.width
             axisControlUITableView.reloadData()
