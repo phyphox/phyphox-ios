@@ -150,9 +150,17 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         selectedViewCollection = requestedViewCollection < experimentViewControllers.count ? requestedViewCollection : 0
         
         super.init(nibName: nil, bundle: nil)
-        
+
         if experimentViewControllers.indices.contains(selectedViewCollection) {
             experimentViewControllers[selectedViewCollection].active = true
+        }
+
+        //No pager swipe while an element is maximized: the ways out are the element itself, "‹" and a tab tap, which asks first
+        for controller in experimentViewControllers {
+            controller.onExclusiveViewChange = { [weak self] view in
+                guard let self = self else { return }
+                self.pageViewControler.dataSource = view == nil ? self : nil
+            }
         }
         
         for view in viewModules.flatMap({ $0 }).flatMap({ $0.moduleTree }) {
@@ -722,6 +730,23 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         let target = sender.selectedSegmentIndex
         if pageTransitionInProgress || target == selectedViewCollection || !experimentViewControllers.indices.contains(target) {
             sender.selectedSegmentIndex = selectedViewCollection
+            return
+        }
+        //A maximized element is asked to leave first (a zoomed graph asks "Keep this view?"); the page moves once it is
+        //gone, Cancel stays on the current tab with the element still maximized
+        let current = experimentViewControllers[selectedViewCollection]
+        if current.exclusiveView != nil {
+            sender.selectedSegmentIndex = selectedViewCollection
+            current.requestLeaveExclusive { [weak self] in
+                self?.moveToCollection(target)
+            }
+            return
+        }
+        moveToCollection(target)
+    }
+
+    private func moveToCollection(_ target: Int) {
+        guard !pageTransitionInProgress, target != selectedViewCollection, experimentViewControllers.indices.contains(target) else {
             return
         }
         let direction = selectedViewCollection < target ? UIPageViewController.NavigationDirection.forward : UIPageViewController.NavigationDirection.reverse
@@ -1450,6 +1475,12 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
     }
     
     @objc func leaveExperiment() {
+        //"‹" first closes a maximized element (a zoomed graph asks "Keep this view?") and leaves the experiment only
+        //when nothing is maximized, like the back routes on Android
+        if experimentViewControllers.indices.contains(selectedViewCollection), experimentViewControllers[selectedViewCollection].exclusiveView != nil {
+            experimentViewControllers[selectedViewCollection].requestLeaveExclusive {}
+            return
+        }
         if experiment.timeReference.getExperimentTime() > 10 {
             let al = UIAlertController(title: localize("leave_experiment"), message: localize("leave_experiment_question"), preferredStyle: .alert)
             

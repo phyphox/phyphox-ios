@@ -315,7 +315,7 @@ final class UnitConversionDisplayTests: XCTestCase {
         XCTAssertEqual(milliseconds.zoomManager.currentZoomBounds.min.x, 1000, accuracy: 1e-9)
         XCTAssertEqual(milliseconds.zoomManager.currentZoomBounds.max.x, 2000, accuracy: 1e-9)
         XCTAssertTrue(milliseconds.zoomManager.currentZoomBounds.min.y.isNaN, "the text unit m/s³ does not match m/s²")
-        XCTAssertFalse(text.zoomManager.hasCustomZoom, "the text unit s does not match the reference")
+        XCTAssertFalse(text.zoomManager.anyZoomed, "the text unit s does not match the reference")
         text.applyZoom(modeX: .keep, applyToX: .sameUnit, targetX: nil, unitX: Unit.text("s"), modeY: .none, applyToY: .none, targetY: nil, unitY: nil, zoomMin: GraphPoint2D(x: 1, y: 0), zoomMax: GraphPoint2D(x: 2, y: 5), systemTime: false)
         XCTAssertEqual(text.zoomManager.currentZoomBounds.max.x, 2, accuracy: 1e-9, "text matches by equal text")
     }

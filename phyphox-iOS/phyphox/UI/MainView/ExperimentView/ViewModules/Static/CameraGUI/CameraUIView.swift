@@ -476,6 +476,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     }
     
     func resizableStateChanged(_ newState: ResizableViewModuleState) {
+        updateResizeButtonIcon()
         if newState == .exclusive {
             cameraSettingUIView?.isHidden = !controlsVisible
             dialogButton.isHidden = !controlsVisible
@@ -630,12 +631,24 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     
     @objc func resizeTapped(_ sender: UITapGestureRecognizer) {
         if resizableState == .normal {
-            cameraPreviewViewControlButton().setImage(UIImage(systemName: "arrow.down.right.and.arrow.up.left"), for: .normal)
             layoutDelegate?.presentExclusiveLayout(self)
-    
         } else {
-            cameraPreviewViewControlButton().setImage(UIImage(systemName: "arrow.up.left.and.arrow.down.right"), for: .normal)
             layoutDelegate?.restoreLayout()
+        }
+    }
+
+    //The collapse icon of the maximized preview is drawn at twice the size of the expand icon, with a 44 pt touch target;
+    //the header row grows with it, nothing else moves
+    private lazy var resizeButtonHeight: NSLayoutConstraint = previewResizingButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
+    private func updateResizeButtonIcon() {
+        if resizableState == .exclusive {
+            previewResizingButton.setImage(UIImage(systemName: "arrow.down.right.and.arrow.up.left"), for: .normal)
+            previewResizingButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 34), forImageIn: .normal)
+            resizeButtonHeight.isActive = true
+        } else {
+            previewResizingButton.setImage(UIImage(systemName: "arrow.up.left.and.arrow.down.right"), for: .normal)
+            previewResizingButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(textStyle: .body), forImageIn: .normal)
+            resizeButtonHeight.isActive = false
         }
     }
     

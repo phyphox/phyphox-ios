@@ -201,98 +201,80 @@ final class GraphGridView: UIView {
         }
     }
     
+    //The text of a tic label: the descriptor's precision as significant digits (or as fixed decimals when scientific
+    //notation is suppressed), the tic's own precision otherwise; a time axis showing a clock formats the wall-clock
+    //time. Shared with the zoomed range in the "Keep this view?" dialog, which reads like the tic labels.
+    static func formatTicLabel(_ n: Double, ticPrecision: Int, descriptorPrecision: Int, suppressScientificNotation: Bool, isTime: Bool, systemTimeOffset: Double) -> String {
+        if isTime && systemTimeOffset > 0 {
+            let alignedOffset = systemTimeOffset + Double(TimeZone.current.secondsFromGMT())
+            let t = Date(timeIntervalSince1970: systemTimeOffset + n)
+            let dateFormatter = DateFormatter()
+            let day = 24*60*60
+            if Int(round(n + alignedOffset)) % day == 0 {
+                dateFormatter.dateStyle = .medium
+                dateFormatter.timeStyle = .none
+            } else {
+                dateFormatter.dateStyle = .none
+                dateFormatter.timeStyle = .medium
+            }
+            return dateFormatter.string(from: t)
+        }
+
+        let formatter = NumberFormatter()
+        if descriptorPrecision >= 0 {
+            if suppressScientificNotation {
+                formatter.usesSignificantDigits = false
+                formatter.minimumFractionDigits = descriptorPrecision
+                formatter.numberStyle = .decimal
+            } else {
+                formatter.usesSignificantDigits = true
+                formatter.minimumSignificantDigits = descriptorPrecision
+            }
+        } else {
+            formatter.usesSignificantDigits = false
+            formatter.minimumFractionDigits = max(ticPrecision, 0)
+            formatter.maximumFractionDigits = max(ticPrecision, 0)
+        }
+
+        if suppressScientificNotation {
+            return formatter.string(from: NSNumber(value: n))!
+        }
+        let expThreshold = formatter.usesSignificantDigits ? max(formatter.minimumSignificantDigits, 3) : 4
+        if n == 0 || (abs(n) < pow(10.0, Double(expThreshold)) && abs(n) > pow(10.0, Double(-expThreshold))) {
+            formatter.numberStyle = .decimal
+            return formatter.string(from: NSNumber(value: n))!
+        }
+        if formatter.usesSignificantDigits {
+            formatter.numberStyle = .scientific
+            return formatter.string(from: NSNumber(value: n))!
+        }
+        let expFormatter = NumberFormatter()
+        expFormatter.numberStyle = .scientific
+        expFormatter.usesSignificantDigits = true
+        expFormatter.minimumSignificantDigits = 2
+        expFormatter.maximumSignificantDigits = 3
+        return expFormatter.string(from: NSNumber(value: n))!
+    }
+
     override func layoutSubviews() {
         let spacing = 1.0/UIScreen.main.scale
         super.layoutSubviews()
-        
-        let formatterX = NumberFormatter()
+
         let descPrecisionX = Int((isZScale ? descriptor?.zPrecision : descriptor?.xPrecision) ?? -1)
-        if descPrecisionX >= 0 {
-            if (descriptor?.suppressScientificNotation ?? false) {
-                formatterX.usesSignificantDigits = false
-                formatterX.minimumFractionDigits = descPrecisionX
-                formatterX.numberStyle = .decimal
-            } else {
-                formatterX.usesSignificantDigits = true
-                formatterX.minimumSignificantDigits = descPrecisionX
-            }
-        }
-        
-        let formatterY = NumberFormatter()
         let descPrecisionY = Int(descriptor?.yPrecision ?? -1)
-        if descPrecisionY >= 0 {
-            if (descriptor?.suppressScientificNotation ?? false) {
-                formatterY.usesSignificantDigits = false
-                formatterY.minimumFractionDigits = descPrecisionY
-                formatterY.numberStyle = .decimal
-            } else {
-                formatterY.usesSignificantDigits = true
-                formatterY.minimumSignificantDigits = descPrecisionY
-            }
-        }
-        
-        let expFormatter = NumberFormatter()
-        if (descriptor?.suppressScientificNotation ?? false) {
-            expFormatter.numberStyle = .decimal
-            expFormatter.usesSignificantDigits = false
-            expFormatter.minimumSignificantDigits = 2
-        } else {
-            expFormatter.numberStyle = .scientific
-            expFormatter.usesSignificantDigits = true
-            expFormatter.minimumSignificantDigits = 2
-            expFormatter.maximumSignificantDigits = 3
-        }
-        
-        func format(_ n: Double, formatter: NumberFormatter, isTime: Bool, systemTimeOffset: Double) -> String {
-            if isTime && systemTimeOffset > 0 {
-                let alignedOffset = systemTimeOffset + Double(TimeZone.current.secondsFromGMT())
-                let t = Date(timeIntervalSince1970: systemTimeOffset + n)
-                let dateFormatter = DateFormatter()
-                let day = 24*60*60
-                if Int(round(n + alignedOffset)) % day == 0 {
-                    dateFormatter.dateStyle = .medium
-                    dateFormatter.timeStyle = .none
-                } else {
-                    dateFormatter.dateStyle = .none
-                    dateFormatter.timeStyle = .medium
-                }
-                return dateFormatter.string(from: t)
-            } else if (descriptor?.suppressScientificNotation ?? false) {
-                return formatter.string(from: NSNumber(value: n as Double))!
-            } else {
-                let expThreshold = formatter.usesSignificantDigits ? max(formatter.minimumSignificantDigits, 3) : 4
-                if (n == 0 || (abs(n) < pow(10.0, Double(expThreshold)) && abs(n) > pow(10.0, Double(-expThreshold)))) {
-                    formatter.numberStyle = .decimal
-                    return formatter.string(from: NSNumber(value: n as Double))!
-                } else {
-                    if formatter.usesSignificantDigits {
-                        formatter.numberStyle = .scientific
-                        return formatter.string(from: NSNumber(value: n as Double))!
-                    } else {
-                        return expFormatter.string(from: NSNumber(value: n as Double))!
-                    }
-                    
-                }
-            }
-        }
-        
+        let suppressScientificNotation = descriptor?.suppressScientificNotation ?? false
+
         var xSpace = CGFloat(0.0)
         var ySpace = CGFloat(0.0)
         var index = 0
-        
+
         if let grid = grid {
             let horizontalGridLines = isZScale ? grid.zGridLines : grid.xGridLines
             for line in horizontalGridLines {
                 let label = labels[index]
                 label.textColor = UIColor(named: "textColor")
 
-                if descPrecisionX < 0 {
-                    formatterX.usesSignificantDigits = false
-                    formatterX.minimumFractionDigits = max(line.precision, 0)
-                    formatterX.maximumFractionDigits = max(line.precision, 0)
-                }
-                
-                label.text = format(line.absoluteValue, formatter: formatterX, isTime: descriptor?.timeOnX ?? false, systemTimeOffset: grid.systemTimeOffsetX)
+                label.text = GraphGridView.formatTicLabel(line.absoluteValue, ticPrecision: line.precision, descriptorPrecision: descPrecisionX, suppressScientificNotation: suppressScientificNotation, isTime: descriptor?.timeOnX ?? false, systemTimeOffset: grid.systemTimeOffsetX)
                 label.font = label.font.withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.85)
                 label.sizeToFit()
 
@@ -305,15 +287,8 @@ final class GraphGridView: UIView {
                 for line in grid.yGridLines {
                     let label = labels[index]
                     label.textColor = UIColor(named: "textColor")
-                                        
-                    if descPrecisionY < 0 {
-                        formatterY.usesSignificantDigits = false
-                        formatterY.minimumFractionDigits = max(line.precision, 0)
-                        formatterY.maximumFractionDigits = max(line.precision, 0)
 
-                    }
-
-                    label.text = format(line.absoluteValue, formatter: formatterY, isTime: descriptor?.timeOnY ?? false, systemTimeOffset: grid.systemTimeOffsetY)
+                    label.text = GraphGridView.formatTicLabel(line.absoluteValue, ticPrecision: line.precision, descriptorPrecision: descPrecisionY, suppressScientificNotation: suppressScientificNotation, isTime: descriptor?.timeOnY ?? false, systemTimeOffset: grid.systemTimeOffsetY)
                     label.font = label.font.withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.85)
                     label.sizeToFit()
 

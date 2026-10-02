@@ -48,6 +48,9 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
     }
     private var tapGesture: UITapGestureRecognizer? = nil
 
+    //A tab change or "‹" waiting for this graph to leave exclusive mode (leaveExclusive); dropped on Cancel
+    private var pendingLeaveCompletion: (() -> Void)? = nil
+
     //Data picker values written so far, aligned with descriptor.pickOutputs slots
     private var pickData: [Double?]
 
@@ -344,23 +347,96 @@ final class ExperimentGraphView: UIView, DynamicViewModule, ResizableViewModule,
         }
     }
     
+    //No question when nothing is zoomed, whatever the time axis shows: the clock display of this graph stays as set
     private func handleExitExclusiveMode() {
-        if zoomManager.hasCustomZoom || systemTime {
+        if zoomManager.anyZoomed {
             showZoomDialog()
         } else {
-            layoutDelegate?.restoreLayout()
+            finishLeavingExclusive()
         }
     }
-    
+
+    //A tab change or "‹" (ResizableViewModule): the page controller waits for the answer; Cancel drops the request
+    func leaveExclusive(completion: @escaping () -> Void) {
+        guard resizableState == .exclusive else {
+            completion()
+            return
+        }
+        pendingLeaveCompletion = completion
+        handleExitExclusiveMode()
+    }
+
+    func finishLeavingExclusive() {
+        layoutDelegate?.restoreLayout()
+        let completion = pendingLeaveCompletion
+        pendingLeaveCompletion = nil
+        completion?()
+    }
+
+    //"Keep this view?" over the zoomed axes (ApplyZoomChoice holds the rules): the emphasised button is Keep once the
+    //user kept a zoom before, and the per-axis controls start from it
     private func showZoomDialog() {
+        let simple = ApplyZoomChoice.defaultAction(previouslyKept: zoomManager.previouslyKept)
         let units = displayUnits
-        let dialog = ApplyZoomDialog(
-            labelX: descriptor.localizedXLabel(withUnit: units.symbols[0]),
-            labelY: descriptor.localizedYLabel(withUnit: units.symbols[1]),
-            preselectKeep: zoomManager.previouslyKept
-        )
+        let labels = [descriptor.localizedXLabel, descriptor.localizedYLabel, descriptor.localizedZLabel]
+        let hasZAxis = descriptor.style.contains(.map)
+        var axes: [ApplyZoomDialog.Axis] = []
+        for axis in 0..<3 where zoomManager.isZoomed(axis: axis) && (axis < 2 || hasZAxis) {
+            let symbol = units.symbols[axis]
+            axes.append(ApplyZoomDialog.Axis(
+                axis: axis,
+                title: zoomRangeLine(axis: axis) ?? labels[axis],
+                keepAction: ApplyZoomChoice.initialAxisAction(axis: axis, zoomed: true, simple: .keep, incrementalX: descriptor.partialUpdate, follows: zoomManager.isZoomFollows),
+                offersFollow: axis == 0 && descriptor.partialUpdate,
+                unitSymbol: symbol.isEmpty ? nil : symbol))
+        }
+        guard !axes.isEmpty else {
+            finishLeavingExclusive()
+            return
+        }
+        let dialog = ApplyZoomDialog(axes: axes, defaultAction: simple)
         dialog.resultDelegate = self
+        dialog.onCancel = { [weak self] in
+            self?.pendingLeaveCompletion = nil
+        }
         dialog.show()
+    }
+
+    //The zoomed range of an axis as the dialog shows it: label, from and to in the display unit, formatted like the tic
+    //labels (a clock on a time axis showing system time); nil while the axis is not zoomed
+    func zoomRangeLine(axis: Int) -> String? {
+        guard zoomManager.isZoomed(axis: axis) else { return nil }
+        //A following x axis shows the window where it is on screen, not where the zoom state anchors it
+        let bounds = dataManager.currentBounds
+        let shown = axis == 0 && zoomManager.isZoomFollows ? (min: bounds.min.x, max: bounds.max.x) : zoomManager.zoomRange(axis: axis)
+        guard let range = shown, range.min.isFinite, range.max.isFinite, range.min < range.max else { return nil }
+
+        let isLog = axis == 0 ? dataManager.logX : (axis == 1 ? dataManager.logY : descriptor.logZ)
+        let isTime = axis == 0 ? descriptor.timeOnX : (axis == 1 && descriptor.timeOnY)
+        let grid = graphRenderer.gridView.grid
+        let offset = isTime && systemTime ? (axis == 0 ? grid?.systemTimeOffsetX : grid?.systemTimeOffsetY) ?? 0.0 : 0.0
+        let units = displayUnits
+        let conversion = units.conversions[axis]
+
+        //Tick space, as GraphDataManager.axisGridLines works in it: log axes in log space, a converted axis in its display unit
+        func tickSpace(_ v: Double) -> Double {
+            guard let conversion = conversion else { return v }
+            return isLog ? log(conversion.toDisplay(exp(v))) : conversion.toDisplay(v)
+        }
+        let tickMin = tickSpace(range.min)
+        let tickMax = tickSpace(range.max)
+        let ticks = ExperimentGraphUtilities.getTicks(tickMin, max: tickMax, maxTicks: 5, log: isLog, isTime: isTime && conversion == nil, systemTimeOffset: conversion == nil ? offset : 0.0)
+        let precision = ticks.map { $0.precision }.max() ?? 0
+        let descriptorPrecision = [descriptor.xPrecision, descriptor.yPrecision, descriptor.zPrecision][axis]
+        func text(_ v: Double) -> String {
+            return GraphGridView.formatTicLabel(isLog ? exp(v) : v, ticPrecision: precision, descriptorPrecision: descriptorPrecision, suppressScientificNotation: descriptor.suppressScientificNotation, isTime: isTime, systemTimeOffset: offset)
+        }
+
+        let clock = isTime && offset > 0
+        let symbol = units.symbols[axis]
+        let suffix = clock || symbol.isEmpty ? "" : " " + symbol
+        let label = [descriptor.localizedXLabel, descriptor.localizedYLabel, descriptor.localizedZLabel][axis]
+        return String(format: localize("applyZoomRange"), label, text(tickMin) + suffix, text(tickMax) + suffix)
     }
     
     private func handleSystemTimeChange() {

@@ -67,8 +67,12 @@ class GraphLayoutManager {
         self.descriptor = descriptor
         
         let config = UIImage.SymbolConfiguration(pointSize: 25, weight: .regular, scale: .default)
-        self.unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: config))
+        //The collapse icon of a maximized graph is drawn at twice the size of the expand icon (its hit area is the whole
+        //margin around the plot, see ExperimentGraphView.handleTapp)
+        let exclusiveConfig = UIImage.SymbolConfiguration(pointSize: 50, weight: .regular, scale: .default)
+        self.unfoldLessImageView = UIImageView(image: UIImage(systemName: "arrow.down.right.and.arrow.up.left", withConfiguration: exclusiveConfig))
         self.unfoldMoreImageView = UIImageView(image: UIImage(systemName: "arrow.up.left.and.arrow.down.right", withConfiguration: config))
+        self.unfoldLessImageView.contentMode = .scaleAspectFit
         
         // Initialize labels
         self.xLabel = Self.makeLabel(descriptor.systemTime ? descriptor.localizedXLabelWithTimezone : descriptor.localizedXLabelWithUnit)
@@ -102,11 +106,27 @@ class GraphLayoutManager {
         label.font = UIFont.preferredFont(forTextStyle: .body).withSize(SettingBundleHelper.getGraphSettingLabelSize())
         label.textColor = UIColor(named: "textColor")
         
-        let unfoldRect = CGRect(x: 5, y: 5, width: 20, height: 20)
-        unfoldMoreImageView.frame = unfoldRect
-        unfoldLessImageView.frame = unfoldRect
+        unfoldMoreImageView.frame = GraphLayoutManager.unfoldRect
+        unfoldLessImageView.frame = GraphLayoutManager.exclusiveUnfoldRect
         unfoldLessImageView.isHidden = true
         unfoldMoreImageView.isHidden = false
+    }
+
+    private static let unfoldRect = CGRect(x: 5, y: 5, width: 20, height: 20)
+    private static let exclusiveUnfoldRect = CGRect(x: 5, y: 5, width: 40, height: 40)
+
+    //The title is centred; next to the large collapse icon of a maximized graph it starts right of the icon instead
+    private func titleFrame(_ size: CGSize, contentWidth: CGFloat, y: CGFloat, resizableState: ResizableViewModuleState) -> CGRect {
+        var x = (contentWidth - size.width) / 2.0
+        var width = size.width
+        if resizableState == .exclusive {
+            let minX = unfoldLessImageView.frame.maxX + 5
+            if x < minX {
+                x = minX
+                width = Swift.max(Swift.min(width, contentWidth - minX - 5), 0)
+            }
+        }
+        return CGRect(x: x, y: y, width: width, height: size.height)
     }
     
     func setupSubviews(renderer: GraphRenderer, markerSystem: GraphMarkerSystem) {
@@ -139,10 +159,10 @@ class GraphLayoutManager {
         graphArea.isHidden = (state == .hidden)
         
         if state == .normal {
-            let unfoldRect = CGRect(x: 5, y: 5, width: 20, height: 20)
-            unfoldMoreImageView.frame = unfoldRect
-            unfoldLessImageView.frame = unfoldRect
+            unfoldMoreImageView.frame = GraphLayoutManager.unfoldRect
             removeMarkerLabelFrame()
+        } else if state == .exclusive {
+            unfoldLessImageView.frame = GraphLayoutManager.exclusiveUnfoldRect
         }
     }
     
@@ -373,7 +393,7 @@ class GraphLayoutManager {
         graphArea.frame = CGRect(x: 0, y: 0, width: contentWidth, height: bounds.height - bottom)
 
         if let plotArea = descriptor.plotArea {
-            layoutFixedPlotArea(plotArea, areaSize: graphArea.frame.size)
+            layoutFixedPlotArea(plotArea, areaSize: graphArea.frame.size, resizableState: resizableState)
             return
         }
         gridView.fixedInsetRect = nil
@@ -387,7 +407,7 @@ class GraphLayoutManager {
 
         // Layout labels
         let s1 = titleSize(bounds.size)
-        label.frame = CGRect(x: (contentWidth - s1.width) / 2.0, y: spacing, width: s1.width, height: s1.height)
+        label.frame = titleFrame(s1, contentWidth: contentWidth, y: spacing, resizableState: resizableState)
 
         let s2 = xLabel.sizeThatFits(bounds.size)
         let s3 = yLabel.sizeThatFits(bounds.size).applying(yLabel.transform)
@@ -422,7 +442,7 @@ class GraphLayoutManager {
     ///plotLeft & co. (file format 1.21, graph.md "Fixing the plot area"): the plot rectangle is pinned to fractions of
     ///the element's box and no longer moves with the tic labels. The labels, tics and the graph's own label are drawn in
     ///the margins that remain and dropped where they do not fit.
-    private func layoutFixedPlotArea(_ plotArea: GraphViewDescriptor.PlotArea, areaSize: CGSize) {
+    private func layoutFixedPlotArea(_ plotArea: GraphViewDescriptor.PlotArea, areaSize: CGSize, resizableState: ResizableViewModuleState) {
         let spacing: CGFloat = 1.0
         let w = areaSize.width
         let h = areaSize.height
@@ -437,7 +457,7 @@ class GraphLayoutManager {
         var top: CGFloat = 0
         label.isHidden = !hasTitle || s1.height > plot.minY
         if !label.isHidden {
-            label.frame = CGRect(x: (w - s1.width) / 2.0, y: spacing, width: s1.width, height: s1.height)
+            label.frame = titleFrame(s1, contentWidth: w, y: spacing, resizableState: resizableState)
             top = s1.height + spacing
         }
         if showColorScale, let zGrid = zGridView, let zLabel = zLabel {

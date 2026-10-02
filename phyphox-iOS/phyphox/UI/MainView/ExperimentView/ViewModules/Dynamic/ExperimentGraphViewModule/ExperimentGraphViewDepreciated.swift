@@ -512,7 +512,7 @@ final class ExperimentGraphViewDepreciated: UIView, DynamicViewModule, Descripto
             layoutDelegate?.presentExclusiveLayout(self)
         } else {
             if (zoomFollows || zoomMax != nil || systemTime) {
-                let dialog = ApplyZoomDialog(labelX: descriptor.localizedXLabelWithUnit, labelY: descriptor.localizedYLabelWithUnit, preselectKeep: previouslyKept)
+                let dialog = ApplyZoomDialog(axes: [], defaultAction: ApplyZoomChoice.defaultAction(previouslyKept: previouslyKept))
                 dialog.resultDelegate = self
                 dialog.show()
             } else {
@@ -2016,7 +2016,7 @@ extension ExperimentGraphViewDepreciated: ApplyZoomDelegate, ZoomableViewModule,
         update()
     }
     
-    func applyZoomDialogResult(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget) {
+    func applyZoomDialogResult(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, modeZ: ApplyZoomAction) {
         
         previouslyKept = !(modeX == .reset && modeY == .reset)
         

@@ -309,6 +309,8 @@
 		8A5A0183000000000000AA93 /* WhiteBalanceControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0182000000000000AA92 /* WhiteBalanceControlView.swift */; };
 		8A5A0185000000000000AA95 /* WhiteBalanceMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0184000000000000AA94 /* WhiteBalanceMathTests.swift */; };
 		8A5A0187000000000000AA97 /* CameraWhiteBalanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0186000000000000AA96 /* CameraWhiteBalanceTests.swift */; };
+		8A5A0189000000000000AA99 /* ApplyZoomChoiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0188000000000000AA98 /* ApplyZoomChoiceTests.swift */; };
+		8A5A018B000000000000AA9B /* ExclusiveNavigationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A018A000000000000AA9A /* ExclusiveNavigationUITests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -693,6 +695,8 @@
 		8A5A0182000000000000AA92 /* WhiteBalanceControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhiteBalanceControlView.swift; sourceTree = "<group>"; };
 		8A5A0184000000000000AA94 /* WhiteBalanceMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhiteBalanceMathTests.swift; sourceTree = "<group>"; };
 		8A5A0186000000000000AA96 /* CameraWhiteBalanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraWhiteBalanceTests.swift; sourceTree = "<group>"; };
+		8A5A0188000000000000AA98 /* ApplyZoomChoiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplyZoomChoiceTests.swift; sourceTree = "<group>"; };
+		8A5A018A000000000000AA9A /* ExclusiveNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExclusiveNavigationUITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -1294,6 +1298,7 @@
 				8A5A0115000000000000AA25 /* SwitchBypassedUITests.swift */,
 				8A5A0130000000000000AA40 /* AAWarmUpTests.swift */,
 				8A5A0132000000000000AA42 /* GraphInteractionTests.swift */,
+				8A5A018A000000000000AA9A /* ExclusiveNavigationUITests.swift */,
 				8A5A0168000000000000AA78 /* UnitConversionUITests.swift */,
 				8A5A0113000000000000AA23 /* AccessibilitySmokeTests.swift */,
 				8A5A0111000000000000AA21 /* LifecycleTests.swift */,
@@ -1357,6 +1362,7 @@
 				8A5A0146000000000000AA56 /* ViewGroupTests.swift */,
 				8A5A0170000000000000AA80 /* CameraAnalyzerMathTests.swift */,
 				8A5A0186000000000000AA96 /* CameraWhiteBalanceTests.swift */,
+				8A5A0188000000000000AA98 /* ApplyZoomChoiceTests.swift */,
 				8A5A0184000000000000AA94 /* WhiteBalanceMathTests.swift */,
 				A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */,
 				A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */,
@@ -1869,6 +1875,7 @@
 				8A5A0116000000000000AA26 /* SwitchBypassedUITests.swift in Sources */,
 				8A5A0131000000000000AA41 /* AAWarmUpTests.swift in Sources */,
 				8A5A0133000000000000AA43 /* GraphInteractionTests.swift in Sources */,
+				8A5A018B000000000000AA9B /* ExclusiveNavigationUITests.swift in Sources */,
 				8A5A0169000000000000AA79 /* UnitConversionUITests.swift in Sources */,
 				8A5A0114000000000000AA24 /* AccessibilitySmokeTests.swift in Sources */,
 				8A5A0112000000000000AA22 /* LifecycleTests.swift in Sources */,
@@ -1896,6 +1903,7 @@
 				8A5A0147000000000000AA57 /* ViewGroupTests.swift in Sources */,
 				8A5A0171000000000000AA81 /* CameraAnalyzerMathTests.swift in Sources */,
 				8A5A0187000000000000AA97 /* CameraWhiteBalanceTests.swift in Sources */,
+				8A5A0189000000000000AA99 /* ApplyZoomChoiceTests.swift in Sources */,
 				8A5A0185000000000000AA95 /* WhiteBalanceMathTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

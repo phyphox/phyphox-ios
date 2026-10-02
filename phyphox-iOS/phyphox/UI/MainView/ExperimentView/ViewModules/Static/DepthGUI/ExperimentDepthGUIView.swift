@@ -111,9 +111,9 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
 
         addSubview(label)
         
-        let unfoldRect = CGRect(x: 5, y: 5, width: 20, height: 20)
-        unfoldMoreImageView.frame = unfoldRect
-        unfoldLessImageView.frame = unfoldRect
+        unfoldMoreImageView.frame = ExperimentDepthGUIView.unfoldRect
+        unfoldLessImageView.frame = ExperimentDepthGUIView.exclusiveUnfoldRect
+        unfoldLessImageView.contentMode = .scaleAspectFit
         unfoldLessImageView.isHidden = true
         unfoldMoreImageView.isHidden = false
         
@@ -155,11 +155,25 @@ final class ExperimentDepthGUIView: UIView, DescriptorBoundViewModule, Resizable
         }
     }
     
+    //The collapse icon of the maximized preview is drawn at twice the size of the expand icon (the whole view takes the tap)
+    private static let unfoldRect = CGRect(x: 5, y: 5, width: 20, height: 20)
+    private static let exclusiveUnfoldRect = CGRect(x: 5, y: 5, width: 40, height: 40)
+
     override func layoutSubviews() {
         super.layoutSubviews()
         let s = label.sizeThatFits(frame.size)
-        label.frame = CGRect(x: (frame.size.width-s.width)/2.0, y: spacing, width: s.width, height: s.height)
-        
+        //The title is centred; next to the large collapse icon it starts right of the icon instead
+        var labelX = (frame.size.width-s.width)/2.0
+        var labelWidth = s.width
+        if resizableState == .exclusive {
+            let minX = unfoldLessImageView.frame.maxX + 5
+            if labelX < minX {
+                labelX = minX
+                labelWidth = Swift.max(Swift.min(labelWidth, frame.size.width - minX - 5), 0)
+            }
+        }
+        label.frame = CGRect(x: labelX, y: spacing, width: labelWidth, height: s.height)
+
         let orientation = UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.windowScene?.interfaceOrientation ?? .portrait
         
         var buttonS = resizableState == .exclusive ? aggregationBtn.sizeThatFits(frame.size) : CGSize(width: 0, height: 0)

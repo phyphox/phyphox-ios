@@ -56,9 +56,18 @@ protocol ResizableViewModule : AnyObject {
     
     func switchResizableState(_ newState: ResizableViewModuleState)
     func resizableStateChanged(_ newState: ResizableViewModuleState)
+
+    //A way back (a tab change, the "‹" bar button) asks the maximized module to leave; completion runs once it is gone.
+    //A zoomed graph asks "Keep this view?" first and never calls it on Cancel.
+    func leaveExclusive(completion: @escaping () -> Void)
 }
 
 extension ResizableViewModule {
+    func leaveExclusive(completion: @escaping () -> Void) {
+        layoutDelegate?.restoreLayout()
+        completion()
+    }
+
     func switchResizableState(_ newState: ResizableViewModuleState) {
         switch newState {
         case .exclusive:

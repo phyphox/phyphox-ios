@@ -34,8 +34,12 @@ final class ExperimentModule {
 final class ExperimentViewController: UITableViewController, ModuleExclusiveLayoutDelegate, ApplyZoomDelegate {
     
     var modules: [ExperimentModule]
-    var exclusiveView: UIView? = nil
-    
+    var exclusiveView: UIView? = nil {
+        didSet { onExclusiveViewChange?(exclusiveView) }
+    }
+    //The page controller locks the pager swipe while a module is maximized (see requestLeaveExclusive)
+    var onExclusiveViewChange: ((UIView?) -> Void)?
+
     private let insetTop: CGFloat = 10
     private let intercellSpacing: CGFloat = 0.0
 
@@ -47,10 +51,22 @@ final class ExperimentViewController: UITableViewController, ModuleExclusiveLayo
                     resizingModule.onResize = tableView?.reloadData
                 }
             }
-            if !active {
+            //A user-initiated tab change waits for the maximized module (requestLeaveExclusive), so this only
+            //catches a page deactivated by other means
+            if !active && exclusiveView != nil {
                 restoreLayout()
             }
         }
+    }
+
+    //A tab change or "‹" while a module is maximized: the module leaves (a zoomed graph asks "Keep this view?" first)
+    //and completion runs once it is gone; Cancel never calls it
+    func requestLeaveExclusive(completion: @escaping () -> Void) {
+        guard let module = exclusiveView as? ResizableViewModule else {
+            completion()
+            return
+        }
+        module.leaveExclusive(completion: completion)
     }
 
     ///A row keeps its inset unless its module, or a leaf inside its view group, is maximized or hidden by a maximized one

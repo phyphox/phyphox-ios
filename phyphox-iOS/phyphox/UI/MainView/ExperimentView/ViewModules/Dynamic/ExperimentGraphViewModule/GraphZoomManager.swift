@@ -29,7 +29,43 @@ class GraphZoomManager {
     private var zPinchTouchScale: CGFloat?
     
     var previouslyKept = false
-    var hasCustomZoom: Bool { zoomMin != nil || zoomMax != nil || zoomFollows != descriptor.followX }
+
+    //Whether the user zoomed an axis: its state differs from the reset state. A followX graph at rest follows its
+    //configured window, which is not a zoom; a follow mode toggled by hand is one.
+    func isZoomed(axis: Int) -> Bool {
+        switch axis {
+        case 0:
+            if zoomFollows != descriptor.followX {
+                return true
+            }
+            let min = zoomMin?.x ?? Double.nan
+            let max = zoomMax?.x ?? Double.nan
+            if descriptor.followX {
+                return min != Double(descriptor.minX) || max != Double(descriptor.maxX)
+            }
+            return !min.isNaN || !max.isNaN
+        case 1:
+            return !(zoomMin?.y ?? Double.nan).isNaN || !(zoomMax?.y ?? Double.nan).isNaN
+        default:
+            return !(zoomMin?.z ?? Double.nan).isNaN || !(zoomMax?.z ?? Double.nan).isNaN
+        }
+    }
+
+    //No "Keep this view?" when nothing is zoomed, whatever the time axis shows
+    var anyZoomed: Bool { return (0..<3).contains { isZoomed(axis: $0) } }
+
+    //The zoomed range of an axis (log axes in log space, like the data), nil unless both ends are set
+    func zoomRange(axis: Int) -> (min: Double, max: Double)? {
+        guard let zoomMin = zoomMin, let zoomMax = zoomMax else { return nil }
+        let range: (min: Double, max: Double)
+        switch axis {
+        case 0: range = (zoomMin.x, zoomMax.x)
+        case 1: range = (zoomMin.y, zoomMax.y)
+        default: range = (zoomMin.z, zoomMax.z)
+        }
+        return range.min.isFinite && range.max.isFinite ? range : nil
+    }
+
     var currentZoomBounds: GraphBounds {
         return GraphBounds(
             min: zoomMin ?? GraphPoint3D.zero,
@@ -214,40 +250,50 @@ class GraphZoomManager {
         delegate?.zoomManagerDidUpdate(self)
     }
     
-    func applyZoomSettings(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget) {
+    //The answer to "Keep this view?" for this graph: NaN resets an axis (a reset x axis of a followX graph goes back to
+    //following its configured window), keep stops following, follow keeps the window and follows. Each axis carries the
+    //others' zoom through, so resetting x no longer drops a z zoom the user wanted to keep.
+    func applyZoomSettings(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, modeZ: ApplyZoomAction = .none) {
         if applyToX == .this {
             switch modeX {
             case .reset:
                 zoomFollows = descriptor.followX
                 if descriptor.followX {
-                    zoomMin = GraphPoint3D(x: descriptor.minX, y: zoomMin?.y ?? Double.nan, z: Double.nan)
-                    zoomMax = GraphPoint3D(x: descriptor.maxX, y: zoomMax?.y ?? Double.nan, z: Double.nan)
+                    zoomMin = GraphPoint3D(x: descriptor.minX, y: zoomMin?.y ?? Double.nan, z: zoomMin?.z ?? Double.nan)
+                    zoomMax = GraphPoint3D(x: descriptor.maxX, y: zoomMax?.y ?? Double.nan, z: zoomMax?.z ?? Double.nan)
                 } else {
-                    zoomMax = GraphPoint3D(x: Double.nan, y: zoomMax?.y ?? Double.nan, z: Double.nan)
-                    zoomMin = GraphPoint3D(x: Double.nan, y: zoomMin?.y ?? Double.nan, z: Double.nan)
+                    zoomMax = GraphPoint3D(x: Double.nan, y: zoomMax?.y ?? Double.nan, z: zoomMax?.z ?? Double.nan)
+                    zoomMin = GraphPoint3D(x: Double.nan, y: zoomMin?.y ?? Double.nan, z: zoomMin?.z ?? Double.nan)
                 }
+            case .keep:
+                zoomFollows = false
             case .follow:
                 zoomFollows = true
             default:
                 break
             }
         }
-        
+
         if applyToY == .this {
             switch modeY {
             case .reset:
-                zoomMax = GraphPoint3D(x: zoomMax?.x ?? Double.nan, y: Double.nan, z: Double.nan)
-                zoomMin = GraphPoint3D(x: zoomMin?.x ?? Double.nan, y: Double.nan, z: Double.nan)
+                zoomMax = GraphPoint3D(x: zoomMax?.x ?? Double.nan, y: Double.nan, z: zoomMax?.z ?? Double.nan)
+                zoomMin = GraphPoint3D(x: zoomMin?.x ?? Double.nan, y: Double.nan, z: zoomMin?.z ?? Double.nan)
             default:
                 break
             }
         }
-        
+
+        if modeZ == .reset {
+            zoomMax = GraphPoint3D(x: zoomMax?.x ?? Double.nan, y: zoomMax?.y ?? Double.nan, z: Double.nan)
+            zoomMin = GraphPoint3D(x: zoomMin?.x ?? Double.nan, y: zoomMin?.y ?? Double.nan, z: Double.nan)
+        }
+
         delegate?.zoomManagerDidUpdate(self)
     }
-    
+
     //A range received from another graph (already converted to this graph's units); an axis given as nil keeps its zoom
-    func applyExternalZoom(x: (min: Double, max: Double)?, y: (min: Double, max: Double)?) {
+    func applyExternalZoom(x: (min: Double, max: Double)?, y: (min: Double, max: Double)?, z: (min: Double, max: Double)? = nil) {
         if let x = x, x.min.isFinite, x.max.isFinite, x.min < x.max {
             zoomMin = GraphPoint3D(x: x.min, y: zoomMin?.y ?? Double.nan, z: zoomMin?.z ?? Double.nan)
             zoomMax = GraphPoint3D(x: x.max, y: zoomMax?.y ?? Double.nan, z: zoomMax?.z ?? Double.nan)
@@ -255,6 +301,10 @@ class GraphZoomManager {
         if let y = y, y.min.isFinite, y.max.isFinite, y.min < y.max {
             zoomMin = GraphPoint3D(x: zoomMin?.x ?? Double.nan, y: y.min, z: zoomMin?.z ?? Double.nan)
             zoomMax = GraphPoint3D(x: zoomMax?.x ?? Double.nan, y: y.max, z: zoomMax?.z ?? Double.nan)
+        }
+        if let z = z, z.min.isFinite, z.max.isFinite, z.min < z.max {
+            zoomMin = GraphPoint3D(x: zoomMin?.x ?? Double.nan, y: zoomMin?.y ?? Double.nan, z: z.min)
+            zoomMax = GraphPoint3D(x: zoomMax?.x ?? Double.nan, y: zoomMax?.y ?? Double.nan, z: z.max)
         }
         delegate?.zoomManagerDidUpdate(self)
     }
@@ -358,17 +408,19 @@ extension ExperimentGraphView: GraphZoomDelegate {
 }
 
 extension ExperimentGraphView: ApplyZoomDialogResultDelegate {
-    func applyZoomDialogResult(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget) {
-        zoomManager.previouslyKept = !(modeX == .reset && modeY == .reset)
-        layoutDelegate?.restoreLayout()
-        
+    func applyZoomDialogResult(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget, modeZ: ApplyZoomAction) {
+        zoomManager.previouslyKept = !(modeX == .reset && modeY == .reset && modeZ == .reset)
+
         // Apply zoom settings
-        zoomManager.applyZoomSettings(modeX: modeX, applyToX: applyToX, modeY: modeY, applyToY: applyToY)
-        
+        zoomManager.applyZoomSettings(modeX: modeX, applyToX: applyToX, modeY: modeY, applyToY: applyToY, modeZ: modeZ)
+
         // Propagate to other graphs if needed
         if applyToX != .this || applyToY != .this {
             propagateZoomToOtherGraphs(modeX: modeX, applyToX: applyToX, modeY: modeY, applyToY: applyToY)
         }
+
+        //The page comes back, and a held-back tab change or "‹" goes on
+        finishLeavingExclusive()
     }
     
     private func propagateZoomToOtherGraphs(modeX: ApplyZoomAction, applyToX: ApplyZoomTarget, modeY: ApplyZoomAction, applyToY: ApplyZoomTarget) {
