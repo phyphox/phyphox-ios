@@ -124,6 +124,46 @@ final class ApplyZoomChoiceTests: XCTestCase {
         XCTAssertFalse(graph.zoomManager.anyZoomed)
     }
 
+    //"Keep and follow new data" from the dialog makes this graph follow, and "any x axis" carries the window and the
+    //follow mode to the other graphs of the page; a propagated reset resets them
+    func testFollowFromTheDialogReachesThisGraphAndTheOthers() throws {
+        let xml = """
+        <phyphox xmlns="http://phyphox.org/xml" version="1.21" locale="en">
+            <title>zoom</title><category>test</category><description>d</description>
+            <data-containers>
+                <container size="5" init="0,1,2,3,4">t</container>
+                <container size="5" init="0,2,1,4,3">a</container>
+            </data-containers>
+            <views><view label="v">
+                <graph label="first" labelX="t" unitX="s" labelY="a" unitY="m" partialUpdate="true"><input axis="x">t</input><input axis="y">a</input></graph>
+                <graph label="second" labelX="t" unitX="s" labelY="a" unitY="m" partialUpdate="true"><input axis="x">t</input><input axis="y">a</input></graph>
+            </view></views>
+        </phyphox>
+        """
+        let experiment = try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: InputStream(data: Data(xml.utf8)))
+        let modules = ExperimentViewModuleFactory.createViews(try XCTUnwrap(experiment.viewDescriptors?.first), resourceFolder: nil)
+        let controller = ExperimentViewController(modules: modules) //wires zoomDelegate and layoutDelegate
+        let first = try XCTUnwrap(modules[0].view as? ExperimentGraphView)
+        let second = try XCTUnwrap(modules[1].view as? ExperimentGraphView)
+        withExtendedLifetime(controller) {
+            first.zoomManager.applyExternalZoom(x: (min: 1, max: 3), y: nil)
+            XCTAssertFalse(first.zoomManager.isZoomFollows)
+
+            first.applyZoomDialogResult(modeX: .follow, applyToX: .sameAxis, modeY: .reset, applyToY: .this, modeZ: .reset)
+            XCTAssertTrue(first.zoomManager.isZoomFollows, "this graph follows")
+            XCTAssertTrue(second.zoomManager.isZoomFollows, "the other graph follows as well")
+            XCTAssertEqual(second.zoomManager.zoomRange(axis: 0)?.min, 1, "with the same window")
+            XCTAssertEqual(second.zoomManager.zoomRange(axis: 0)?.max, 3)
+
+            first.applyZoomDialogResult(modeX: .keep, applyToX: .sameAxis, modeY: .reset, applyToY: .this, modeZ: .reset)
+            XCTAssertFalse(second.zoomManager.isZoomFollows, "keep stops following on the other graph too")
+            XCTAssertEqual(second.zoomManager.zoomRange(axis: 0)?.max, 3)
+
+            first.applyZoomDialogResult(modeX: .reset, applyToX: .sameAxis, modeY: .reset, applyToY: .this, modeZ: .reset)
+            XCTAssertFalse(second.zoomManager.anyZoomed, "a propagated reset resets the other graph")
+        }
+    }
+
     func testAxisTitlesShowTheZoomInTheDisplayUnitLikeTheTicLabels() throws {
         let graph = try graph(plain)
         XCTAssertNil(graph.zoomRangeLine(axis: 0), "no range while the axis is not zoomed")

@@ -379,8 +379,10 @@ extension ExperimentGraphView {
             break
         }
         
+        //A matching graph takes the choice as its own (reset, keep stops following, follow), as on Android; the target
+        //only said which graphs match
         if applyX || applyY {
-            zoomManager.applyZoomSettings(modeX: applyX ? modeX : .none, applyToX: applyX ? applyToX : .none, modeY: applyY ? modeY : .none, applyToY: applyY ? applyToY : .none)
+            zoomManager.applyZoomSettings(modeX: applyX ? modeX : .none, applyToX: applyX ? .this : .none, modeY: applyY ? modeY : .none, applyToY: applyY ? .this : .none)
         }
 
         //A kept or followed range from another graph, converted from the sending graph's unit into this one's where
