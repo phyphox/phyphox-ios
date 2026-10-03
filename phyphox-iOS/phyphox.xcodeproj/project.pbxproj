@@ -310,6 +310,7 @@
 		8A5A0185000000000000AA95 /* WhiteBalanceMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0184000000000000AA94 /* WhiteBalanceMathTests.swift */; };
 		8A5A0187000000000000AA97 /* CameraWhiteBalanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0186000000000000AA96 /* CameraWhiteBalanceTests.swift */; };
 		8A5A0189000000000000AA99 /* ApplyZoomChoiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0188000000000000AA98 /* ApplyZoomChoiceTests.swift */; };
+		8A5A018B000000000000AB01 /* AudioOutputRetriggerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A018A000000000000AB00 /* AudioOutputRetriggerTests.swift */; };
 		8A5A018B000000000000AA9B /* ExclusiveNavigationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A018A000000000000AA9A /* ExclusiveNavigationUITests.swift */; };
 /* End PBXBuildFile section */
 
@@ -696,6 +697,7 @@
 		8A5A0184000000000000AA94 /* WhiteBalanceMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhiteBalanceMathTests.swift; sourceTree = "<group>"; };
 		8A5A0186000000000000AA96 /* CameraWhiteBalanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraWhiteBalanceTests.swift; sourceTree = "<group>"; };
 		8A5A0188000000000000AA98 /* ApplyZoomChoiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplyZoomChoiceTests.swift; sourceTree = "<group>"; };
+		8A5A018A000000000000AB00 /* AudioOutputRetriggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioOutputRetriggerTests.swift; sourceTree = "<group>"; };
 		8A5A018A000000000000AA9A /* ExclusiveNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExclusiveNavigationUITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1363,6 +1365,7 @@
 				8A5A0170000000000000AA80 /* CameraAnalyzerMathTests.swift */,
 				8A5A0186000000000000AA96 /* CameraWhiteBalanceTests.swift */,
 				8A5A0188000000000000AA98 /* ApplyZoomChoiceTests.swift */,
+				8A5A018A000000000000AB00 /* AudioOutputRetriggerTests.swift */,
 				8A5A0184000000000000AA94 /* WhiteBalanceMathTests.swift */,
 				A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */,
 				A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */,
@@ -1904,6 +1907,7 @@
 				8A5A0171000000000000AA81 /* CameraAnalyzerMathTests.swift in Sources */,
 				8A5A0187000000000000AA97 /* CameraWhiteBalanceTests.swift in Sources */,
 				8A5A0189000000000000AA99 /* ApplyZoomChoiceTests.swift in Sources */,
+				8A5A018B000000000000AB01 /* AudioOutputRetriggerTests.swift in Sources */,
 				8A5A0185000000000000AA95 /* WhiteBalanceMathTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

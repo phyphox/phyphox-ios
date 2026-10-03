@@ -20,10 +20,9 @@ final class AudioEngine {
     private var engine: AVAudioEngine? = nil
     private var playbackPlayer: AVAudioPlayerNode? = nil
     private var frameIndex: Int = 0
-    private var endIndex: Int = 0
     private var recordInput: AVAudioInputNode? = nil
     
-    private var playing = false
+    var playing = false //internal for the retrigger tests, which have no engine
     
     private var playbackOut: ExperimentAudioOutput? = nil
     private var playbackStateToken = UUID()
@@ -31,8 +30,8 @@ final class AudioEngine {
     
     private var format: AVAudioFormat? = nil
     
-    private var sineLookup: [Float]?
     let sineLookupSize = 4096
+    private lazy var sineLookup: [Float] = (0..<sineLookupSize).map{sin(2*Float.pi*Float($0)/Float(sineLookupSize))}
     private var phases: [Double] = []
     
     private struct Beep {
@@ -52,6 +51,7 @@ final class AudioEngine {
     init(audioOutput: ExperimentAudioOutput?, audioInput: ExperimentAudioInput?) {
         self.playbackOut = audioOutput
         self.recordIn = audioInput
+        self.phases = [Double](repeating: 0.0, count: audioOutput?.tones.count ?? 0)
     }
     
     @objc func audioEngineConfigurationChange(_ notification: Notification) -> Void {
@@ -78,12 +78,6 @@ final class AudioEngine {
     func startEngine() throws {
         if playbackOut == nil && recordIn == nil {
             return
-        }
-        
-        if playbackOut != nil {
-            if sineLookup == nil {
-                sineLookup = (0..<sineLookupSize).map{sin(2*Float.pi*Float($0)/Float(sineLookupSize))}
-            }
         }
         
         let avSession = AVAudioSession.sharedInstance()
@@ -172,46 +166,117 @@ final class AudioEngine {
         return Int(value)
     }
 
+    //The trigger at the end of every analysis cycle. A one-shot output starts over from its beginning, a looped output
+    //that is already playing continues undisturbed (phyphox-docs spec/output.yml, attribute loop). Both pick up new data
+    //with the next generated block.
     func play() {
         guard let playbackOut = playbackOut else {
             return
         }
-        guard let format = format else {
+        if playing {
+            if !playbackOut.loop {
+                //The completion handlers advance frameIndex on this queue. The blocks already queued play first, so the
+                //restart is heard with the next generated block, as on Android.
+                audioOutputQueue.sync {
+                    self.restart()
+                }
+            }
             return
         }
+        startPlayback()
+    }
+
+    //A beep shifts with the restart, as on Android, so a running timed-run beep is not stretched. The tone phases are
+    //kept to avoid a click; only the durations count from zero again.
+    private func restart() {
+        if let beeper = beep, beeper.startFrame >= 0 {
+            beep!.startFrame -= frameIndex
+        }
+        frameIndex = 0
+    }
+
+    private func startPlayback() {
+        guard let playbackOut = playbackOut, format != nil, !playing else {
+            return
+        }
+        playing = true
+        frameIndex = 0
+        phases = [Double](repeating: 0.0, count: playbackOut.tones.count)
+        
+        appendBufferToPlayback()
+        appendBufferToPlayback()
+        appendBufferToPlayback()
+        appendBufferToPlayback()
+        
+        self.playbackPlayer!.play()
+    }
+
+    //The frame at which the one-shot sources end, read from the data and parameters current now rather than from when
+    //playback started: a direct source that has grown plays on, one that has shrunk stops earlier (as on Android).
+    func currentEndIndex() -> Int {
+        guard let playbackOut = playbackOut else {
+            return 0
+        }
+        let sampleRate = Double(playbackOut.sampleRate)
+        var endIndex = 0
+        if let inBuffer = playbackOut.directSource {
+            endIndex = max(endIndex, inBuffer.count)
+        }
+        for tone in playbackOut.tones {
+            endIndex = max(endIndex, javaInt(sanitizedParameter(tone.duration.getValue()) * sampleRate))
+        }
+        if let noise = playbackOut.noise {
+            endIndex = max(endIndex, javaInt(sanitizedParameter(noise.duration.getValue()) * sampleRate))
+        }
+        return endIndex
+    }
+
+    //Whether another block has to be generated after the current one
+    func playbackContinues(beeping: Bool) -> Bool {
+        guard playing, let playbackOut = playbackOut else {
+            return false
+        }
+        return playbackOut.loop || beeping || frameIndex < currentEndIndex()
+    }
+
+    func appendBufferToPlayback() {
+        guard let block = nextBlock() else {
+            stop()
+            return
+        }
+        var dataLeft = block.left
+        var dataRight = block.right
+        let beeping = block.beeping
+
+        guard let format = format, let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: bufferFrameCount) else {
+            stop()
+            return
+        }
+        buffer.floatChannelData?[0].update(from: &dataLeft, count: Int(bufferFrameCount))
+        buffer.floatChannelData?[1].update(from: &dataRight, count: Int(bufferFrameCount))
+        buffer.frameLength = UInt32(bufferFrameCount)
         
         if !playing {
-            playing = true
-            frameIndex = 0
-            endIndex = 0
-            phases = [Double](repeating: 0.0, count: playbackOut.tones.count)
-            
-            if let inBuffer = playbackOut.directSource {
-                endIndex = max(endIndex, inBuffer.count);
-            }
-            for tone in playbackOut.tones {
-                endIndex = max(endIndex, javaInt(sanitizedParameter(tone.duration.getValue()) * format.sampleRate))
-            }
-            if let noise = playbackOut.noise {
-                endIndex = max(endIndex, javaInt(sanitizedParameter(noise.duration.getValue()) * format.sampleRate))
-            }
-            
-            appendBufferToPlayback()
-            appendBufferToPlayback()
-            appendBufferToPlayback()
-            appendBufferToPlayback()
-            
-            self.playbackPlayer!.play()
+            return
         }
+        self.playbackPlayer!.scheduleBuffer(buffer, at: nil, options: [], completionHandler: { [unowned self] in
+            if self.playbackContinues(beeping: beeping) {
+                audioOutputQueue.async {
+                    self.appendBufferToPlayback()
+                }
+            } else {
+                self.playing = false
+            }
+        })
     }
-    
-    func appendBufferToPlayback() {
+
+    //Generates the next block of bufferFrameCount stereo frames and advances frameIndex. Returns nil when nothing is
+    //left to play. Split from the scheduling so the retrigger behaviour can be tested without an audio engine.
+    func nextBlock() -> (left: [Float], right: [Float], beeping: Bool)? {
         guard let playbackOut = playbackOut else {
-            return
+            return nil
         }
-        guard let format = format else {
-            return
-        }
+        let sampleRate = Double(playbackOut.sampleRate)
         
         var dataLeft = [Float](repeating: 0, count: Int(bufferFrameCount))
         var dataRight = [Float](repeating: 0, count: Int(bufferFrameCount))
@@ -231,9 +296,6 @@ final class AudioEngine {
         var beeping = false
         beeper: if let beeper = beep {
             let amplitude: Float = 0.5
-            guard let sineLookup = sineLookup else {
-                break beeper
-            }
             totalAmplitude += amplitude
             if beeper.startFrame < 0 {
                 beep!.startFrame = frameIndex
@@ -244,7 +306,7 @@ final class AudioEngine {
                 break beeper
             }
             beeping = true
-            let phaseStep = beeper.f / (Double)(format.sampleRate)
+            let phaseStep = beeper.f / sampleRate
             for i in 0..<end {
                 let lookupIndex = Int(beep!.phase*Double(sineLookupSize)) % sineLookupSize
                 let v = amplitude*sineLookup[lookupIndex]
@@ -302,21 +364,18 @@ final class AudioEngine {
                 guard d > 0 else {
                     continue
                 }
-                guard let sineLookup = sineLookup else {
-                    continue
-                }
                 let end: Int
                 if playbackOut.loop {
                     end = Int(bufferFrameCount)
                 } else {
-                    end = min(Int(bufferFrameCount), javaInt(d * format.sampleRate)-frameIndex)
+                    end = min(Int(bufferFrameCount), javaInt(d * sampleRate)-frameIndex)
                 }
                 if end < 1 {
                     continue
                 }
                 let (panLeft, panRight) = panFactors(tone.pan)
                 //Phase is not tracked at a periodicity of 0..2pi but 0..1 as it is converted to the range of the lookuptable anyways
-                let phaseStep = f / (Double)(format.sampleRate)
+                let phaseStep = f / sampleRate
                 var phase = phases[i]
                 switch tone.waveform {
                 case .sine:
@@ -362,7 +421,7 @@ final class AudioEngine {
                 if playbackOut.loop {
                     end = Int(bufferFrameCount)
                 } else {
-                    end = min(Int(bufferFrameCount), javaInt(d * format.sampleRate)-frameIndex)
+                    end = min(Int(bufferFrameCount), javaInt(d * sampleRate)-frameIndex)
                 }
                 if end < 1 {
                     break addNoise
@@ -378,8 +437,7 @@ final class AudioEngine {
         }
 
         guard totalAmplitude > 0 else {
-            stop()
-            return
+            return nil
         }
 
         if playbackOut.normalize {
@@ -391,26 +449,7 @@ final class AudioEngine {
 
         frameIndex += Int(bufferFrameCount)
 
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: self.format!, frameCapacity: bufferFrameCount) else {
-            stop()
-            return
-        }
-        buffer.floatChannelData?[0].update(from: &dataLeft, count: Int(bufferFrameCount))
-        buffer.floatChannelData?[1].update(from: &dataRight, count: Int(bufferFrameCount))
-        buffer.frameLength = UInt32(bufferFrameCount)
-        
-        if !playing {
-            return
-        }
-        self.playbackPlayer!.scheduleBuffer(buffer, at: nil, options: [], completionHandler: { [unowned self] in
-            if self.playing && (self.playbackOut?.loop ?? false || self.frameIndex < self.endIndex || beeping) {
-                audioOutputQueue.async {
-                    self.appendBufferToPlayback()
-                }
-            } else {
-                self.playing = false
-            }
-        })
+        return (left: dataLeft, right: dataRight, beeping: beeping)
     }
     
     func stop() {
@@ -458,7 +497,7 @@ final class AudioEngine {
             return
         }
         beep = Beep(phase: 0.0, duration: Int(duration * sampleRate), f: frequency, startFrame: -1)
-        self.play()
+        startPlayback() //a beep joins a playing output without restarting it, the output is only retriggered by the analysis
     }
     
 }
