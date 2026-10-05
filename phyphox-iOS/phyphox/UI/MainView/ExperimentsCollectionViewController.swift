@@ -571,10 +571,41 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         }
         
         let saveStateAlert = UIAlertAction(title: localize("save_state_share"), style: .default, handler: { [unowned self] action in
-            let vc = UIActivityViewController(activityItems: [experiment.source!], applicationActivities: nil)
-            vc.popoverPresentationController?.sourceView = self.navigationController!.view
-            vc.popoverPresentationController?.sourceRect = button.convert(button.bounds, to: self.navigationController!.view)
-            self.navigationController!.present(vc, animated: true)
+            func share(_ item: URL, temporary: Bool) {
+                let vc = UIActivityViewController(activityItems: [item], applicationActivities: nil)
+                vc.popoverPresentationController?.sourceView = self.navigationController!.view
+                vc.popoverPresentationController?.sourceRect = button.convert(button.bounds, to: self.navigationController!.view)
+                if temporary {
+                    vc.completionWithItemsHandler = { _, _, _, _ in
+                        try? FileManager.default.removeItem(at: item)
+                    }
+                }
+                self.navigationController!.present(vc, animated: true)
+            }
+            guard experiment.isSavedState, let folder = experiment.source else {
+                //A legacy state or a plain experiment file is shared as it is
+                share(experiment.source!, temporary: false)
+                return
+            }
+            //A state of the collection is shared as <state title>.zip, built from the stored tree
+            let zipURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(FileNameFormat.sanitize(experiment.displayTitle) + ".zip")
+            DispatchQueue.global(qos: .default).async {
+                do {
+                    try SavedState.zip(folder: folder, to: zipURL)
+                    mainThread {
+                        share(zipURL, temporary: true)
+                    }
+                } catch {
+                    mainThread {
+                        let hud = JGProgressHUD(style: .dark)
+                        hud.interactionType = .blockTouchesOnHUDView
+                        hud.indicatorView = JGProgressHUDErrorIndicatorView()
+                        hud.textLabel.text = "Failed to share state: \(error.localizedDescription)"
+                        hud.show(in: self.view)
+                        hud.dismiss(afterDelay: 3.0)
+                    }
+                }
+            }
         })
         
         let renameAlert = UIAlertAction(title: localize("rename"), style: .default, handler: { [unowned self] action in
@@ -846,14 +877,33 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         return destination
     }
 
-    ///Unpacks a container archive into `destination` and returns its experiment files; static so a test can drive it
+    ///Unpacks a container archive into `destination` and returns its experiment files; static so a test can drive it.
+    ///A saved state (docs/saved-states.md, recognised by meta/state.csv) is unpacked whole into one .phystate folder, which
+    ///is returned as the single "file": it loads through ExperimentSerialization like a state of the collection
     static func extractContainer(at url: URL, to destination: URL) throws -> [URL] {
         let archive = try Archive(url: url, accessMode: .read)
-        var files: [URL] = []
-        for entry in archive {
-            if entry.type != .file {
-                continue
+        let entries = archive.filter { $0.type == .file }
+
+        if entries.contains(where: { $0.path == SavedState.stateEntry }) {
+            //Exactly one experiment: a state holds the one that was running, and the picker is never shown for a state
+            guard entries.filter({ $0.path.hasSuffix(".phyphox") }).count == 1 else {
+                throw SerializationError.genericError(message: "A saved state must contain exactly one experiment.")
             }
+            let stateFolder = destination.appendingPathComponent("state").appendingPathExtension(experimentStateFileExtension)
+            for entry in entries {
+                guard let fileName = containerEntryDestination(entry.path, in: stateFolder) else {
+                    try? FileManager.default.removeItem(at: destination)
+                    throw SerializationError.genericError(message: "Refusing an archive whose entry \(entry.path) points outside the extraction directory.")
+                }
+                try FileManager.default.createDirectory(at: fileName.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+                try? FileManager.default.removeItem(at: fileName)
+                _ = try archive.extract(entry, to: fileName)
+            }
+            return [stateFolder]
+        }
+
+        var files: [URL] = []
+        for entry in entries {
             guard let fileName = containerEntryDestination(entry.path, in: destination) else {
                 //An entry pointing outside is evidence of tampering: the whole archive is refused, nothing salvaged (ruling 2026-08-26,
                 //container-traversal-entry; Android's ZipIntentHandler refuses the same way)
@@ -1063,6 +1113,10 @@ print("\(url)")
             } catch let error {
                 experimentLoadingError = error
             }
+        } else if url.isFileURL && url.pathExtension == experimentStateFileExtension {
+            //An unpacked saved state (extractContainer): a folder, loaded the way the collection loads one
+            fileType = .phyphox
+            finalURL = url
         } else if url.isFileURL {
             //Local file
             do {

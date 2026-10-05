@@ -56,6 +56,16 @@ enum Metadata: CaseIterable {
     static var allNonSensorCases: [Metadata] {
         return [.uniqueId, .version, .build, .fileFormat, .deviceModel, deviceBrand, deviceBoard, deviceManufacturer, deviceBaseOS, deviceCodename, deviceRelease, depthFrontSensor, depthFrontResolution, depthFrontRate, depthBackSensor, depthBackResolution, depthBackRate]
     }
+
+    //The rows of meta/device.csv in the export and in a saved state: every non-sensor property but the per-experiment id
+    static var deviceRows: [(property: String, value: String)] {
+        return allNonSensorCases.compactMap { metadata in
+            if case .uniqueId = metadata {
+                return nil
+            }
+            return (metadata.identifier, metadata.get(hash: "") ?? "")
+        }
+    }
     
     var identifier: String {
         switch self {

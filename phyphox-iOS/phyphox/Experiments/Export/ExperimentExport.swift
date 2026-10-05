@@ -89,13 +89,8 @@ struct ExperimentExport: Equatable {
 
                             //Metadata
                             var metaCSV = "\"property\"\(separator)\"value\"\n"
-                            for metadata in Metadata.allNonSensorCases {
-                                switch metadata {
-                                case .uniqueId:
-                                    continue
-                                default:
-                                    metaCSV += "\"\(metadata.identifier)\"\(separator)\"\(metadata.get(hash: "") ?? "")\"\n"
-                                }
+                            for row in Metadata.deviceRows {
+                                metaCSV += "\"\(row.property)\"\(separator)\"\(row.value)\"\n"
                             }
                             try addEntry(fileName: "meta/device.csv", data: metaCSV.data(using: .utf8))
                             
@@ -150,16 +145,11 @@ struct ExperimentExport: Equatable {
                             xlsx.stringCell("property", bold: true)
                             xlsx.stringCell("value", bold: true)
                             xlsx.endRow()
-                            for metadata in Metadata.allNonSensorCases {
-                                switch metadata {
-                                case .uniqueId:
-                                    continue
-                                default:
-                                    xlsx.startRow()
-                                    xlsx.stringCell(metadata.identifier)
-                                    xlsx.stringCell(metadata.get(hash: "") ?? "")
-                                    xlsx.endRow()
-                                }
+                            for row in Metadata.deviceRows {
+                                xlsx.startRow()
+                                xlsx.stringCell(row.property)
+                                xlsx.stringCell(row.value)
+                                xlsx.endRow()
                             }
 
                             //Time references

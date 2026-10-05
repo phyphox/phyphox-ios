@@ -451,6 +451,7 @@ jobs:
 
   # phyphox-test: lifecycle
   # phyphox-test: save-to-collection
+  # phyphox-test: saved-state-collection
   # phyphox-test: app-chrome
   interaction:
     needs: build
@@ -467,13 +468,14 @@ jobs:
       - name: Interruptions and saving to the collection
         run: |
           set -euo pipefail
-          # What an interruption does to a run, and saving a container the app opened
+          # What an interruption does to a run, saving a container the app opened, and the saved-state flow
           xcrun simctl terminate "${{ steps.prepare.outputs.udid }}" "$BUNDLE" >/dev/null 2>&1 || true
           xcodebuild test-without-building -xctestrun "${{ steps.prepare.outputs.xctestrun }}" \
             -destination "id=${{ steps.prepare.outputs.udid }}" \
             -only-testing:phyphoxUITests/AAWarmUpTests \
             -only-testing:phyphoxUITests/LifecycleTests \
-            -only-testing:phyphoxUITests/SaveToCollectionTests 2>&1 \
+            -only-testing:phyphoxUITests/SaveToCollectionTests \
+            -only-testing:phyphoxUITests/SavedStateCollectionTests 2>&1 \
             | python3 phyphox-ios/.github/scripts/xctest_progress.py "Interaction, phone" t1-diagnostics/interaction-phone.log
 
       - name: App chrome on a tablet

@@ -3251,14 +3251,18 @@ final class ExportUnderWritesTests: XCTestCase {
         let writer = writeCycles(lock: experiment.dataLock, buffers: [(buffer, values)], until: { stop })
         defer { stop = true; while !writer.isFinished { usleep(200) } }
 
+        let work = FileManager.default.temporaryDirectory.appendingPathComponent("state-under-writes-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: work) }
         for iteration in 0..<iterations {
-            let state = try LegacyStateSerializer.serializeState(customTitle: "under writes", experiment: experiment)
-            let line = try XCTUnwrap(state.components(separatedBy: "\n").first(where: { $0.hasSuffix(">a</container>") }),
-                                     "the state names the container")
-            let initValues = line.components(separatedBy: "init=\"")[1].components(separatedBy: "\"")[0]
-            let saved = initValues.isEmpty ? 0 : initValues.components(separatedBy: ",").count
+            let folder = work.appendingPathComponent("state-\(iteration).phystate")
+            try SavedState.write(experiment: experiment, title: "under writes", to: folder)
+            let index = SavedState.parseCSV(try String(contentsOf: folder.appendingPathComponent(SavedState.indexEntry), encoding: .utf8))
+            let row = try XCTUnwrap(index.first(where: { $0.first == "a" }), "the state's index names the container")
+            let saved = try XCTUnwrap(Int(row[2]))
             XCTAssertEqual(saved, values.count,
                            "the state saved \(saved) of \(values.count) values in iteration \(iteration)")
+            let file = folder.appendingPathComponent(SavedState.dataFolder).appendingPathComponent(row[1])
+            XCTAssertEqual(try DataBuffer.readValues(from: file).count, values.count, "and the data file holds them (iteration \(iteration))")
         }
     }
 }

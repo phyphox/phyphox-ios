@@ -38,9 +38,8 @@ extension SerializationError: LocalizedError {
     }
 }
 
+//A saved state in the collection is a folder with this extension holding the container tree of docs/saved-states.md (SavedState)
 let experimentStateFileExtension = "phystate"
-let bufferContentsFileExtension = "buffer"
-let experimentStateExperimentFileName = "Experiment"
 let experimentFileExtension = "phyphox"
 
 final class ExperimentSerialization {
@@ -57,8 +56,9 @@ final class ExperimentSerialization {
         }
         */
         
-        if url.pathExtension == experimentStateFileExtension {
-            readURL = url.appendingPathComponent(experimentStateExperimentFileName).appendingPathExtension(experimentFileExtension)
+        let isState = url.pathExtension == experimentStateFileExtension
+        if isState {
+            readURL = url.appendingPathComponent(SavedState.experimentEntry)
         }
         else {
             readURL = url
@@ -72,6 +72,11 @@ final class ExperimentSerialization {
 
         experiment.source = url
         experiment.crc32 = crc32Stream.crcValue
+
+        //The experiment file is loaded as if opened on its own; the state's data, time reference and title come on top
+        if isState {
+            try SavedState.restore(into: experiment, from: url)
+        }
 
         return experiment
     }

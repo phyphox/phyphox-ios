@@ -36,6 +36,11 @@ final class ExperimentManager {
         guard let source = experiment.source else { return }
         print("Deleting " + source.absoluteString + "...")
         try FileManager.default.removeItem(at: source)
+        //A saved state is one folder, resources included; there is no CRC32 resource folder to remove
+        if experiment.isSavedState {
+            reloadUserExperiments()
+            return
+        }
         do {
             if let resFolder = experiment.resourceFolder {
                 print("Deleting " + resFolder.absoluteString + "...")
@@ -52,6 +57,12 @@ final class ExperimentManager {
     func renameExperiment(_ experiment: Experiment, newTitle: String) throws {
         guard let source = experiment.source else { return }
         print("Renaming experiment in \(source)")
+        if experiment.isSavedState {
+            //Only meta/state.csv changes; the experiment file and its CRC32 stay as they are
+            try SavedState.rename(folder: source, title: newTitle)
+            reloadUserExperiments()
+            return
+        }
         let oldResFolder = experiment.resourceFolder
         try LegacyStateSerializer.renameStateFile(customTitle: newTitle, file: source)
         if let oldResFolder = oldResFolder, let inputStream = InputStream(url: source) {
@@ -311,7 +322,8 @@ final class ExperimentManager {
             return false
         }
         for collection in experimentCollections {
-            for experiment in collection.experiments {
+            //A saved state's experiment file is byte-identical to the plain experiment, which is not in the collection for that
+            for experiment in collection.experiments where !experiment.experiment.isSavedState {
                 if experiment.experiment.crc32 == crc32 {
                     return true
                 }

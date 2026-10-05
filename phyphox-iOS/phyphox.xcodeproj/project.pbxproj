@@ -286,6 +286,7 @@
 		C0804DC52471C48600AD32F4 /* CRC32InputStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0804DC42471C48600AD32F4 /* CRC32InputStream.swift */; };
 		C08725112241460500079279 /* ColorElementHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08725102241460500079279 /* ColorElementHandler.swift */; };
 		C08F3909218AFB0800AB5CE0 /* LegacyStateSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */; };
+		8A5A0190000000000000AB10 /* SavedState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0191000000000000AB11 /* SavedState.swift */; };
 		C0914ED922688F1E00000A2F /* FormulaParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0914ED822688F1E00000A2F /* FormulaParser.swift */; };
 		C097E4452297DA1800FB62B9 /* OutputConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C097E4442297DA1800FB62B9 /* OutputConversion.swift */; };
 		C0984B2A2278838C00D0EBCD /* MapVertexShader.glsl in Resources */ = {isa = PBXBuildFile; fileRef = C0984B292278838C00D0EBCD /* MapVertexShader.glsl */; };
@@ -311,6 +312,8 @@
 		8A5A0187000000000000AA97 /* CameraWhiteBalanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0186000000000000AA96 /* CameraWhiteBalanceTests.swift */; };
 		8A5A0189000000000000AA99 /* ApplyZoomChoiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0188000000000000AA98 /* ApplyZoomChoiceTests.swift */; };
 		8A5A018B000000000000AB01 /* AudioOutputRetriggerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A018A000000000000AB00 /* AudioOutputRetriggerTests.swift */; };
+		8A5A0192000000000000AB12 /* SavedStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0193000000000000AB13 /* SavedStateTests.swift */; };
+		8A5A0194000000000000AB14 /* SavedStateCollectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0195000000000000AB15 /* SavedStateCollectionTests.swift */; };
 		8A5A018B000000000000AA9B /* ExclusiveNavigationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A018A000000000000AA9A /* ExclusiveNavigationUITests.swift */; };
 /* End PBXBuildFile section */
 
@@ -669,6 +672,7 @@
 		C0804DC42471C48600AD32F4 /* CRC32InputStream.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRC32InputStream.swift; sourceTree = "<group>"; };
 		C08725102241460500079279 /* ColorElementHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorElementHandler.swift; sourceTree = "<group>"; };
 		C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyStateSerializer.swift; sourceTree = "<group>"; };
+		8A5A0191000000000000AB11 /* SavedState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedState.swift; sourceTree = "<group>"; };
 		C0914ED822688F1E00000A2F /* FormulaParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormulaParser.swift; sourceTree = "<group>"; };
 		C097E4442297DA1800FB62B9 /* OutputConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutputConversion.swift; sourceTree = "<group>"; };
 		C0984B292278838C00D0EBCD /* MapVertexShader.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; path = MapVertexShader.glsl; sourceTree = "<group>"; };
@@ -698,6 +702,8 @@
 		8A5A0186000000000000AA96 /* CameraWhiteBalanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraWhiteBalanceTests.swift; sourceTree = "<group>"; };
 		8A5A0188000000000000AA98 /* ApplyZoomChoiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplyZoomChoiceTests.swift; sourceTree = "<group>"; };
 		8A5A018A000000000000AB00 /* AudioOutputRetriggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioOutputRetriggerTests.swift; sourceTree = "<group>"; };
+		8A5A0193000000000000AB13 /* SavedStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedStateTests.swift; sourceTree = "<group>"; };
+		8A5A0195000000000000AB15 /* SavedStateCollectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedStateCollectionTests.swift; sourceTree = "<group>"; };
 		8A5A018A000000000000AA9A /* ExclusiveNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExclusiveNavigationUITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1109,6 +1115,7 @@
 				C063C6732900A2C400327AE7 /* IOMappingValidation.swift */,
 				6BE320AD1CB2D36D00DCC1ED /* SimpleExperimentSerializer.swift */,
 				C08F3908218AFB0800AB5CE0 /* LegacyStateSerializer.swift */,
+				8A5A0191000000000000AB11 /* SavedState.swift */,
 				6B612FE7207E5A9B001DA8D9 /* Handlers */,
 				6B612FE0207E5A09001DA8D9 /* DocumentParser */,
 			);
@@ -1305,6 +1312,7 @@
 				8A5A0113000000000000AA23 /* AccessibilitySmokeTests.swift */,
 				8A5A0111000000000000AA21 /* LifecycleTests.swift */,
 				8A5A011B000000000000AA2B /* SaveToCollectionTests.swift */,
+				8A5A0195000000000000AB15 /* SavedStateCollectionTests.swift */,
 			);
 			path = phyphoxUITests;
 			sourceTree = "<group>";
@@ -1366,6 +1374,7 @@
 				8A5A0186000000000000AA96 /* CameraWhiteBalanceTests.swift */,
 				8A5A0188000000000000AA98 /* ApplyZoomChoiceTests.swift */,
 				8A5A018A000000000000AB00 /* AudioOutputRetriggerTests.swift */,
+				8A5A0193000000000000AB13 /* SavedStateTests.swift */,
 				8A5A0184000000000000AA94 /* WhiteBalanceMathTests.swift */,
 				A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */,
 				A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */,
@@ -1657,6 +1666,7 @@
 				A171F06B2CF5F5B700D5F9F2 /* ExperimentSliderView.swift in Sources */,
 				A1984D2E2E3BE65D00C21D16 /* GraphCalibrationView.swift in Sources */,
 				C08F3909218AFB0800AB5CE0 /* LegacyStateSerializer.swift in Sources */,
+				8A5A0190000000000000AB10 /* SavedState.swift in Sources */,
 				6B612FDF207E1648001DA8D9 /* DocumentParser.swift in Sources */,
 				86E752192CC2556700E9E9C8 /* SplitAnalysis.swift in Sources */,
 				86E7521A2CC2556700E9E9C8 /* EventStreamAnalysis.swift in Sources */,
@@ -1883,6 +1893,7 @@
 				8A5A0114000000000000AA24 /* AccessibilitySmokeTests.swift in Sources */,
 				8A5A0112000000000000AA22 /* LifecycleTests.swift in Sources */,
 				8A5A011C000000000000AA2C /* SaveToCollectionTests.swift in Sources */,
+				8A5A0194000000000000AB14 /* SavedStateCollectionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1908,6 +1919,7 @@
 				8A5A0187000000000000AA97 /* CameraWhiteBalanceTests.swift in Sources */,
 				8A5A0189000000000000AA99 /* ApplyZoomChoiceTests.swift in Sources */,
 				8A5A018B000000000000AB01 /* AudioOutputRetriggerTests.swift in Sources */,
+				8A5A0192000000000000AB12 /* SavedStateTests.swift in Sources */,
 				8A5A0185000000000000AA95 /* WhiteBalanceMathTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

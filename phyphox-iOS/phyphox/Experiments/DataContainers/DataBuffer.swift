@@ -384,49 +384,50 @@ extension DataBuffer: CustomStringConvertible {
     }
 }
 
+//The data file of a saved state (docs/saved-states.md): the values as little-endian binary64, nothing else
 extension DataBuffer {
     func writeState(to url: URL) throws {
-        try syncWrite {
-            let atomicFile = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+        try DataBuffer.writeValues(toArray(), to: url)
+    }
 
-            FileManager.default.createFile(atPath: atomicFile.path, contents: nil, attributes: nil)
+    static func writeValues(_ values: [Double], to url: URL) throws {
+        let data: Data
+        if isLittleEndian {
+            data = values.withUnsafeBufferPointer { Data(buffer: $0) }
+        } else {
+            data = values.map { $0.bitPattern.littleEndian }.withUnsafeBufferPointer { Data(buffer: $0) }
+        }
+        try data.write(to: url, options: .atomic)
+    }
 
-            let handle = try FileHandle(forWritingTo: atomicFile)
-            handle.seekToEndOfFile()
-
-            let byteSize = MemoryLayout<Double>.size
-
-            func writeDataFromPointer(_ pointer: UnsafeMutableRawPointer) {
-                let data = Data(bytesNoCopy: pointer, count: directMemoryCount * byteSize, deallocator: .none)
-
-                handle.write(data)
-                handle.closeFile()
-            }
-
-            if isLittleEndian {
-                // We must guarantee that values is not deallocated before we've finished writing its memory to the file.
-                withExtendedLifetime(contents, { values in
-                    values.withUnsafeBytes{ pointer in
-                        let rawDataPointer = UnsafeMutableRawPointer(mutating: pointer.baseAddress!)
-                        writeDataFromPointer(rawDataPointer)
-                    }
-                })
-            }
-            else {
-                let values = contents.map { $0.bitPattern.littleEndian }
-
-                withExtendedLifetime(values, { values in
-                    values.withUnsafeBytes{ pointer in
-                        let rawDataPointer = UnsafeMutableRawPointer(mutating: pointer.baseAddress!)
-                        writeDataFromPointer(rawDataPointer)
-                    }
-                })
-            }
-
-            try FileManager.default.moveItem(at: atomicFile, to: url)
+    static func readValues(from url: URL) throws -> [Double] {
+        let data = try Data(contentsOf: url)
+        let count = data.count / MemoryLayout<Double>.size
+        return data.withUnsafeBytes { raw in
+            (0..<count).map { Double(bitPattern: UInt64(littleEndian: raw.loadUnaligned(fromByteOffset: $0 * MemoryLayout<Double>.size, as: UInt64.self))) }
         }
     }
 
+    //Restores a saved state's values: replaces whatever init put there (the newest `size` values if the file holds more), and a
+    //static buffer that received at least one value counts as filled, so the analysis does not fill it again
+    func restoreState(_ values: [Double]) {
+        syncWrite {
+            staticAndSet = false
+
+            var cutValues = values
+            let effectiveSize = effectiveMemorySize
+            if cutValues.count > effectiveSize {
+                cutValues = Array(cutValues[(cutValues.count - effectiveSize)...])
+            }
+            contents = cutValues
+
+            if staticBuffer && !cutValues.isEmpty {
+                staticAndSet = true
+            }
+
+            didWrite()
+        }
+    }
 }
 
 extension DataBuffer: Equatable {

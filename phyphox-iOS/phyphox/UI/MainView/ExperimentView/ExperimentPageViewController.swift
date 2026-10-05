@@ -564,8 +564,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
 
         case .saveLocally:
             //Ask to save the experiment locally if it has been loaded from a remote source
-            if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32),
-               !AutomationLaunchOptions.autoConfirm {
+            if canBeSavedToCollection, !AutomationLaunchOptions.autoConfirm {
                 UIAlertController.PhyphoxUIAlertBuilder()
                     .title(title: localize("save_locally"))
                     .message(message: localize("save_locally_message"))
@@ -1053,71 +1052,75 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return HUD
     }
     
+    //The state goes into the collection as a Saved-States/<name>.phystate folder in the container layout (SavedState)
     private func saveTheState(title: String){
-        do {
-            if !FileManager.default.fileExists(atPath: savedExperimentStatesURL.path) {
-                try FileManager.default.createDirectory(atPath: savedExperimentStatesURL.path, withIntermediateDirectories: false, attributes: nil)
-            }
-            
-            //For now, we disable the new state serializer (saving buffers to a separate binary file)
-            //until the Android version has caught up and can offer the same function
-            //_ = try self.experiment.saveState(to: savedExperimentStatesURL, with: title)
-            
-            //Instead use the legacy state serializer for now:
-            let fileName = FileNameFormat.formatFilename(title: self.experiment.displayTitle, timeReference: self.experiment.timeReference) + ".phyphox"
-            let target = savedExperimentStatesURL.appendingPathComponent(fileName)
-            
-            let HUD = showHUDProgressWidget()
-            
-            LegacyStateSerializer.writeStateFile(customTitle: title, target: target.path, experiment: self.experiment, callback: {(error, file) in
-                if (error != nil) {
-                    self.showError(message: error!)
-                    return
+        let HUD = showHUDProgressWidget()
+        let fileName = FileNameFormat.formatFilename(title: self.experiment.displayTitle, timeReference: self.experiment.timeReference)
+
+        DispatchQueue.global(qos: .default).async {
+            do {
+                let target = try SavedState.newCollectionFolder(name: fileName)
+                try SavedState.write(experiment: self.experiment, title: title, to: target)
+            } catch {
+                mainThread {
+                    HUD.dismiss()
+                    self.showError(message: error.localizedDescription)
                 }
-                
+                return
+            }
+
+            mainThread {
                 ExperimentManager.shared.reloadUserExperiments()
-                
+
                 HUD.dismiss()
-                
+
                 UIAlertController.PhyphoxUIAlertBuilder()
                     .title(title: localize("save_state"))
                     .message(message: localize("save_state_success"))
                     .preferredStyle(style: .alert)
                     .addOkAction()
                     .show(in: self.navigationController!, animated: true)
-            })
-        }
-        catch {
-            self.showError(message: error.localizedDescription)
-            return
+            }
         }
     }
-    
+
+    //Shared as <name>.zip: the same tree, zipped (an app without this format opens it as the plain experiment)
     private func shareTheState(title: String){
-        let fileName = FileNameFormat.formatFilename(title: experiment.displayTitle, timeReference: experiment.timeReference) + ".phyphox"
-        let tmpFile = (NSTemporaryDirectory() as NSString).appendingPathComponent(fileName)
-        
+        let fileName = FileNameFormat.formatFilename(title: experiment.displayTitle, timeReference: experiment.timeReference)
+        let tmpFolder = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let stateFolder = tmpFolder.appendingPathComponent(fileName).appendingPathExtension(experimentStateFileExtension)
+        let zipFile = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName + ".zip")
+
         let HUD = showHUDProgressWidget()
-        
-        
-        LegacyStateSerializer.writeStateFile(customTitle: title, target: tmpFile, experiment: self.experiment, callback: {(error, file) in
-            if (error != nil) {
-                self.showError(message: error!)
+
+        DispatchQueue.global(qos: .default).async {
+            do {
+                try SavedState.write(experiment: self.experiment, title: title, to: stateFolder)
+                try SavedState.zip(folder: stateFolder, to: zipFile)
+            } catch {
+                try? FileManager.default.removeItem(at: tmpFolder)
+                mainThread {
+                    HUD.dismiss()
+                    self.showError(message: error.localizedDescription)
+                }
                 return
             }
-            
-            let vc = UIActivityViewController(activityItems: [file!], applicationActivities: nil)
-            
-            vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
-            
-            self.navigationController!.present(vc, animated: true) {
-                HUD.dismiss()
+            try? FileManager.default.removeItem(at: tmpFolder)
+
+            mainThread {
+                let vc = UIActivityViewController(activityItems: [zipFile], applicationActivities: nil)
+
+                vc.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems![0]
+
+                self.navigationController!.present(vc, animated: true) {
+                    HUD.dismiss()
+                }
+
+                vc.completionWithItemsHandler = { _, _, _, _ in
+                    try? FileManager.default.removeItem(at: zipFile)
+                }
             }
-            
-            vc.completionWithItemsHandler = { _, _, _, _ in
-                do { try FileManager.default.removeItem(atPath: tmpFile) } catch {}
-            }
-        })
+        }
     }
     
     private func updateTimerDisplay() {
@@ -1319,7 +1322,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             }))
         }
         
-        if !experiment.local && !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32) {
+        if canBeSavedToCollection {
             alert.addAction(UIAlertAction(title: localize("save_locally"), style: .default, handler: { [unowned self] action in
                 try? self.saveLocally()
             }))
@@ -1338,8 +1341,14 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         self.navigationController?.present(alert, animated: true, completion: nil)
     }
     
+    //Opened from outside and not in the collection yet. A saved state skips the CRC32 check: its experiment file is
+    //byte-identical to the plain experiment the user may already have, and the state is a different thing to keep
+    private var canBeSavedToCollection: Bool {
+        return !experiment.local && (experiment.isSavedState || !ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32))
+    }
+
     func saveLocally() throws {
-        if (ExperimentManager.shared.experimentInCollection(crc32: experiment.crc32)) {
+        if !canBeSavedToCollection {
             return
         }
         try experiment.saveLocally(quiet: false, presenter: self.navigationController)

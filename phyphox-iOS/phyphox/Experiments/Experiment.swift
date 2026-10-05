@@ -52,7 +52,8 @@ struct ExperimentLink: Equatable {
 
 final class Experiment {
     let title: String
-    let stateTitle: String?
+    //From the file's state-title (legacy state) or meta/state.csv (SavedState.restore)
+    var stateTitle: String?
     private let description: String?
     private let links: [ExperimentLink]
     let category: String
@@ -80,8 +81,13 @@ final class Experiment {
     
     let localizedLinks: [ExperimentLink]
     
+    //Listed under "Saved states" with the app's colour (the legacy serializer forced <color>blue</color> into the file instead)
+    var inSavedStatesCollection: Bool {
+        return source?.path.hasPrefix(savedExperimentStatesURL.path) == true
+    }
+
     var localizedCategory: String {
-        if source?.path.hasPrefix(savedExperimentStatesURL.path) == true {
+        if inSavedStatesCollection {
             return localize("save_state_category")
         }
         return translation?.selectedTranslation?.categoryString ?? category
@@ -93,7 +99,9 @@ final class Experiment {
     
     let rawColor: UIColor?
     var color: UIColor {
-        if let color = rawColor {
+        if inSavedStatesCollection, let stateColor = namedColors["blue"] {
+            return stateColor
+        } else if let color = rawColor {
             return color
         } else if bluetoothDevices.count > 0 {
             return kBluetooth
@@ -108,6 +116,19 @@ final class Experiment {
         return !(source?.absoluteString.starts(with: experimentsBaseURL.absoluteString) ?? true)
     }
     var crc32: UInt?
+    //The buffer names in data-containers order (buffers is a dictionary); a saved state's index follows it
+    var bufferOrder: [String] = []
+
+    //Loaded from a saved-state folder (SavedState): source is the .phystate folder, not an experiment file
+    var isSavedState: Bool {
+        return source?.pathExtension == experimentStateFileExtension
+    }
+    //The experiment file itself, which a state copies byte for byte
+    var sourceExperimentFile: URL? {
+        guard let source = source else { return nil }
+        return isSavedState ? source.appendingPathComponent(SavedState.experimentEntry) : source
+    }
+
     var localResourceFolder: URL? {
         if let crc32 = crc32 {
             return customExperimentsURL.appendingPathComponent(String(crc32, radix: 16))
@@ -116,7 +137,9 @@ final class Experiment {
         }
     }
     var resourceFolder: URL? {
-        if local && custom {
+        if isSavedState {
+            return source?.appendingPathComponent(SavedState.resourceFolder)
+        } else if local && custom {
             return localResourceFolder
         } else {
             return source?.deletingLastPathComponent().appendingPathComponent("res")
@@ -345,6 +368,27 @@ final class Experiment {
     func saveLocally(quiet: Bool, presenter: UINavigationController?) throws {
         guard let source = self.source else { throw FileError.genericError }
 
+        func confirm() {
+            mainThread {
+                if !quiet, let controller = presenter {
+                    let confirmation = UIAlertController(title: localize("save_locally"), message: localize("save_locally_done"), preferredStyle: .alert)
+
+                    confirmation.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: nil))
+                    controller.present(confirmation, animated: true, completion: nil)
+                }
+            }
+        }
+
+        //A saved state opened from outside goes into the collection as a state: the whole tree, under Saved-States
+        if isSavedState {
+            let target = try SavedState.newCollectionFolder(name: displayTitle)
+            try FileManager.default.copyItem(at: source, to: target)
+            self.source = target
+            local = true
+            confirm()
+            return
+        }
+
         if !FileManager.default.fileExists(atPath: customExperimentsURL.path) {
             try FileManager.default.createDirectory(atPath: customExperimentsURL.path, withIntermediateDirectories: false, attributes: nil)
         }
@@ -386,16 +430,8 @@ final class Experiment {
             
             self.source = experimentURL
             local = true
-            
-            mainThread {
-                
-                if !quiet, let controller = presenter {
-                    let confirmation = UIAlertController(title: localize("save_locally"), message: localize("save_locally_done"), preferredStyle: .alert)
-                    
-                    confirmation.addAction(UIAlertAction(title: localize("ok"), style: .default, handler: nil))
-                    controller.present(confirmation, animated: true, completion: nil)
-                }
-            }
+
+            confirm()
         }
 
         if source.isFileURL {

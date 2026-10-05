@@ -406,6 +406,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         }
         
         let experiment = Experiment(title: title, stateTitle: stateTitle, description: description, links: links, category: category, icon: icon, color: color, appleBan: appleBan, isLink: isLink, translation: translations, buffers: buffers, timeReference: timeReference, sensorInputs: sensorInputs, depthInput: depthInput, cameraInput: cameraInput, gpsInputs: gpsInputs, audioInputs: audioInputs, audioOutput: audioOutput, flashlightOutput: flashlightOutput, bluetoothDevices: bluetoothDevices, bluetoothInputs: bluetoothInputs, bluetoothOutputs: bluetoothOutputs, networkConnections: networkConnections, viewDescriptors: viewDescriptors, analysis: analysis, export: export)
+        experiment.bufferOrder = dataContainersDescriptor?.map { $0.name } ?? []
 
         results.append(experiment)
     }
