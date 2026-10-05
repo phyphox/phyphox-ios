@@ -618,6 +618,24 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             return CameraViewDescriptor(label: descriptor.label, visibilityBuffer: visibilityBuffer, exposureAdjustmentLevel: descriptor.exposureAdjustmentLevel,
                                         grayscale: descriptor.grayscale, markOverexposure: descriptor.markOverexposure, markUnderexposure: descriptor.markUnderexposure, showControls: descriptor.showControls, translation: translations)
 
+        //The drawing elements of file format 1.21 (drawing.md)
+        case .geometry(let descriptor):
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "geometry")
+
+            return GeometryViewDescriptor(visibilityBuffer: visibilityBuffer, attributes: descriptor)
+
+        case .scale(let descriptor):
+            let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "scale")
+            func boundBuffer(_ name: String?) throws -> DataBuffer? {
+                guard let name = name else { return nil }
+                guard let buffer = buffers[name] else {
+                    throw ElementHandlerError.missingElement("data-container \(name) for scale")
+                }
+                return buffer
+            }
+
+            return ScaleViewDescriptor(label: descriptor.label, translation: translations, visibilityBuffer: visibilityBuffer, unit: unit(descriptor.unit) ?? .empty, minBuffer: try boundBuffer(descriptor.minInputBufferName), maxBuffer: try boundBuffer(descriptor.maxInputBufferName), attributes: descriptor)
+
         //The view groups of file format 1.21 (groups.md): their children are made the same way, recursively
         case .vertical(let descriptor):
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "vertical")

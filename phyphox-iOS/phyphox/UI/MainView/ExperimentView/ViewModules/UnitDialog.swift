@@ -55,8 +55,9 @@ final class UnitDialog: UITableViewController {
         return id == experimentUnitId ? symbol + " (" + localize("unit_dialog_experiment_default") + ")" : symbol
     }
 
-    ///Presents the dialog for a convertible unit; nothing happens for a unit without alternatives
-    static func show(from presenter: UIViewController?, sourceView: UIView?, experimentUnitId: String, currentUnitId: String, onChosen: @escaping (String) -> Void) {
+    ///Presents the dialog for a convertible unit; nothing happens for a unit without alternatives. A popover anchors to
+    ///sourceRect within the source view (the label of a scale), or to the whole view.
+    static func show(from presenter: UIViewController?, sourceView: UIView?, sourceRect: CGRect? = nil, experimentUnitId: String, currentUnitId: String, onChosen: @escaping (String) -> Void) {
         guard let presenter = presenter, Units.isConvertible(experimentUnitId) else { return }
         let dialog = UnitDialog(experimentUnitId: experimentUnitId, currentUnitId: currentUnitId, onChosen: onChosen)
         let alert = UIAlertController(title: localize("unit_dialog_title"), message: nil, preferredStyle: .actionSheet)
@@ -68,7 +69,7 @@ final class UnitDialog: UITableViewController {
         alert.addAction(UIAlertAction(title: localize("cancel"), style: .cancel, handler: nil))
         if let popover = alert.popoverPresentationController, let sourceView = sourceView {
             popover.sourceView = sourceView
-            popover.sourceRect = sourceView.bounds
+            popover.sourceRect = sourceRect ?? sourceView.bounds
         }
         dialog.alert = alert
         presenter.present(alert, animated: true, completion: nil)

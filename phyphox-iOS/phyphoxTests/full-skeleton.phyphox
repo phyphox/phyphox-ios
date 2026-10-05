@@ -152,6 +152,23 @@
                 <separator height="2" color="fe005d60" />
                 <value label="" unit="%" size="2"><input>buffer</input></value>
             </stack>
+            <stack>
+                <geometry shape="circle" centerX="0.5" centerY="0.5" radius="0.48" color="202020" lineColor="ff7e22" lineWidth="0.01" visibility="buffer" />
+                <geometry shape="arc" radius="0.45" innerRadius="0.4" startAngle="1.57" sweepAngle="0.79" color="fe005d80" />
+                <geometry shape="rectangle" aspectRatio="2" left="0.1" top="0.2" right="0.9" bottom="0.8" cornerRadius="0.05" lineColor="orange" />
+                <scale shape="circular" label="l19" min="0" max="100" ticStep="10" minorTics="4" centerX="0.5" centerY="0.5" radius="0.42"
+                       startAngle="-2.3562" sweepAngle="4.7124" lineWidth="0.005" ticLength="-0.04" minorTicLength="-0.02"
+                       valueEvery="2" valueDistance="-0.11" precision="0" size="0.8" color="white" valueOrientation="radial"
+                       unit="@degree_celsius" labelPositionX="0.5" labelPositionY="0.72" visibility="buffer">
+                    <input as="min">buffer</input>
+                    <input as="max">buffer2</input>
+                </scale>
+                <transform originX="0.5" originY="0.5">
+                    <input as="rotate" min="0" max="100" mapMin="-2.3562" mapMax="2.3562" clamp="true">buffer</input>
+                    <geometry shape="line" startX="0.5" startY="0.5" endX="0.5" endY="0.12" lineColor="ff7e22" lineWidth="0.015" />
+                </transform>
+                <scale shape="linear" aspectRatio="4" min="-20" max="60" unit="m/s²" startX="0.05" startY="0.25" endX="0.95" endY="0.25" valueOrientation="tangential" />
+            </stack>
         </view>
     </views>
     <analysis>

@@ -61,10 +61,29 @@ final class ExperimentGroupView: UIView, ContainerViewModule, VisibilityControll
         for child in children {
             addSubview(child)
         }
-        if case .stack = kind {
-            //A stack is not interactive: no maximize, zoom or pick, no touches on a transformed child
-            isUserInteractionEnabled = false
+    }
+
+    ///The untransformed scale of a stack whose label lies under the point (in this group's coordinates), topmost first:
+    ///a transformed child is wrapped in a transform view and never asked, a hidden child neither
+    func scaleLabel(at point: CGPoint) -> ExperimentScaleView? {
+        for child in childModules.reversed() {
+            guard !child.isHidden, let scale = child as? ExperimentScaleView else { continue }
+            if scale.hitsLabel(convert(point, to: scale)) {
+                return scale
+            }
         }
+        return nil
+    }
+
+    //A stack is not interactive: no maximize, zoom or pick, no touches on a transformed child; every touch goes to the
+    //page (scrolling). The one exception is the label of an untransformed scale, which opens the unit dialog like a
+    //graph axis (drawing.md): the tap is offered to the children from the topmost down, skipping transformed children
+    //and any child whose label is not under the finger, so a scale at the bottom with a needle drawn over its label is
+    //still reached.
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        guard isStack else { return super.hitTest(point, with: event) }
+        guard !isHidden, isUserInteractionEnabled, alpha > 0.01, self.point(inside: point, with: event) else { return nil }
+        return scaleLabel(at: point)
     }
 
     @available(*, unavailable)

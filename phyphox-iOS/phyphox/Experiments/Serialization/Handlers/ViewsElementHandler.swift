@@ -24,6 +24,8 @@ indirect enum ViewElementDescriptor {
     case dropdown(DropdownViewElementDescriptor)
     case slider(SliderViewElementDescriptor)
     case camera(CameraViewElementDescriptor)
+    case geometry(GeometryViewElementDescriptor)
+    case scale(ScaleViewElementDescriptor)
     case vertical(GroupViewElementDescriptor)
     case horizontal(GroupViewElementDescriptor)
     case grid(GridViewElementDescriptor)

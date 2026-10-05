@@ -222,9 +222,10 @@ final class ViewGroupTests: XCTestCase {
         defer { _ = controller }
         let stack = try group(rows[0])
         XCTAssertTrue(stack.isStack)
-        XCTAssertFalse(stack.isUserInteractionEnabled, "a stack is not interactive")
 
         let size = layout(stack, width: 600)
+        //a stack is not interactive: without a scale label under the finger every touch is left to the page
+        XCTAssertNil(stack.hitTest(CGPoint(x: 300, y: size.height / 2), with: nil), "a stack passes its touches to the page")
         let layers = stack.childModules
         XCTAssertEqual(size.height, 6 * unit, accuracy: 0.5, "the separator is the tallest child and sets the height")
         XCTAssertEqual(layers[0].frame.height, 6 * unit, accuracy: 0.5)

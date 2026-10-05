@@ -1704,7 +1704,7 @@ final class EnumCaseFoldingTests: XCTestCase {
         let skeleton = try testBundle.path(forResource: "full-skeleton", ofType: "phyphox").unwrap()
         var xml = try String(contentsOfFile: skeleton, encoding: .utf8)
         //Only attributes with enumerated values - buffer names, labels and numbers must stay untouched
-        for attribute in ["type", "component", "conversion", "waveform", "parameter", "axis", "as", "feature", "aeStrategy", "service", "discovery", "format", "style", "value"] {
+        for attribute in ["type", "component", "conversion", "waveform", "parameter", "axis", "as", "feature", "aeStrategy", "service", "discovery", "format", "style", "value", "shape", "valueOrientation"] {
             let regex = try NSRegularExpression(pattern: "\(attribute)=\"([^\"]*)\"")
             let matches = regex.matches(in: xml, range: NSRange(xml.startIndex..., in: xml)).reversed()
             for match in matches {

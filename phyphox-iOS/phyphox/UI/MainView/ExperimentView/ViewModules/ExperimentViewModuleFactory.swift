@@ -57,6 +57,12 @@ final class ExperimentViewModuleFactory {
         else if let descriptor = descriptor as? ImageViewDescriptor {
             return ExperimentImageView(descriptor: descriptor, resourceFolder: resourceFolder)
         }
+        else if let descriptor = descriptor as? GeometryViewDescriptor {
+            return ExperimentGeometryView(descriptor: descriptor, resourceFolder: resourceFolder)
+        }
+        else if let descriptor = descriptor as? ScaleViewDescriptor {
+            return ExperimentScaleView(descriptor: descriptor, resourceFolder: resourceFolder)
+        }
         else if let descriptor = descriptor as? SwitchViewDescriptor {
             return ExperimentSwitchView(descriptor: descriptor, resourceFolder: resourceFolder)
         }

@@ -249,6 +249,19 @@ final class WebServerUtilities {
                     else if element is ImageViewDescriptor {
                         json += ", \"updateMode\": \"none\""
                     }
+                    //The drawing elements are drawn by the interface from their configuration (readme.md, "Drawing elements")
+                    else if let geometry = element as? GeometryViewDescriptor {
+                        json += ", \"updateMode\": \"none\", \"geometry\":\(geometry.webGeometryConfig())"
+                    }
+                    else if let scale = element as? ScaleViewDescriptor {
+                        //The bound containers are polled like a single value, so the page can re-range the tics
+                        let inputs = scale.webDataInputs
+                        json += ", \"updateMode\": \"\(inputs.isEmpty ? "none" : "single")\""
+                        if !inputs.isEmpty {
+                            json += ", \"dataInput\": [\(inputs.map { WebJSON.string($0.name) }.joined(separator: ","))]"
+                        }
+                        json += ", \"scale\":\(scale.webScaleConfig())"
+                    }
 
                     json += "}"
 

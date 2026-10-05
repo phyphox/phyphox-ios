@@ -125,6 +125,36 @@ struct ExperimentGraphUtilities {
         return step
     }
     
+    ///The "nice" step between the major tics of a linear axis of the given range with at most maxTics tics, and the
+    ///number of decimals the labels at that step need. The table of Android's GraphView.linearTicStep and of the web
+    ///interface; shared with the scale element, which lays its automatic tics out like a graph axis (phyphox-docs
+    ///views/drawing.md, "Tics").
+    static func linearTicStep(range: Double, maxTics: Int) -> (step: Double, precision: Int) {
+        guard range > 0, range.isFinite else { return (1, 0) }
+        let exponent = Int(floor(log10(range))) - 1
+        let stepFactor = pow(10.0, Double(exponent)) //First estimate how large the steps between our tics should be as a power of ten
+        let steps = range / stepFactor //How many steps would there be with step times stepfactor?
+        let limit = Double(maxTics)
+
+        //Depending on how many steps we would have, increase the step factor to stay within maxTics
+        if steps <= limit {
+            return (1 * stepFactor, -exponent)
+        } else if steps <= limit * 2 {
+            return (2 * stepFactor, -exponent)
+        } else if steps <= limit * 5 {
+            return (5 * stepFactor, -exponent)
+        } else if steps <= limit * 10 {
+            return (10 * stepFactor, -exponent - 1)
+        } else if steps <= limit * 20 {
+            return (20 * stepFactor, -exponent - 1)
+        } else if steps <= limit * 50 {
+            return (50 * stepFactor, -exponent - 1)
+        } else if steps <= limit * 100 {
+            return (100 * stepFactor, -exponent - 2)
+        }
+        return (1, 0)
+    }
+
     static func getTicks(_ min: Double, max: Double, maxTicks: Int, log: Bool, isTime: Bool, systemTimeOffset: Double) -> [(value: Double, precision: Int)] {
         guard max > min && min.isFinite && max.isFinite else {
             return []

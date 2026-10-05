@@ -67,8 +67,8 @@ struct TransformViewElementDescriptor {
 ///Which children a container accepts (the nesting table of groups.md)
 enum ViewChildSet {
     case all        //view, vertical, horizontal, grid: every view element
-    case stack      //info, separator, value, graph, image, transform
-    case transform  //exactly one of info, separator, value, graph, image (input is read by the transform handler itself)
+    case stack      //info, separator, value, graph, image, geometry, scale, transform
+    case transform  //exactly one of info, separator, value, graph, image, geometry, scale (input is read by the transform handler itself)
 }
 
 ///Reads the per-child weight of a horizontal group around the child's own handler
@@ -141,6 +141,10 @@ final class ViewElementContainerHandler {
             inner = GraphViewElementHandler()
         case "image":
             inner = ImageViewElementHandler()
+        case "geometry":
+            inner = GeometryViewElementHandler()
+        case "scale":
+            inner = ScaleViewElementHandler()
         case "edit":
             guard childSet == .all else { throw ElementHandlerError.unexpectedChildElement(elementName) }
             inner = EditViewElementHandler()

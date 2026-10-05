@@ -171,6 +171,13 @@
 		8A5A0167000000000000AA77 /* UnitConversionDisplayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0166000000000000AA76 /* UnitConversionDisplayTests.swift */; };
 		8A5A0165000000000000AA75 /* UnitReferenceParseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0164000000000000AA74 /* UnitReferenceParseTests.swift */; };
 		8A5A0147000000000000AA57 /* ViewGroupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0146000000000000AA56 /* ViewGroupTests.swift */; };
+		8A5A019D000000000000AAAD /* ScaleUnitsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A019C000000000000AAAC /* ScaleUnitsTests.swift */; };
+		8A5A019B000000000000AAAB /* ViewDrawingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A019A000000000000AAAA /* ViewDrawingTests.swift */; };
+		8A5A0199000000000000AAA9 /* ExperimentScaleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0198000000000000AAA8 /* ExperimentScaleView.swift */; };
+		8A5A0197000000000000AAA7 /* ExperimentGeometryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0196000000000000AAA6 /* ExperimentGeometryView.swift */; };
+		8A5A0195000000000000AAA5 /* DrawingBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0194000000000000AAA4 /* DrawingBoxView.swift */; };
+		8A5A0193000000000000AAA3 /* DrawingViewDescriptors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0192000000000000AAA2 /* DrawingViewDescriptors.swift */; };
+		8A5A0191000000000000AAA1 /* DrawingViewElementHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0190000000000000AAA0 /* DrawingViewElementHandlers.swift */; };
 		8A5A0171000000000000AA81 /* CameraAnalyzerMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0170000000000000AA80 /* CameraAnalyzerMathTests.swift */; };
 		8A5A0145000000000000AA55 /* ExperimentGroupViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0144000000000000AA54 /* ExperimentGroupViews.swift */; };
 		8A5A0143000000000000AA53 /* GroupViewDescriptors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0142000000000000AA52 /* GroupViewDescriptors.swift */; };
@@ -530,6 +537,13 @@
 		8A5A0166000000000000AA76 /* UnitConversionDisplayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitConversionDisplayTests.swift; sourceTree = "<group>"; };
 		8A5A0164000000000000AA74 /* UnitReferenceParseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitReferenceParseTests.swift; sourceTree = "<group>"; };
 		8A5A0146000000000000AA56 /* ViewGroupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewGroupTests.swift; sourceTree = "<group>"; };
+		8A5A019C000000000000AAAC /* ScaleUnitsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScaleUnitsTests.swift; sourceTree = "<group>"; };
+		8A5A019A000000000000AAAA /* ViewDrawingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewDrawingTests.swift; sourceTree = "<group>"; };
+		8A5A0198000000000000AAA8 /* ExperimentScaleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentScaleView.swift; sourceTree = "<group>"; };
+		8A5A0196000000000000AAA6 /* ExperimentGeometryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentGeometryView.swift; sourceTree = "<group>"; };
+		8A5A0194000000000000AAA4 /* DrawingBoxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingBoxView.swift; sourceTree = "<group>"; };
+		8A5A0192000000000000AAA2 /* DrawingViewDescriptors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingViewDescriptors.swift; sourceTree = "<group>"; };
+		8A5A0190000000000000AAA0 /* DrawingViewElementHandlers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingViewElementHandlers.swift; sourceTree = "<group>"; };
 		8A5A0170000000000000AA80 /* CameraAnalyzerMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraAnalyzerMathTests.swift; sourceTree = "<group>"; };
 		8A5A0144000000000000AA54 /* ExperimentGroupViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentGroupViews.swift; sourceTree = "<group>"; };
 		8A5A0142000000000000AA52 /* GroupViewDescriptors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupViewDescriptors.swift; sourceTree = "<group>"; };
@@ -761,6 +775,8 @@
 		6B2E0F8E205939DD008FAA91 /* Static */ = {
 			isa = PBXGroup;
 			children = (
+				8A5A0196000000000000AAA6 /* ExperimentGeometryView.swift */,
+				8A5A0194000000000000AAA4 /* DrawingBoxView.swift */,
 				86147C112D78EBFA008BAAD2 /* CameraGUIShader.metal */,
 				86E7520C2CC254E500E9E9C8 /* ExperimentImageView.swift */,
 				A182CEDB2B025AE8000385D2 /* CameraGUI */,
@@ -774,6 +790,7 @@
 		6B2E0F9D205939F3008FAA91 /* Dynamic */ = {
 			isa = PBXGroup;
 			children = (
+				8A5A0198000000000000AAA8 /* ExperimentScaleView.swift */,
 				A1984D2F2E3FB00500C21D16 /* ExperimentGraphViewModule */,
 				4B5568B41DD7D1F4000C033E /* ExperimentButtonView.swift */,
 				6B00F0A11C457B5D00971941 /* ExperimentValueView.swift */,
@@ -907,6 +924,7 @@
 		6BEA944B207FCA050077274A /* ViewHandlers */ = {
 			isa = PBXGroup;
 			children = (
+				8A5A0190000000000000AAA0 /* DrawingViewElementHandlers.swift */,
 				86E7521B2CC255A300E9E9C8 /* ImageViewElementHandler.swift */,
 				6BEA944C207FCA2F0077274A /* ValueViewElementHandler.swift */,
 				6BEA944E207FD8350077274A /* InfoViewElementHandler.swift */,
@@ -1094,6 +1112,7 @@
 		6BFE377120447BF200301CA3 /* ViewDescriptors */ = {
 			isa = PBXGroup;
 			children = (
+				8A5A0192000000000000AAA2 /* DrawingViewDescriptors.swift */,
 				86E751FE2CC2539D00E9E9C8 /* ImageViewDescriptor.swift */,
 				6BAEC1DB1C1F6EFC00FBD979 /* ViewDescriptor.swift */,
 				6B0C714D1C1C6FF600500FEE /* ExperimentViewCollectionDescriptor.swift */,
@@ -1375,6 +1394,8 @@
 				8A5A0166000000000000AA76 /* UnitConversionDisplayTests.swift */,
 				8A5A0164000000000000AA74 /* UnitReferenceParseTests.swift */,
 				8A5A0146000000000000AA56 /* ViewGroupTests.swift */,
+				8A5A019C000000000000AAAC /* ScaleUnitsTests.swift */,
+				8A5A019A000000000000AAAA /* ViewDrawingTests.swift */,
 				8A5A0170000000000000AA80 /* CameraAnalyzerMathTests.swift */,
 				8A5A0186000000000000AA96 /* CameraWhiteBalanceTests.swift */,
 				8A5A0188000000000000AA98 /* ApplyZoomChoiceTests.swift */,
@@ -1811,6 +1832,11 @@
 				6B00F0BA1C46F24400971941 /* ExperimentExportSet.swift in Sources */,
 				86E7520D2CC254E500E9E9C8 /* ExperimentImageView.swift in Sources */,
 				8A5A0145000000000000AA55 /* ExperimentGroupViews.swift in Sources */,
+				8A5A0199000000000000AAA9 /* ExperimentScaleView.swift in Sources */,
+				8A5A0197000000000000AAA7 /* ExperimentGeometryView.swift in Sources */,
+				8A5A0195000000000000AAA5 /* DrawingBoxView.swift in Sources */,
+				8A5A0193000000000000AAA3 /* DrawingViewDescriptors.swift in Sources */,
+				8A5A0191000000000000AAA1 /* DrawingViewElementHandlers.swift in Sources */,
 				8A5A0143000000000000AA53 /* GroupViewDescriptors.swift in Sources */,
 				8A5A0141000000000000AA51 /* ViewGroupElementHandlers.swift in Sources */,
 				C01F80FC226A05C5001B0DF8 /* FormulaAnalysis.swift in Sources */,
@@ -1922,6 +1948,8 @@
 				8A5A0167000000000000AA77 /* UnitConversionDisplayTests.swift in Sources */,
 				8A5A0165000000000000AA75 /* UnitReferenceParseTests.swift in Sources */,
 				8A5A0147000000000000AA57 /* ViewGroupTests.swift in Sources */,
+				8A5A019D000000000000AAAD /* ScaleUnitsTests.swift in Sources */,
+				8A5A019B000000000000AAAB /* ViewDrawingTests.swift in Sources */,
 				8A5A0171000000000000AA81 /* CameraAnalyzerMathTests.swift in Sources */,
 				8A5A0187000000000000AA97 /* CameraWhiteBalanceTests.swift in Sources */,
 				8A5A0189000000000000AA99 /* ApplyZoomChoiceTests.swift in Sources */,
