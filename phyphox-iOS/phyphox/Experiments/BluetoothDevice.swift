@@ -14,6 +14,7 @@ let phyphoxServiceUUID: UUID = UUID(uuidString: "cddf0001-30f7-4671-8b43-5e40ba5
 let phyphoxExperimentCharacteristicUUID: UUID = UUID(uuidString: "cddf0002-30f7-4671-8b43-5e40ba53514a")!
 let phyphoxExperimentControlCharacteristicUUID: UUID = UUID(uuidString: "cddf0003-30f7-4671-8b43-5e40ba53514a")!
 let phyphoxEventCharacteristicUUID: UUID = UUID(uuidString: "cddf0004-30f7-4671-8b43-5e40ba53514a")!
+let phyphoxCommandCharacteristicUUID: UUID = UUID(uuidString: "cddf0005-30f7-4671-8b43-5e40ba53514a")!
 let batteryServiceUUID: String = "2A19"
 
 public extension CBUUID {
@@ -100,6 +101,8 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     }
     
     var stopExperimentDelegate: StopExperimentDelegate? = nil
+    //Carries out the device's commands from the command characteristic (0005); nil outside an experiment screen
+    weak var commandDelegate: BluetoothCommandDelegate? = nil
     
     var peripheral: CBPeripheral? = nil
     
@@ -109,6 +112,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     private var servicesToBeDiscovered: [CBService] = []
     
     private var eventCharacteristic: CBCharacteristic? = nil
+    private var commandCharacteristic: CBCharacteristic? = nil
     
     let hud: JGProgressHUD
     var feedbackViewController: UIViewController?
@@ -524,6 +528,10 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     
     override func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         peripheral.readRSSI()
+        if characteristic.uuid.uuid128String == phyphoxCommandCharacteristicUUID.uuidString {
+            handleCommand(characteristic.value ?? Data())
+            return
+        }
         if let newData = characteristic.value {
             for delegate in delegates {
                 if(characteristic.uuid.uuidString == batteryServiceUUID){
@@ -566,6 +574,9 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
             if characteristic.uuid.uuid128String == phyphoxEventCharacteristicUUID.uuidString {
                 eventCharacteristic = characteristic
             }
+            if characteristic.uuid.uuid128String == phyphoxCommandCharacteristicUUID.uuidString {
+                commandCharacteristic = characteristic
+            }
             
             if(characteristic.uuid.uuidString == batteryServiceUUID){
                 //Battery Label
@@ -586,6 +597,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         
         do {
             writeEventCharacteristic(timeMapping: nil)
+            subscribeToCommands()
             
             for delegate in delegates {
                 try delegate.writeConfigData()
@@ -609,46 +621,65 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     }
     
     func writeEventCharacteristic(timeMapping: ExperimentTimeReference.TimeMapping?) {
-        if let char = eventCharacteristic {
-            var out: Data = Data(capacity: 17)
-            var experimentTime: Int64
-            var systemTime: Int64
-            
-            if let timeMapping = timeMapping {
-                switch timeMapping.event {
-                case .PAUSE:
-                    out.append(0x00)
-                case .START:
-                    out.append(0x01)
-                case .CLEAR:
-                    out.append(0x02)
-                }
-                experimentTime = Int64(timeMapping.experimentTime * 1000)
-                systemTime = Int64(timeMapping.systemTime.timeIntervalSince1970 * 1000)
-            } else {
-                out.append(0xff)
-                experimentTime = -1
-                systemTime = Int64(Date().timeIntervalSince1970 * 1000)
+        if let timeMapping = timeMapping {
+            let code: UInt8
+            switch timeMapping.event {
+            case .PAUSE:
+                code = 0x00
+            case .START:
+                code = 0x01
+            case .CLEAR:
+                code = 0x02
             }
-            
-            let leExpTimeData = Data(bytes: &experimentTime, count: MemoryLayout.size(ofValue: experimentTime))
-            for byte in leExpTimeData.subdata(in: (0..<MemoryLayout.size(ofValue: experimentTime))).reversed() {
-                out.append(byte)
-            }
-            
-            let leSysTimeData = Data(bytes: &systemTime, count: MemoryLayout.size(ofValue: systemTime))
-            for byte in leSysTimeData.subdata(in: (0..<MemoryLayout.size(ofValue: systemTime))).reversed() {
-                out.append(byte)
-            }
-            
-            do {
-                try writeCharacteristic(uuid: char.uuid, data: out)
-            } catch BluetoothDeviceError.generic(let msg) {
-                showError(msg: "Could not write event. \(msg)")
-            } catch {
-                showError(msg: "Could not write event. Unknown error.")
-            }
+            writeEventBlock(code: code, experimentTime: Int64(timeMapping.experimentTime * 1000), systemTime: Int64(timeMapping.systemTime.timeIntervalSince1970 * 1000))
+        } else {
+            writeEventBlock(code: 0xff, experimentTime: -1, systemTime: Int64(Date().timeIntervalSince1970 * 1000))
         }
+    }
+    
+    //Answer to a STATUS command: the current state as an event block, START with the current experiment time while
+    //measuring, PAUSE otherwise. Lets a device that connected late or missed an event resynchronize.
+    func writeStatusEvent(measuring: Bool, experimentTime: Double) {
+        writeEventBlock(code: measuring ? 0x01 : 0x00, experimentTime: Int64(experimentTime * 1000), systemTime: Int64(Date().timeIntervalSince1970 * 1000))
+    }
+    
+    //The 17-byte event block of the event characteristic (0004): event code, then both times in ms as big-endian int64
+    private func writeEventBlock(code: UInt8, experimentTime: Int64, systemTime: Int64) {
+        guard let char = eventCharacteristic else {
+            return
+        }
+        var out: Data = Data(capacity: 17)
+        out.append(code)
+        withUnsafeBytes(of: experimentTime.bigEndian) { out.append(contentsOf: $0) }
+        withUnsafeBytes(of: systemTime.bigEndian) { out.append(contentsOf: $0) }
+        
+        do {
+            try writeCharacteristic(uuid: char.uuid, data: out)
+        } catch BluetoothDeviceError.generic(let msg) {
+            showError(msg: "Could not write event. \(msg)")
+        } catch {
+            showError(msg: "Could not write event. Unknown error.")
+        }
+    }
+    
+    //Subscribes to the phyphox command characteristic if the device offers one. This runs after every service discovery,
+    //so a reconnected device is subscribed again. A failed subscription does not block the experiment (the notification
+    //state callback ignores errors); the device's commands are then simply not received.
+    private func subscribeToCommands() {
+        guard let char = commandCharacteristic, let peripheral = peripheral else {
+            return
+        }
+        peripheral.setNotifyValue(true, for: char)
+    }
+    
+    //A notification on the command characteristic. The experiment screen carries the command out like a tap on the
+    //corresponding button; an unknown command is ignored by contract so newer devices stay harmless.
+    func handleCommand(_ data: Data) {
+        guard let command = BluetoothCommand.decode(data) else {
+            print("Ignoring unknown command from \(deviceName ?? ""): " + (data.first.map { String(format: "0x%02x", $0) } ?? "empty"))
+            return
+        }
+        commandDelegate?.onBluetoothCommand(command, device: self)
     }
     
 }

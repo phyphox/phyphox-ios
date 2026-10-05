@@ -18,7 +18,7 @@ protocol StopExperimentDelegate {
     func stopExperiment()
 }
 
-final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIPopoverPresentationControllerDelegate, ExperimentWebServerDelegate, ExportDelegate, StopExperimentDelegate, BluetoothScanDialogDismissedDelegate, NetworkScanDialogDismissedDelegate, NetworkConnectionDataPolicyInfoDelegate, UpdateConnectedDeviceDelegate{
+final class ExperimentPageViewController: UIViewController, UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIPopoverPresentationControllerDelegate, ExperimentWebServerDelegate, ExportDelegate, StopExperimentDelegate, BluetoothScanDialogDismissedDelegate, NetworkScanDialogDismissedDelegate, NetworkConnectionDataPolicyInfoDelegate, UpdateConnectedDeviceDelegate, BluetoothCommandDelegate{
     
     var actionItem: UIBarButtonItem?
     var playItem: UIBarButtonItem?
@@ -340,6 +340,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         
         for device in experiment.bluetoothDevices {
             device.feedbackViewController = self
+            device.commandDelegate = self
         }
         
         for connection in experiment.networkConnections {
@@ -1368,10 +1369,7 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
             
             if experimentStartTimer != nil {
                 //A running countdown is cancelled rather than started again, so nothing begins
-                experimentStartTimer!.invalidate()
-                experimentStartTimer = nil
-                
-                updateTimerDisplay()
+                cancelStartCountdown()
                 return false
             }
             
@@ -1460,6 +1458,13 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         return true
     }
     
+    private func cancelStartCountdown() {
+        experimentStartTimer?.invalidate()
+        experimentStartTimer = nil
+        
+        updateTimerDisplay()
+    }
+    
     func stopExperiment() {
         if experiment.running {
             if (!self.webServer.running) {
@@ -1512,6 +1517,44 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         else {
             startExperiment()
         }
+    }
+    
+    //A command from a device on the command characteristic (phyphox-docs, bluetooth-low-energy.md, "Phyphox command
+    //characteristic (0005)"): the same code paths as the play, pause and trash buttons. START during a countdown or a
+    //measurement is a no-op, PAUSE cancels a countdown, TOGGLE is the play/pause button. A start before all devices are
+    //connected is refused silently, which the device notices by the missing START event.
+    func onBluetoothCommand(_ command: BluetoothCommand, device: ExperimentBluetoothDevice) {
+        let active = experiment.running || experimentStartTimer != nil
+        switch command {
+        case .start:
+            if !active && allBluetoothDevicesConnected() {
+                startExperiment()
+            }
+        case .pause:
+            if experimentStartTimer != nil {
+                cancelStartCountdown()
+            } else if active {
+                stopExperiment()
+            }
+        case .toggle:
+            if experimentStartTimer != nil {
+                cancelStartCountdown()
+            } else if active {
+                stopExperiment()
+            } else if allBluetoothDevicesConnected() {
+                startExperiment()
+            }
+        case .clear:
+            clearData(clearGroups: [])
+        case .clearAll:
+            clearData(clearGroups: experiment.clearGroups)
+        case .status:
+            device.writeStatusEvent(measuring: experiment.running, experimentTime: experiment.timeReference.getExperimentTime())
+        }
+    }
+    
+    private func allBluetoothDevicesConnected() -> Bool {
+        return experiment.bluetoothDevices.allSatisfy { $0.peripheral?.state == .connected }
     }
     
     @objc func handleCameraError(notification: Notification) {
