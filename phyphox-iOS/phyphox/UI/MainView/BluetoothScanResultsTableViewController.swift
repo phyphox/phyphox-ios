@@ -34,8 +34,8 @@ class BluetoothScanResultsTableViewController: UITableViewController, ScanResult
     
     var signalImages: [UIImage]
     
-    init(filterByName: String?, filterByUUID: CBUUID?, checkExperiments: Bool, autoConnect: Bool) {
-        ble = BluetoothScan(scanDirectly: true, filterByName: filterByName, filterByUUID: filterByUUID, checkExperiments: checkExperiments, autoConnect: autoConnect)
+    init(nameFilter: BluetoothNameFilter, filterByUUID: CBUUID?, checkExperiments: Bool, autoConnect: Bool) {
+        ble = BluetoothScan(scanDirectly: true, nameFilter: nameFilter, filterByUUID: filterByUUID, checkExperiments: checkExperiments, autoConnect: autoConnect)
         
         signalImages = []
         

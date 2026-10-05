@@ -45,7 +45,7 @@ final class BluetoothCommandTests: XCTestCase {
 
     func testANotificationReachesTheDelegateAsACommandAndUnknownOnesDoNot() {
         let delegate = CapturingDelegate()
-        let device = ExperimentBluetoothDevice(id: nil, name: "sim", uuid: nil, autoConnect: false)
+        let device = ExperimentBluetoothDevice(id: nil, nameFilter: BluetoothNameFilter(name: "sim"), uuid: nil, autoConnect: false)
         device.commandDelegate = delegate
         device.handleCommand(Data([0x01]))
         device.handleCommand(Data([0x03]))

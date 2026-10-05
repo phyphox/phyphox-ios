@@ -214,7 +214,7 @@ private final class BluetoothInputElementHandler: ResultElementHandler, Childles
 
 struct BluetoothOutputBlockDescriptor {
     let id: String?
-    let name: String?
+    let nameFilter: BluetoothNameFilter
     let uuid: CBUUID?
     let autoConnect: Bool
     let inputs: [BluetoothInputDescriptor]
@@ -238,6 +238,7 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
     private enum Attribute: String, AttributeKey {
         case id
         case name
+        case nameRegex
         case uuid
         case autoConnect
         case address
@@ -252,7 +253,7 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
         }
 
         let id: String? = attributes.optionalString(for: .id)
-        let name: String? = attributes.optionalString(for: .name)
+        let nameFilter = try parseBluetoothNameFilter(name: attributes.optionalString(for: .name), regex: attributes.optionalString(for: .nameRegex))
         let uuidString: String? = attributes.optionalString(for: .uuid)
         let uuid: CBUUID?
         if let uuidString = uuidString {
@@ -260,10 +261,10 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
         } else {
             uuid = nil
         }
-        
+
         let autoConnect: Bool = try attributes.optionalValue(for: .autoConnect) ?? false
-        
-        results.append(BluetoothOutputBlockDescriptor(id: id, name: name, uuid: uuid, autoConnect: autoConnect, inputs: inputHandler.results, configs: configHandler.results))
+
+        results.append(BluetoothOutputBlockDescriptor(id: id, nameFilter: nameFilter, uuid: uuid, autoConnect: autoConnect, inputs: inputHandler.results, configs: configHandler.results))
     }
 }
 

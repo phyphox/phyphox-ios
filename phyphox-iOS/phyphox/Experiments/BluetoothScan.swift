@@ -28,7 +28,7 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     public var discoveredDevices: [UUID:ScanResult] = [:]
     var scanResultsDelegate: ScanResultsDelegate?
     
-    let filterByName: String?
+    let nameFilter: BluetoothNameFilter
     let filterByUUID: CBUUID?
     let checkExperiments: Bool
    
@@ -43,9 +43,9 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
         case unknown
     }
     
-    init(scanDirectly: Bool, filterByName: String?, filterByUUID: CBUUID?, checkExperiments: Bool, autoConnect: Bool) {
+    init(scanDirectly: Bool, nameFilter: BluetoothNameFilter, filterByUUID: CBUUID?, checkExperiments: Bool, autoConnect: Bool) {
         self.scanImmediately = scanDirectly
-        self.filterByName = filterByName
+        self.nameFilter = nameFilter
         self.filterByUUID = filterByUUID
         self.checkExperiments = checkExperiments
         self.autoConnect = autoConnect
@@ -115,10 +115,8 @@ class BluetoothScan: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                 }
             }
             
-            if let filterByName = filterByName, filterByName != "" {
-                if !foundName.contains(filterByName) {
-                    return
-                }
+            if !nameFilter.matches(foundName) {
+                return
             }
             
             if autoConnect {

@@ -88,14 +88,13 @@ enum BluetoothDeviceError: Error {
 
 class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     let id: String?
-    let deviceName: String?
     var deviceAddress: UUID? = nil
     let advertiseUUID: CBUUID?
 
     ///Compares the parsed configuration (for Experiment's Equatable); NSObject's == stays identity-based
     static func valueEqual(lhs: ExperimentBluetoothDevice, rhs: ExperimentBluetoothDevice) -> Bool {
         return lhs.id == rhs.id &&
-            lhs.deviceName == rhs.deviceName &&
+            lhs.nameFilter == rhs.nameFilter &&
             lhs.advertiseUUID == rhs.advertiseUUID &&
             lhs.autoConnect == rhs.autoConnect
     }
@@ -136,18 +135,16 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         ExperimentBluetoothDevice.updateDelegate = delegate
         
         self.id = ""
-        self.deviceName = ""
         self.advertiseUUID = nil
         
         self.hud = JGProgressHUD(style: .dark)
         
-        super.init(scanDirectly: false, filterByName: "", filterByUUID: nil, checkExperiments: false, autoConnect: false)
+        super.init(scanDirectly: false, nameFilter: .none, filterByUUID: nil, checkExperiments: false, autoConnect: false)
     }
     
     
-    init(id: String?, name: String?, uuid: CBUUID?, autoConnect: Bool) {
+    init(id: String?, nameFilter: BluetoothNameFilter, uuid: CBUUID?, autoConnect: Bool) {
         self.id = id
-        self.deviceName = name
         self.advertiseUUID = uuid
         
         self.hud = JGProgressHUD(style: .dark)
@@ -155,7 +152,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         hud.textLabel.text = localize("loadingTitle")
         hud.detailTextLabel.text = localize("loadingBluetoothConnectionText")
         
-        super.init(scanDirectly: false, filterByName: name, filterByUUID: uuid, checkExperiments: false, autoConnect: autoConnect)
+        super.init(scanDirectly: false, nameFilter: nameFilter, filterByUUID: uuid, checkExperiments: false, autoConnect: autoConnect)
     }
     
     public func prepareForStart() -> Bool {
@@ -196,8 +193,8 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         } else {
             deviceIDInfo = ""
         }
-        if let filterName = deviceName, filterName != "" {
-            message = localize("bt_scanning_specific1") + " \"" + filterName + "\" " + localize("bt_scanning_specific2") + deviceIDInfo
+        if !nameFilter.isEmpty {
+            message = localize("bt_scanning_specific1") + " \"" + nameFilter.description + "\" " + localize("bt_scanning_specific2") + deviceIDInfo
         } else {
             message = localize("bt_scanning_generic") + deviceIDInfo
         }
@@ -212,7 +209,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         }
         alertController.addAction(cancelAction)
         
-        let scanController = BluetoothScanResultsTableViewController(filterByName: deviceName, filterByUUID: advertiseUUID, checkExperiments: false, autoConnect: autoConnect)
+        let scanController = BluetoothScanResultsTableViewController(nameFilter: nameFilter, filterByUUID: advertiseUUID, checkExperiments: false, autoConnect: autoConnect)
         scanController.tableView = FixedTableView()
         alertController.setValue(scanController, forKey: "contentViewController")
         
@@ -676,7 +673,7 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
     //corresponding button; an unknown command is ignored by contract so newer devices stay harmless.
     func handleCommand(_ data: Data) {
         guard let command = BluetoothCommand.decode(data) else {
-            print("Ignoring unknown command from \(deviceName ?? ""): " + (data.first.map { String(format: "0x%02x", $0) } ?? "empty"))
+            print("Ignoring unknown command from \(nameFilter.description): " + (data.first.map { String(format: "0x%02x", $0) } ?? "empty"))
             return
         }
         commandDelegate?.onBluetoothCommand(command, device: self)

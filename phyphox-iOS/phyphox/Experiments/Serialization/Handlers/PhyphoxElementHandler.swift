@@ -274,18 +274,18 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         var bluetoothOutputs: [ExperimentBluetoothOutput] = []
         var bluetoothDeviceMap: [String:ExperimentBluetoothDevice] = [:]
         
-        func getBluetoothDeviceForId(id: String?, name: String?, uuid: CBUUID?, autoConnect: Bool) -> ExperimentBluetoothDevice {
+        func getBluetoothDeviceForId(id: String?, nameFilter: BluetoothNameFilter, uuid: CBUUID?, autoConnect: Bool) -> ExperimentBluetoothDevice {
             let bluetoothDevice: ExperimentBluetoothDevice
             if let id = id, id != "" {
                 if let device = bluetoothDeviceMap[id] {
                     bluetoothDevice = device
                 } else {
-                    bluetoothDevice = ExperimentBluetoothDevice(id: id, name: name, uuid: uuid, autoConnect: autoConnect)
+                    bluetoothDevice = ExperimentBluetoothDevice(id: id, nameFilter: nameFilter, uuid: uuid, autoConnect: autoConnect)
                     bluetoothDeviceMap[id] = bluetoothDevice
                     bluetoothDevices.append(bluetoothDevice)
                 }
             } else {
-                bluetoothDevice = ExperimentBluetoothDevice(id: nil, name: name, uuid: uuid, autoConnect: autoConnect)
+                bluetoothDevice = ExperimentBluetoothDevice(id: nil, nameFilter: nameFilter, uuid: uuid, autoConnect: autoConnect)
                 bluetoothDevices.append(bluetoothDevice)
             }
             return bluetoothDevice
@@ -293,13 +293,13 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
         
         if let descriptors = inputDescriptor?.bluetooth {
             for descriptor in descriptors {
-                let device = getBluetoothDeviceForId(id: descriptor.id, name: descriptor.name, uuid: descriptor.uuid, autoConnect: descriptor.autoConnect)
+                let device = getBluetoothDeviceForId(id: descriptor.id, nameFilter: descriptor.nameFilter, uuid: descriptor.uuid, autoConnect: descriptor.autoConnect)
                 bluetoothInputs.append(try ExperimentBluetoothInput(device: device, descriptor: descriptor, buffers: buffers, timeReference: timeReference) )
             }
         }
         if let descriptors = outputDescriptor?.bluetooth {
             for descriptor in descriptors {
-                let device = getBluetoothDeviceForId(id: descriptor.id, name: descriptor.name, uuid: descriptor.uuid, autoConnect: descriptor.autoConnect)
+                let device = getBluetoothDeviceForId(id: descriptor.id, nameFilter: descriptor.nameFilter, uuid: descriptor.uuid, autoConnect: descriptor.autoConnect)
                 bluetoothOutputs.append(try ExperimentBluetoothOutput(device: device, descriptor: descriptor, buffers: buffers) )
             }
         }

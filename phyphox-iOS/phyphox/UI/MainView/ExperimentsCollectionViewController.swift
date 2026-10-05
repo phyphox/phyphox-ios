@@ -228,7 +228,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         
         let cancelAction = UIAlertAction(title: localize("cancel"), style: .cancel) { (action) in }
         
-        bluetoothScanResultsTableViewController = BluetoothScanResultsTableViewController(filterByName: nil, filterByUUID: nil, checkExperiments: true, autoConnect: false)
+        bluetoothScanResultsTableViewController = BluetoothScanResultsTableViewController(nameFilter: .none, filterByUUID: nil, checkExperiments: true, autoConnect: false)
         bluetoothScanResultsTableViewController?.tableView = FixedTableView()
         bluetoothScanResultsTableViewController?.deviceIsChosenDelegate = self
         
@@ -297,7 +297,7 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         guard automationBluetoothScan == nil else { return }
 
         //checkExperiments false: wanted is the experiment the DEVICE offers, not bundled ones registered for its name
-        let scan = BluetoothScan(scanDirectly: true, filterByName: name, filterByUUID: nil,
+        let scan = BluetoothScan(scanDirectly: true, nameFilter: BluetoothNameFilter(name: name), filterByUUID: nil,
                                  checkExperiments: false, autoConnect: true)
         scan.scanResultsDelegate = self
         automationBluetoothScan = scan

@@ -77,7 +77,7 @@
             <input parameter="frequency" type="value">10</input>
             <input parameter="dutycycle" type="value">0.5</input>
         </flashlight>
-        <bluetooth id="bleout" name="devicename" uuid="cddf0000-30f7-4671-8b43-5e40ba53514a" autoConnect="true">
+        <bluetooth id="bleout" name="devicename" nameRegex="devicename(:[0-9]+)?" uuid="cddf0000-30f7-4671-8b43-5e40ba53514a" autoConnect="true">
             <config char="cddf1003-30f7-4671-8b43-5e40ba53514a" conversion="uInt16LittleEndian">1000</config>
             <input char="cddf1002-30f7-4671-8b43-5e40ba53514a" conversion="float32LittleEndian" offset="0" keep="false" triggerId="btnSend">buffer</input>
             <input char="cddf1002-30f7-4671-8b43-5e40ba53514a" conversion="singleByte">buffer</input>

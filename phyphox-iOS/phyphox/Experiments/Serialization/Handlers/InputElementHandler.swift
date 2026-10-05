@@ -488,7 +488,7 @@ enum BluetoothMode: String, CaseInsensitiveAttributeDecodable, CaseIterable {
 
 struct BluetoothInputBlockDescriptor {
     let id: String?
-    let name: String?
+    let nameFilter: BluetoothNameFilter
     let uuid: CBUUID?
     let mode: BluetoothMode
     let rate: Double?
@@ -515,6 +515,7 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
     private enum Attribute: String, AttributeKey {
         case id
         case name
+        case nameRegex
         case uuid
         case mode
         case subscribeOnStart
@@ -534,7 +535,7 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
         }
 
         let id: String? = attributes.optionalString(for: .id)
-        let name: String? = attributes.optionalString(for: .name)
+        let nameFilter = try parseBluetoothNameFilter(name: attributes.optionalString(for: .name), regex: attributes.optionalString(for: .nameRegex))
         let uuidString: String? = attributes.optionalString(for: .uuid)
         let uuid: CBUUID?
         if let uuidString = uuidString {
@@ -551,7 +552,17 @@ private final class BluetoothElementHandler: ResultElementHandler, LookupElement
             throw ElementHandlerError.message("For poll mode, a finite rate > 0 is required.")
         }
         
-        results.append(BluetoothInputBlockDescriptor(id: id, name: name, uuid: uuid, mode: mode, rate: rate, subscribeOnStart: subscribeOnStart, autoConnect: autoConnect, outputs: outputHandler.results, configs: configHandler.results))
+        results.append(BluetoothInputBlockDescriptor(id: id, nameFilter: nameFilter, uuid: uuid, mode: mode, rate: rate, subscribeOnStart: subscribeOnStart, autoConnect: autoConnect, outputs: outputHandler.results, configs: configHandler.results))
+    }
+}
+
+///The name criteria of a bluetooth element in the input and the output block; an invalid nameRegex refuses the file
+///like an invalid enum value (ble-name-regex in phyphox-docs)
+func parseBluetoothNameFilter(name: String?, regex: String?) throws -> BluetoothNameFilter {
+    do {
+        return try BluetoothNameFilter(name: name, regex: regex)
+    } catch {
+        throw ElementHandlerError.message("The bluetooth nameRegex \"\(regex ?? "")\" is not a valid regular expression.")
     }
 }
 

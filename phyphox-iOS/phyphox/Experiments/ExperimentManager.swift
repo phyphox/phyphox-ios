@@ -102,12 +102,8 @@ final class ExperimentManager {
                     continue
                 }
                 if let dev = experiment.bluetoothDevices.first {
-                    if let name = dev.deviceName, name != "" {
-                        if let deviceName = deviceName {
-                            if !deviceName.contains(name) {
-                                continue
-                            }
-                        } else {
+                    if !dev.nameFilter.isEmpty {
+                        guard let deviceName = deviceName, dev.nameFilter.matches(deviceName) else {
                             continue
                         }
                     }
