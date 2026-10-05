@@ -264,7 +264,8 @@ final class SavedStateTests: XCTestCase {
         XCTAssertNotNil(time[2][1].range(of: "^[0-9.]+E[+-]?[0-9]+$", options: .regularExpression), "experiment time in scientific notation: \(time[2][1])")
         XCTAssertEqual(SavedState.parseNumber(time[2][1]), experiment.timeReference.timeMappings[1].experimentTime, "and exact to the last digit")
         XCTAssertNotNil(time[1][2].range(of: "^[0-9]+\\.[0-9]{3}$", options: .regularExpression), "system time in seconds with three decimals: \(time[1][2])")
-        XCTAssertNotNil(time[1][3].range(of: "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3} UTC[+-][0-9]{2}:[0-9]{2}$", options: .regularExpression),
+        //The XXX pattern of the docs page writes a zero offset as Z (CI runners are on UTC), like the export does
+        XCTAssertNotNil(time[1][3].range(of: "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3} UTC(Z|[+-][0-9]{2}:[0-9]{2})$", options: .regularExpression),
                         "system time text: \(time[1][3])")
         XCTAssertEqual(try text(folder, SavedState.timeEntry).components(separatedBy: "\n")[0], "\"event\",\"experiment time\",\"system time\",\"system time text\"")
 
