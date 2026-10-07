@@ -125,6 +125,27 @@ final class AppChromeTests: XCTestCase {
         XCTAssertTrue(app.buttons["Actions"].waitForExistence(timeout: 10), "and the experiment is back")
     }
 
+    // MARK: - the hint bubbles
+
+    // phyphox-test: app-chrome
+    func testHintBubblesSitBelowTheBar() throws {
+        //Reset the dismiss counters through NSArgumentDomain, a measurement started by an earlier test spends them
+        let app = launch(["-phyphoxUrl", "phyphox://asset=tone_generator.phyphox", "-phyphoxAutoConfirm",
+                          "-experiment_start_hint_dismiss_count", "0", "-experiment_info_hint_dismiss_count", "0"])
+        XCTAssertTrue(app.buttons["Actions"].waitForExistence(timeout: 20), "the experiment screen is up")
+        let bar = app.navigationBars.firstMatch
+
+        for text in ["Touch the triangle to start the experiment.",
+                     "Check experiment info to learn how to use this experiment."] {
+            let hint = app.staticTexts[text]
+            XCTAssertTrue(hint.waitForExistence(timeout: 10), "the hint \"\(text)\" is shown")
+            XCTAssertGreaterThanOrEqual(hint.frame.minY, bar.frame.maxY, "and not covered by the bar")
+            XCTAssertTrue(hint.isHittable, "and can be tapped away")
+            hint.tap()
+            XCTAssertFalse(hint.waitForExistence(timeout: 2), "tapping dismisses it")
+        }
+    }
+
     // MARK: - rotation
 
     // phyphox-test: app-chrome

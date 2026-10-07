@@ -638,7 +638,8 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         //Just under the bar, pointing up at the buttons, which never move (tab strip and countdown appear below/beside them)
         var originX = targetX - size.width / 2
         originX = max(12, min(originX, view.bounds.width - 12 - size.width))
-        let originY: CGFloat = 8
+        //The view extends under the bar (edgesForExtendedLayout), so start below its safe area
+        let originY: CGFloat = view.safeAreaInsets.top + 8
 
         tooltip.frame = CGRect(x: originX, y: originY, width: size.width, height: size.height)
         tooltip.pointerX = targetX - originX
