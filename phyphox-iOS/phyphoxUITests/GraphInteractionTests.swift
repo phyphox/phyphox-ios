@@ -33,6 +33,8 @@ final class GraphInteractionTests: XCTestCase {
         app.launchArguments = ["-phyphoxUrl", url.absoluteString,
                                "-phyphoxRemote", "-phyphoxRemotePort", String(port),
                                "-phyphoxAutoConfirm",
+                               //A fresh simulator shows the hint bubbles, which cover the top elements (AppChromeTests tests them)
+                               "-experiment_start_hint_dismiss_count", "3", "-experiment_info_hint_dismiss_count", "3",
                                "-AppleLocale", "en_US", "-AppleLanguages", "(en)"]
         app.launch()
 
