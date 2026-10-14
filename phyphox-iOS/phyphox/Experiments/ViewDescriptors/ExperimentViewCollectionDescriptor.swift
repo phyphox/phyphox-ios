@@ -102,6 +102,16 @@ func viewDescriptorsEqual(_ l: ViewDescriptor, _ r: ViewDescriptor) -> Bool {
             return false
         }
     }
+    else if let ll = l as? GeometryViewDescriptor {
+        guard let rr = r as? GeometryViewDescriptor, ll == rr else {
+            return false
+        }
+    }
+    else if let ll = l as? ScaleViewDescriptor {
+        guard let rr = r as? ScaleViewDescriptor, ll == rr else {
+            return false
+        }
+    }
     else if let ll = l as? VerticalViewDescriptor {
         guard let rr = r as? VerticalViewDescriptor, ll.visibilityBuffer == rr.visibilityBuffer, ll.spacing == rr.spacing, ll.children.elementsEqual(rr.children, by: viewDescriptorsEqual) else {
             return false

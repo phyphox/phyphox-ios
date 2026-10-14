@@ -16,7 +16,7 @@ enum GeometryShape: String, CaseInsensitiveAttributeDecodable, CaseIterable {
     case rectangle, circle, line, arc
 }
 
-struct GeometryViewElementDescriptor {
+struct GeometryViewElementDescriptor: Equatable {
     let visibility: String
     let shape: GeometryShape
     let aspectRatio: Double
@@ -123,7 +123,7 @@ enum ScaleRangeEnd: String, CaseInsensitiveAttributeDecodable, CaseIterable {
     case min, max
 }
 
-struct ScaleViewElementDescriptor {
+struct ScaleViewElementDescriptor: Equatable {
     let label: String
     let visibility: String
     let shape: ScaleShape

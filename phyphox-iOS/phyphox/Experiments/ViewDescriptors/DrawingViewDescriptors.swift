@@ -9,7 +9,7 @@ import Foundation
 
 ///geometry (file format 1.21, phyphox-docs views/drawing.md): a static shape. Nothing in it reads a data container; the
 ///label has no effect. The remote interface draws it from the "geometry" object (webinterface readme.md, "Drawing elements").
-struct GeometryViewDescriptor: ViewDescriptor {
+struct GeometryViewDescriptor: ViewDescriptor, Equatable {
     let label = ""
     let translation: ExperimentTranslationCollection? = nil
     let visibilityBuffer: DataBuffer?
@@ -51,7 +51,7 @@ struct GeometryViewDescriptor: ViewDescriptor {
 ///scale (file format 1.21, phyphox-docs views/drawing.md): the axis of a gauge. The geometry comes from the attributes,
 ///the range from min/max or the containers an input child binds them to; the label is the axis label. The unit is a
 ///logical unit like a value's, so a reference takes part in the unit conversion.
-struct ScaleViewDescriptor: ViewDescriptor {
+struct ScaleViewDescriptor: ViewDescriptor, Equatable {
     let label: String
     let translation: ExperimentTranslationCollection?
     let visibilityBuffer: DataBuffer?
