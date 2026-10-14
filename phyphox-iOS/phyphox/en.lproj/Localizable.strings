@@ -6,455 +6,896 @@
   Copyright © 2016 RWTH Aachen. All rights reserved.
 */
 
+/* Message of an alert titled "Warning" (warning), shown when the user taps an experiment that has been withdrawn from the iOS app and can no longer be started. */
 "apple_ban" = "This experiment is no longer available.";
+/* Name of the app. Brand name: do not translate, keep it in lower case. */
 "app_name" = "phyphox";
+/* Title of the action sheet with the actions for the running experiment (description, export, share, save state, remote access, …), opened by the "…" button at the top right of the experiment screen. Also the accessibility label (read aloud by VoiceOver, not visible) of that button and of the "…" button on the user's own experiments in the main list. Short. */
 "actions" = "Actions";
+/* Not used by the iOS app at the moment; translating it does no harm. Means the settings of the app. */
 "action_settings" = "Settings";
+/* Not used by the iOS app at the moment; translating it does no harm. Brand name: do not translate. */
 "title_activity_experiment" = "phyphox";
+/* Title of the menu opened by the + button at the top right of the main screen, which offers the ways to add an experiment (QR code, Bluetooth device, simple experiment). Short title. */
 "newExperiment" = "Add experiment";
+/* Entry in the menu of the + button on the main screen, and title of the screen in which the user creates a simple experiment by choosing sensors and a rate. */
 "newExperimentSimple" = "Add simple experiment";
+/* Not used by the iOS app at the moment; translating it does no harm. Note pointing to the phyphox website for more elaborate experiments than the "Add simple experiment" screen can create. */
 "newExperimentPhyphoxInfo" = "Visit phyphox.org to create more advanced experiments including data analysis and share them with colleagues, students and friends.";
+/* Grey hint inside the field for the title of a new simple experiment, and inside the text field of the dialog that renames a saved state. */
 "newExperimentInputTitle" = "Title";
+/* Not used by the iOS app at the moment; translating it does no harm. Label of a field for how many values a new simple experiment stores. */
 "newExperimentInputBufferSize" = "Buffer size (number of values to be stored)";
+/* Grey hint inside the field for the sensor rate of a new simple experiment: how many values per second (Hz) the sensors deliver. 0 means as fast as the sensor can. */
 "newExperimentInputRate" = "Sensor rate (in Hz, 0 = as fast as possible)";
+/* Heading above the list of sensors (each with a switch) in the "Add simple experiment" screen. */
 "newExperimentInputSensors" = "Active sensors";
+/* Title of several alerts: the warning not to damage the phone, shown when the app starts until the user taps "Do not show again", and alerts about experiments that cannot be opened. */
 "warning" = "Warning";
+/* Button in the warning alert at app start. If tapped, the warning is not shown again. */
 "donotshowagain" = "Do not show again";
+/* Text of the warning alert shown when the app starts. Reminds the user that phyphox experiments move the phone around (dropping, swinging, magnets). */
 "damageWarning" = "Please be careful not to damage your phone while experimenting. Please take special care to avoid dropping it on hard surfaces and do not expose it to excessive magnetic fields. The authors of phyphox are not responsible for any damage to your phone.";
+/* Not used by the iOS app at the moment; translating it does no harm. Short for "information". */
 "info" = "Info";
+/* Entry in the help menu (opened by the "i" icon at the top left of the main screen) and title of the screen listing the authors and the software libraries used. */
 "credits" = "Credits";
+/* First paragraph of the credits. Keep the institution's name; you may add the local name of the university if that is customary. */
 "creditsRWTH" = "phyphox has been created at the 2nd Institute of Physics at the RWTH Aachen University.";
+/* List of people in the credits. Translate only the role headings (the lines ending in a colon; keep the colon, the app recognises a heading by it). The names below each heading are shown in bold. Do not change the names and keep each name on its own line; \n is a line break. */
 "creditsNames" = "Development and Concept:\nDr. Sebastian Staacks\nConcept:\nProf. Christoph Stampfer\nProgramming:\nGaurav Tripathee\nDominik Dorsel\nJonas Gessner\nCamilla Lummerzheim";
+/* Licence note in the credits. Keep the product names "phyphox" and "RWTH Aachen" unchanged, they are registered trademarks. */
 "gpl" = "Phyphox is open source software released under the GNU General Public Licence. Please visit http://phyphox.org for further information and to get access to its source code. However, the name \"phyphox\" and \"RWTH Aachen\" are registered trademarks.";
+/* Name of a sensor: acceleration of the phone without the contribution of gravity. Used in the list of sensors in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. */
 "sensorLinearAcceleration" = "Linear Acceleration";
+/* Name of a sensor: the ambient light sensor (illuminance in lux). iPhones give apps no access to it, so iOS shows it only in the "sensor not available" message and in the privacy note of network experiments. */
 "sensorLight" = "Light";
+/* Name of a sensor: the gyroscope (rotation rate). Used in the list of sensors in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. */
 "sensorGyroscope" = "Gyroscope";
+/* Name of a sensor: the accelerometer (acceleration including gravity). Used in the list of sensors in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. */
 "sensorAccelerometer" = "Accelerometer";
+/* Name of a sensor: the magnetometer (magnetic field strength). Used in the list of sensors in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. */
 "sensorMagneticField" = "Magnetic Field";
+/* Name of a sensor: the barometer (air pressure). Used in the list of sensors in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. */
 "sensorPressure" = "Pressure";
+/* Name of a sensor: the proximity sensor near the earpiece, which detects whether something covers the screen. Used in the list of sensors in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. */
 "sensorProximity" = "Proximity";
+/* Name of a sensor: a temperature sensor (iPhones have none that apps can read). Shown in the "sensor not available" message and in the privacy note of network experiments. */
 "sensorTemperature" = "Temperature";
+/* Name of a sensor: relative air humidity (iPhones have no such sensor). Shown in the "sensor not available" message and in the privacy note of network experiments. */
 "sensorHumidity" = "Humidity";
+/* Name of a sensor: the orientation of the phone in space (attitude), computed from several sensors. Used in the list of sensors in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. */
 "sensorAttitude" = "Attitude";
+/* Name of a sensor: the direction and strength of gravity as estimated by the phone. Used in the list of sensors in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. */
 "sensorGravity" = "Gravity";
+/* Shown as the sensor name for a manufacturer-specific sensor that the app cannot name more precisely, in the "sensor not available" message and in the privacy note of network experiments. */
 "sensorVendor" = "Vendor specific";
+/* Name of a sensor: the depth sensor that measures distances to objects (LiDAR or time-of-flight camera). Keep the abbreviations LiDAR and ToF. Used in the "sensor not available" message and in the privacy note of network experiments. */
 "sensorDepth" = "Depth (LiDAR/ToF)";
+/* Name of the camera as a data source, in the privacy note of network experiments. Also the label of the button that selects the camera in the controls of the depth sensor (shown as "Camera: Back") and title of the menu it opens. */
 "sensorCamera" = "Camera";
+/* Name of the location (GPS) data source. Used in the list of sensors in "Add simple experiment". */
 "location" = "Location";
+/* Not used by the iOS app at the moment; translating it does no harm. Message that an experiment using the camera needs a newer iOS version than the one installed. */
 "cameraNotAvailableWarningText" = "This experiment is not available, as your device is not compatible with the minimum iOS version to run analysis with camera.";
+/* Title of the alert shown when the camera of the phone could not be started for an experiment that uses it. */
 "cameraLoadingErrorTitle" = "Camera Loading Error";
+/* Message in the "Camera Loading Error" alert (cameraLoadingErrorTitle). Technical error: the camera could not be set up. The text "Please reopen the experiment." (cameraLoadingErrorSecondMessage) is appended directly, so keep the trailing space. */
 "cameraLoadingErrorMessage1" = "Failed to configure the camera. ";
+/* Message in the "Camera Loading Error" alert (cameraLoadingErrorTitle). Technical error: the camera the experiment asks for is not available on this phone. The text "Please reopen the experiment." (cameraLoadingErrorSecondMessage) is appended directly, so keep the trailing space. */
 "cameraLoadingErrorMessage2" = "Default video device is unavailable. ";
+/* Message in the "Camera Loading Error" alert (cameraLoadingErrorTitle). Technical error: the camera could not be connected to the recording session that delivers its images to the app. The text "Please reopen the experiment." (cameraLoadingErrorSecondMessage) is appended directly, so keep the trailing space. */
 "cameraLoadingErrorMessage3" = "Couldn't add video device input to the camera session. ";
+/* Message in the "Camera Loading Error" alert (cameraLoadingErrorTitle). Technical error: the image output could not be connected to the recording session of the camera. The text "Please reopen the experiment." (cameraLoadingErrorSecondMessage) is appended directly, so keep the trailing space. */
 "cameraLoadingErrorMessage4" = "Cannot add the output to the camera session. ";
+/* Message in the "Camera Loading Error" alert (cameraLoadingErrorTitle). Technical error: the camera could not be opened as an input. The text "Please reopen the experiment." (cameraLoadingErrorSecondMessage) is appended directly, so keep the trailing space. */
 "cameraLoadingErrorMessage5" = "Couldn't create video device input. ";
+/* Message in the "Camera Loading Error" alert (cameraLoadingErrorTitle) when no more specific reason is known. The text "Please reopen the experiment." (cameraLoadingErrorSecondMessage) is appended directly, so keep the trailing space. */
 "cameraLoadingErrorMessage6" = "Camera could not be loaded properly. ";
+/* Second sentence of every message in the "Camera Loading Error" alert, appended to cameraLoadingErrorMessage1 to cameraLoadingErrorMessage6. */
 "cameraLoadingErrorSecondMessage" = "Please reopen the experiment.";
+/* Message of an alert shown when the camera cannot be started, either because the phone has no suitable camera or because phyphox has not been given permission to use it (in the iOS settings). */
 "cameraConfigErrorMessage" = "Camera configuration failed. Either your device camera is not available or its missing permissions.";
+/* Not used by the iOS app at the moment; translating it does no harm. Title of a message saying that the phone does not have a sensor an experiment needs. */
 "sensorNotAvailableWarningTitle" = "Sensor not available.";
+/* First part of a message, followed by a sensor name and then sensorNotAvailableWarningText2: "The sensor Pressure is not available. …". Shown in an alert when the user taps an experiment that needs a sensor this phone does not have (such experiments are greyed out in the list). */
 "sensorNotAvailableWarningText1" = "The sensor";
+/* Second part of a message, placed after "The sensor" and a sensor name. See sensorNotAvailableWarningText1. */
 "sensorNotAvailableWarningText2" = "is not available. Usually this means, that your device simply does not have this type of sensor.";
+/* Button in the alert about a missing sensor that opens an explanation in the FAQ on the phyphox website. */
 "sensorNotAvailableWarningMoreInfo" = "More info";
+/* Web address opened by "More info" in the alert about a missing sensor. Keep the URL unless phyphox.org has a version of this page in your language. */
 "sensorNotAvailableWarningMoreInfoURL" = "http://phyphox.org/faq/#faqMissingSensor";
+/* Not used by the iOS app at the moment; translating it does no harm. Button that would open an explanation on the phyphox website why an experiment is no longer available. */
 "appleBanWarningMoreInfo" = "More info";
+/* Not used by the iOS app at the moment. Web address of an explanation why an experiment is no longer available. Keep the URL unless phyphox.org has a version of this page in your language. */
 "appleBanWarningMoreInfoURL" = "http://phyphox.org/faq/#faqAppleBan";
+/* Generic confirmation button in alerts and dialogs. Also the button that closes the on-screen keyboard of an input field in an experiment, and the same button in the remote-access web interface. */
 "ok" = "OK";
+/* Button that closes the alert about a camera that could not be started (cameraConfigErrorMessage). Short. */
 "accept" = "Accept";
+/* Button in an error alert that repeats the failed action, for example a QR code scan or a Bluetooth connection. */
 "tryagain" = "Try again";
+/* Not used by the iOS app at the moment; translating it does no harm. Generic button that continues to the next step. */
 "doContinue" = "Continue";
+/* Button that closes an alert or screen, for example the credits, the device info or the experiment info. */
 "close" = "Close";
+/* Not used by the iOS app at the moment; translating it does no harm. A button that moves to the next step. */
 "next" = "Next";
+/* Generic button that closes an alert, menu or dialog without doing anything. */
 "cancel" = "Cancel";
+/* Placeholder when something has no name: a Bluetooth device that does not report a name, or the category of an experiment file that could not be read. Lower case, as it may appear in a sentence. */
 "unknown" = "unknown";
+/* Entry in the menu of a saved state in the experiment list on the main screen, and title and confirmation button of the alert in which the user types the new title. */
 "rename" = "Rename";
+/* Button that deletes an experiment or saved state from the user's collection on the main screen: in the menu of an entry, in the confirmation that follows (followed by the title of the experiment: "Delete Pendulum"), and when several selected entries are deleted at once. */
 "delete" = "Delete";
+/* Not used by the iOS app at the moment; translating it does no harm. Placeholder in a drop-down list before a value has been chosen; keep the dashes. */
 "select" = "--select--";
+/* Title of the menu that opens when the user taps a drop-down field in an experiment, listing the values to choose from. */
 "chooseOption" = "Choose an option";
+/* Question in the alert shown before an experiment (or saved state) is removed from the user's collection on the main screen. */
 "confirmDelete" = "Do you want to delete this experiment from your collection?";
+/* Title of the alert shown before an experiment is removed from the user's collection. */
 "confirmDeleteTitle" = "Confirm delete?";
+/* Not used by the iOS app at the moment (iOS shows its own pause symbol); translating it does no harm. Stops the measurement; the recorded data is kept. */
 "stop" = "Stop";
+/* Not used by the iOS app at the moment (iOS shows its own play symbol); translating it does no harm. Starts or resumes the measurement. */
 "start" = "Start";
+/* Accessibility label (read aloud by VoiceOver) of the trash button at the top of an experiment, which deletes all data recorded so far, and title of the alert asking for confirmation. Also used in the menu of the remote-access web interface. */
 "clear_data" = "Clear data";
+/* Question in the confirmation alert shown before the recorded data is cleared. Also used in the remote-access web interface. */
 "clear_data_question" = "Clear recorded data?";
+/* Question in the confirmation alert shown before the recorded data is cleared, when the experiment offers additional optional items (listed with switches below) that can be cleared as well, for example calibration values. Also used in the remote-access web interface. */
 "clear_data_question_select" = "Clear recorded data and the following optional items?";
+/* Button in the confirmation alert "Clear recorded data?" that deletes the recorded data. Short. */
 "clear" = "Clear";
+/* Title of the alert shown when the user taps the back button of an experiment that has been measuring for more than ten seconds. */
 "leave_experiment" = "Leave experiment";
+/* Question in the alert shown when the user leaves an experiment that has been measuring for more than ten seconds. Leaving discards the data unless it was exported or saved. */
 "leave_experiment_question" = "Leave this experiment and discard recorded data?";
+/* Button in the alert "Leave this experiment and discard recorded data?". Leaves the experiment. */
 "leave" = "Leave";
+/* Not used by the iOS app at the moment; translating it does no harm. Stops a timed run, i.e. a measurement that starts and stops automatically after set delays. Use the same term for "timed run" throughout. */
 "timed_stop" = "Stop timed run";
+/* Not used by the iOS app at the moment; translating it does no harm. Starts a timed run, i.e. a measurement that starts and stops automatically after set delays. Use the same term for "timed run" throughout. */
 "timed_start" = "Start timed run";
+/* Title of the progress indicator shown while an experiment (or the list of saved states) is loaded, or while a Bluetooth device is connected. Short. */
 "loadingTitle" = "Loading";
+/* Message of the progress indicator shown while an experiment is loaded from a Bluetooth device. */
 "loadingText" = "Loading experiment…";
+/* Message of the progress indicator shown while the app connects to the Bluetooth device(s) an experiment needs. */
 "loadingBluetoothConnectionText" = "Connecting to Bluetooth device…";
+/* Title of the alert in which the user sets up a timed run: a measurement that starts after a delay and stops automatically after a set duration. Use the same term for "timed run" throughout. */
 "timedRunDialogTitle" = "Timed Run";
+/* Label of an input field in the timed run alert: seconds to wait after pressing start before the measurement begins. (s) means seconds. */
 "timedRunStartDelay" = "Start delay (s)";
+/* Label of an input field in the timed run alert: how long the measurement runs, in seconds. (s) means seconds. */
 "timedRunStopDelay" = "Experiment duration (s)";
+/* Button in the timed run alert that applies the settings and turns the timed run mode on. The start button of the experiment then starts the countdown. */
 "enableTimedRun" = "Enable a timed run";
+/* Button in the timed run alert that turns the timed run mode off; the experiment then starts and stops only when the user taps the buttons. */
 "disableTimedRun" = "Disable a timed run";
+/* Entry in the actions menu of an experiment (opened by the "…" button at the top right of the experiment screen) and title of the alert in which the user exports the recorded data as a file (CSV, Excel, …). Also used in the menu of the remote-access web interface. */
 "export" = "Export Data";
+/* Message shown when the user tries to export but the experiment file defines nothing to export. "Configuration" means the experiment file. */
 "export_empty" = "This experiment configuration does not define any data to be exported. If this is an error, please contact the source of the QR code or configuration file.";
+/* Not used by the iOS app at the moment; translating it does no harm. Subject line used when exported data is shared, for example by e-mail. */
 "export_subject" = "Data from phyphox";
+/* Not used by the iOS app at the moment; translating it does no harm. Title of a menu in which the user picks an app to receive exported data. */
 "export_pick_share" = "Pick an export method";
+/* Entry in the actions menu of an experiment (opened by the "…" button at the top right of the experiment screen). Takes a screenshot of the current screen and shares it with another app. */
 "share" = "Share screenshot";
+/* Not used by the iOS app at the moment; translating it does no harm. Subject line used when a screenshot of phyphox is shared, for example by e-mail. */
 "share_subject" = "Screenshot from phyphox";
+/* Not used by the iOS app at the moment; translating it does no harm. Title of a menu in which the user picks the app to share a screenshot, an export or a saved state with. */
 "share_pick_share" = "Pick a share method";
+/* Entry in the actions menu of an experiment (opened by the "…" button at the top right of the experiment screen), shown when the experiment uses the magnetometer and the uncalibrated (raw) readings are currently selected. Switches to the readings the phone has corrected for magnetic disturbances of the device itself; the measurement is stopped. */
 "switch_to_calibrated_magnetometer" = "Switch to calibrated magnetometer";
+/* Entry in the actions menu of an experiment (opened by the "…" button at the top right of the experiment screen), shown when the experiment uses the magnetometer. Switches to the uncalibrated (raw) readings, without the phone's correction for magnetic disturbances of the device itself; the measurement is stopped. */
 "switch_to_raw_magnetometer" = "Switch to raw magnetometer";
+/* Entry in the actions menu of an experiment (opened by the "…" button at the top right of the experiment screen), shown when the experiment uses the gyroscope and the uncalibrated (raw) readings are currently selected. Switches to the readings the phone has corrected for drift; the measurement is stopped. */
 "switch_to_calibrated_gyroscope" = "Switch to calibrated gyroscope";
+/* Entry in the actions menu of an experiment (opened by the "…" button at the top right of the experiment screen), shown when the experiment uses the gyroscope. Switches to the uncalibrated (raw) readings, without the phone's drift correction; the measurement is stopped. */
 "switch_to_raw_gyroscope" = "Switch to raw gyroscope";
+/* Entry in the actions menu of an experiment (opened by the "…" button at the top right of the experiment screen) that switches remote access on: the running experiment can then be watched and controlled from a web browser on another device in the same network. Use the same term for "remote access" throughout. */
 "enableRemoteServer" = "Enable remote access";
+/* Entry in the actions menu of an experiment (opened by the "…" button at the top right of the experiment screen) while remote access is on. Switches it off again. Use the same term for "remote access" throughout. */
 "disableRemoteServer" = "Disable remote access";
+/* Warning shown before remote access is switched on. Remote access makes the running experiment available in any web browser on the same network, so it can be watched and controlled from a computer. Keep the paragraph breaks (\n\n). "ok" refers to the OK button of this alert. */
 "remoteServerWarning" = "You are about to enable remote access to the acquired data. You should only do so on a trusted network! Also note, that direct access between devices may not be possible on many corporate or university networks.\n\nFor best security and performance you should connect to this device via a tethering option (mobile hotspot).\n\nAfter pressing ok, you can access your measurement from any web browser on the same network.";
+/* Title of the warning shown before remote access is switched on. */
 "remoteServerWarningTitle" = "Security warning!";
+/* Not used by the iOS app at the moment; translating it does no harm. Message that remote access needs a Wi-Fi connection or a mobile hotspot. */
 "remoteServerNoNetwork" = "You need to set up a Wifi connection to the remote device first. Please enable Wifi or create a mobile hotspot.";
+/* Shown in the bar at the bottom of an experiment while remote access is on. The app adds a line break and then one or more web addresses (e.g. http://192.168.0.5:8080) that can be opened in a browser, so the text should end with a colon or equivalent. */
 "remoteServerActive" = "Remote access enabled. Access this experiment from the following URL:";
+/* Title of the error alert when remote access could not be switched on. */
 "remoteServerPortInUseTitle" = "Could not enable remote access";
+/* Error shown when remote access could not start because another app uses the same network port. The port number is appended in brackets: "(Port 8080)". The port can be changed on the phyphox page of the iOS Settings app. */
 "remoteServerPortInUse" = "Remote access could not be enabled because the port is already in use by another app on this device. Stop the app that is using the port or set a different port in the phyphox settings.";
+/* Not used by the iOS app at the moment; translating it does no harm. Settings for the mobile hotspot (sharing the phone's connection over Wi-Fi). */
 "hotspotSettings" = "Hotspot Settings";
+/* Entry in the menu of the remote web interface (the experiment opened in a computer's web browser). Shows the experiment in one narrow column like on a phone. */
 "switchToPhoneLayout" = "View: Narrow";
+/* Entry in the menu of the remote web interface. Arranges the experiment's elements in one wide column. */
 "switchColumns1" = "View: 1 column";
+/* Entry in the menu of the remote web interface. Arranges the experiment's elements in two columns. */
 "switchColumns2" = "View: 2 columns";
+/* Entry in the menu of the remote web interface. Arranges the experiment's elements in three columns. */
 "switchColumns3" = "View: 3 columns";
+/* Entry in the menu of the remote web interface. Switches between a dark and a bright colour scheme, for example for projectors. */
 "toggleBrightMode" = "Bright mode";
+/* Entry in the menu of the remote web interface, followed by buttons to make the text smaller or larger. */
 "fontSize" = "Font size";
+/* First entry in the actions menu of an experiment (opened by the "…" button at the top right of the experiment screen). Shows the description and instructions written by the author of the experiment. Use the same term as in the hint "Check experiment info …" (experimentinfo_hint). */
 "show_description" = "Experiment info";
+/* Entry in the actions menu of an experiment (opened by the "…" button at the top right of the experiment screen) for an experiment opened from outside the app (a file, link or QR code), and title of the alert offering to keep it and of the confirmation afterwards. Adds the experiment to the user's own list on the main screen ("collection"). Use the same term for "collection" throughout. */
 "save_locally" = "Add experiment to collection";
+/* Shown when an experiment opened from a file, link or QR code is started, offering to keep it in the user's collection (the list on the main screen). */
 "save_locally_message" = "This experiment has been opened from a remote source. Do you want to add it to your experiment collection?";
+/* Button in the alert offering to add an experiment from outside to the user's collection. */
 "save_locally_button" = "Save to collection";
+/* Confirmation after an experiment from outside has been added to the user's collection. */
 "save_locally_done" = "Experiment successfully added to collection.";
+/* Entry in the actions menu of an experiment (opened by the "…" button at the top right of the experiment screen) and title of the alert that saves its "state": the experiment together with all data recorded so far, so it can be reopened later. Use the same term for "state" throughout. */
 "save_state" = "Save experiment state";
+/* Heading of the category in the experiment list that holds the experiment states the user has saved (experiments including their recorded data). */
 "save_state_category" = "Saved experiment states";
+/* Explanation in the "Save experiment state" alert, above a text field with the title of the state. A state is the experiment including the recorded data. */
 "save_state_message" = "You can save the state of this experiment including your data to your collection or share it with a third-party app.";
+/* Title of an alert shown when the user taps an entry in the experiment list that only links to a web page, but the link is not a valid web address. Short title. */
 "url_invalid" = "Invalid URL";
+/* Message of the alert "Invalid URL" (url_invalid). Some entries in the experiment list are not experiments but links to a web page; this one has no valid web address. */
 "url_invalid_msg" = "This experiment is just a link, but no valid URL was found.";
+/* Not used by the iOS app at the moment; translating it does no harm. Label of the field for the title of a saved experiment state. */
 "save_state_title" = "Title";
+/* Button in the "Save experiment state" alert that saves the state to the user's collection on the main screen. Keep it short. */
 "save_state_save" = "To collection";
+/* Button in the "Save experiment state" alert, and entry in the menu of an experiment or saved state in the user's collection on the main screen: sends the file to another app. Keep it short. */
 "save_state_share" = "Share";
+/* Not used by the iOS app at the moment; translating it does no harm. Subject line when a saved experiment state is shared. */
 "save_state_subject" = "Experiment state for phyphox";
+/* Not used by the iOS app at the moment; translating it does no harm. Default title for a saved experiment state. A short noun for one recording. */
 "save_state_default_title" = "Measurement";
+/* Confirmation after an experiment state has been saved to the collection. */
 "save_state_success" = "State has been saved to your collection.";
+/* Entry in the actions menu of an experiment (opened by the "…" button at the top right of the experiment screen) that opens the timed run settings: a measurement that starts after a delay and stops after a set duration. Use the same term for "timed run" throughout. */
 "timedRun" = "Timed run";
+/* Not used by the iOS app at the moment; translating it does no harm. Asks the user to select which data sets to export. */
 "pick_exportSets" = "Pick the data sets to export.";
+/* Message in the "Export Data" alert, above the list of file formats (CSV, Excel, …). */
 "pick_exportFormat" = "Choose the data format.";
+/* Not used by the iOS app at the moment; translating it does no harm. Means there is no data that could be shown in a graph. */
 "noDrawableData" = "No drawable data.";
+/* Heading of the category in the experiment list that holds the simple experiments the user created in the app. The text is written into each created experiment as its category. */
 "categoryNewExperiment" = "Simple custom experiments";
+/* Heading of the category of experiments that show the plain data of one sensor (Accelerometer, Gyroscope, …). Must be exactly the same text as the translation of the category "Raw Sensors" in the experiments component: the app compares the two to place this category at the top of the list and to skip the "Check experiment info" hint for these experiments. */
 "categoryRawSensor" = "Raw Sensors";
+/* Heading of the last category in the experiment list, with links to support phyphox (donations, survey, website). */
 "categoryPhyphoxOrg" = "Contribute to phyphox";
+/* Hint bubble shown once on the main screen after an update, pointing down to the "Contribute to phyphox" category at the end of the list. */
 "categoryPhyphoxOrgHint" = "There are new options to support phyphox at the bottom of the list.";
+/* Hint bubble shown when an experiment is opened for the first time, pointing at the "…" button at the top right, whose menu contains "Experiment info" (show_description) with the experiment's instructions. */
 "experimentinfo_hint" = "Check experiment info to learn how to use this experiment.";
+/* Hint bubble pointing at the start button (a triangle pointing right, "play") at the top right of an experiment. */
 "start_hint" = "Touch the triangle to start the experiment.";
+/* Title of the help menu, opened by the "i" icon at the top left of the main screen. Means "help and information about the app". */
 "help" = "Help and info";
+/* Entry in the help menu of the main screen (the "i" icon at the top left). Opens the phyphox website with ideas and instructions for experiments. */
 "experimentsPhyphoxOrg" = "Experiment ideas and instructions";
+/* Web address opened by "Experiment ideas and instructions" in the help menu. Keep the URL unless phyphox.org has a version of this page in your language. */
 "experimentsPhyphoxOrgURL" = "http://phyphox.org/experiments";
+/* Entry in the help menu of the main screen. Opens the FAQ page on the phyphox website. */
 "faqPhyphoxOrg" = "Frequently asked questions";
+/* Web address opened by "Frequently asked questions" in the help menu. Keep the URL unless phyphox.org has a version of this page in your language. */
 "faqPhyphoxOrgURL" = "http://phyphox.org/faq";
+/* Entry in the help menu of the main screen that opens the website page about remote access (controlling an experiment from a web browser). */
 "remotePhyphoxOrg" = "Remote control help";
+/* Web address opened by "Remote control help" in the help menu. Keep the URL unless phyphox.org has a version of this page in your language. */
 "remotePhyphoxOrgURL" = "http://phyphox.org/remote-control";
+/* Not used by the iOS app at the moment; translating it does no harm. Error that the audio hardware runs at a different sampling rate than the experiment requires, for example because AirPlay is active. Keep the name AirPlay. */
 "AudioRateMissmatch" = "Error: Sampling rate mismatch. Please disable any apps or services (like AirPlay) which force a different audio sampling rate.";
+/* Entry in the help menu of the main screen and title of the alert it opens. The alert lists technical details of the app and the phone (versions, model, sensors) that users can send to the developers when reporting a problem. */
 "deviceInfo" = "Device info";
+/* Button in the "Device info" alert. Copies the listed technical details to the clipboard. */
 "copyToClipboard" = "Copy to clipboard";
+/* Not used by the iOS app at the moment; translating it does no harm. Confirmation after the device info has been copied to the clipboard. */
 "deviceInfoCopied" = "The device info has been copied to your clipboard.";
+/* Tool button below a graph shown in full screen (tap a graph to get there): in this mode, dragging moves the graph and pinching zooms. Also used in the remote web interface. Keep it short. */
 "graph_tools_pan_and_zoom" = "Pan and zoom";
+/* Tool button below a full-screen graph: in this mode, tapping the graph selects a data point and shows its values. Experiments can rename it. Also used in the remote web interface. Keep it short. */
 "graph_tools_pick" = "Pick data";
+/* Tool button below a full-screen graph that opens a menu with further graph tools. Keep it short. */
 "graph_tools_more" = "More tools";
+/* Entry in the graph tools menu: shows the time axis as clock time (time of day) instead of seconds since the start of the measurement. Also used in the remote web interface. */
 "graph_tools_system_time" = "Convert to system time";
+/* Entry in the graph tools menu: undoes zooming and panning so the graph shows all data again. Also used in the remote web interface. */
 "graph_tools_reset" = "Reset zoom";
+/* Entry in the graph tools menu: keeps the zoomed section but moves it along with new incoming data. Also used in the remote web interface. */
 "graph_tools_follow" = "Follow new data";
+/* Entry in the graph tools menu: fits a straight line (y = a x + b) to the visible data. */
 "graph_tools_linear_fit" = "Linear fit";
+/* Entry in the graph tools menu: exports only the data of this graph. */
 "graph_tools_export" = "Export this dataset";
+/* Entry in the graph tools menu: switches the x axis (horizontal) to a logarithmic scale. Also used in the remote web interface. */
 "graph_tools_log_x" = "Logarithmic x axis";
+/* Entry in the graph tools menu: switches the y axis (vertical) to a logarithmic scale. Also used in the remote web interface. */
 "graph_tools_log_y" = "Logarithmic y axis";
+/* Heading in the read-out box of a full-screen graph in pick mode, above the coordinates of the selected data point. Also used in the remote web interface. */
 "graph_point_label" = "Point";
+/* Heading in the read-out box of a full-screen graph when two data points are selected, above the slope (rise over run) between them. Also used in the remote web interface. */
 "graph_slope_label" = "Slope";
+/* Heading in the read-out box of a full-screen graph when two data points are selected, above the differences of their x and y values. Also used in the remote web interface. */
 "graph_difference_label" = "Difference";
+/* Heading of the result box of the linear fit in a full-screen graph; the values of a and b follow below. Keep the formula y = a x + b unchanged, as the following lines refer to a and b. */
 "graph_fit_label" = "Linear fit: y = a x + b";
+/* Shown in the middle of an empty graph before any data has been recorded. Also used in the remote web interface. */
 "graph_no_data" = "No data";
+/* Shown in the middle of a graph whose data contains no plottable numbers (for example only invalid values, or only values that cannot be shown on a logarithmic axis). Also used in the remote web interface. */
 "graph_no_valid_data" = "No valid data";
+/* Shown in the middle of a graph when there is data, but none of it lies in the zoomed section. Also used in the remote web interface. */
 "graph_no_data_in_range" = "No data in range";
 
 
+/* Short error in the remote-access web interface (the experiment opened in a computer's web browser), shown when the user typed something that is not a number. */
 "invalidValue" = "Invalid value";
+/* Help text below graphs in the remote web interface (the experiment opened in a computer's web browser), explaining mouse and touch gestures. "shift" is the keyboard key; use the name printed on keyboards in your language. */
 "remoteGraphZoomHint" = "Mouse: drag to pan, hold shift and drag to zoom into a region, wheel to zoom. Touch: pinch to zoom, drag to pan.";
+/* Warning shown in the remote web interface for colour map graphs (graphs that use colour as a third axis), which the browser can only approximate. */
 "remoteColorMapWarning" = "The color plot in the remote interface is only an approximation. In contrast to the in-app plot, at the moment it cannot handle non-equidistant data or logarithmic scaling on the x and y axis. So, data at varying intervals may appear at the wrong location.";
+/* Shown in the remote web interface in place of the depth sensor controls, which only work on the phone. Keep LiDAR and ToF. */
 "remoteDepthGUIWarning" = "Previewing and controlling the LiDAR/ToF sensor on the remote interface is not supported.";
+/* Shown in the remote-access web interface (the experiment opened in a computer's web browser) in place of the camera preview and controls, which only work on the phone. */
 "remoteCameraWarning" = "Previewing and controlling the camera sensor on the remote interface is not supported.";
 /* Title of the dialog shown when the user leaves the full-screen view of a graph after zooming or panning it. The dialog asks whether the graph should keep showing the zoomed section. Also used for the same dialog in the remote-access web interface. Short dialog title. */
 "applyZoomQuestionTitle" = "Keep this view?";
+/* Text of the "Keep this view?" dialog, shown when the user closes the full-screen view of a graph after zooming or panning it. "Return" means coming back to the normal view of the experiment. */
 "applyZoomQuestion" = "You zoomed in. Should the graph keep showing this section when you return?";
+/* One line in the "Keep this view?" dialog describing the zoomed range of one graph axis. %1$@ is the axis label from the experiment (e.g. "Acceleration"), %2$@ and %3$@ are the lower and upper limit as formatted numbers with their unit (e.g. "2.5 s"), or clock times on a time axis. Example: "Time: 2.5 s to 7.0 s". Also used in the remote-access web interface. */
 "applyZoomRange" = "%1$@: %2$@ to %3$@";
+/* Button or option in the "Keep this view?" dialog: discard the zoom so the graph shows all data again. */
 "applyZoomActionReset" = "Reset zoom";
+/* Button or option in the "Keep this view?" dialog: keep showing the zoomed section of the graph. */
 "applyZoomActionKeep" = "Keep this section";
+/* Option in the "Keep this view?" dialog: keep the zoomed width but let it move along with new incoming data (offered for the x axis only). */
 "applyZoomActionFollow" = "Keep and follow new data";
+/* Button in the "Keep this view?" dialog that expands per-axis options. */
 "applyZoomMoreOptions" = "More options…";
+/* Label in the expanded "Keep this view?" dialog, next to the selected option "this graph only", "the same data", "the same unit (…)" or "any … axis"; tapping it opens a menu with the same title to choose another one. Ends with an ellipsis because the selected option completes the sentence. */
 "applyZoomAlsoApply" = "Also apply to other graphs with…";
+/* Option completing "Also apply to other graphs with…": the zoom applies to this graph only. Lower case, as it continues the sentence. */
 "applyZoomTargetThis" = "this graph only";
+/* Option completing "Also apply to other graphs with…": also zoom other graphs that show the same data on this axis. Lower case, as it continues the sentence. */
 "applyZoomTargetSameData" = "the same data";
+/* Option completing "Also apply to other graphs with…": also zoom other graphs whose axis has the same unit. %@ is the unit symbol, e.g. "s" or "m/s²". Lower case, as it continues the sentence. */
 "applyZoomTargetSameUnit" = "the same unit (%@)";
+/* Option completing "Also apply to other graphs with…": also zoom every other graph on this axis. %@ is the axis name, "x" or "y". Lower case, as it continues the sentence. */
 "applyZoomTargetSameAxis" = "any %@ axis";
+/* Entry in the menu of the + button at the top right of the main screen: scan for a Bluetooth Low Energy device such as a sensor box or a microcontroller and open an experiment for it. */
 "newExperimentBluetooth" = "Add experiment for Bluetooth device";
+/* Not used by the iOS app at the moment; translating it does no harm. Title of an error message when the Bluetooth scan for new experiments failed. */
 "newExperimentBluetoothErrorTitle" = "Bluetooth scan error";
+/* Button in the dialog after selecting a Bluetooth device that sends its own experiment to the phone. Downloads that experiment from the device. */
 "newExperimentBluetoothLoadFromDevice" = "Load from device";
+/* Text in the dialog after selecting a Bluetooth device that sends its own experiment. "load from device" quotes the button; use the same words as your translation of that button. */
 "newExperimentBluetoothLoadFromDeviceInfo" = "This device provides its own phyphox experiment. Select \"load from device\" to open it.";
+/* Entry in the menu of the + button at the top right of the main screen, title of the camera screen that scans the QR code, and title of the message shown while further QR codes of the same experiment are missing. */
 "newExperimentQR" = "Add experiment from QR code";
+/* Not used by the iOS app at the moment; translating it does no harm. Instruction to scan a QR code that contains a phyphox experiment. */
 "newExperimentQRscan" = "Scan a QR code that contains a phyphox experiment.";
+/* Title of the error alert when a scanned QR code could not be used. */
 "newExperimentQRErrorTitle" = "QR code error.";
+/* Error shown when a scanned QR code contains neither an experiment nor a link to one. */
 "newExperimentQRNoExperiment" = "Could not find a QR code that contains a phyphox experiment.";
+/* Error shown when a large experiment is split over several QR codes and the user scanned a code that belongs to a different experiment. */
 "newExperimentQRcrcMismatch" = "The QR code you just scanned does not seem to match to the previous codes. Please make sure to only scan the codes belonging to the same experiment.";
+/* First part of a message shown when a large experiment is split over several QR codes. Assembled as: [this text] [total number of codes] [second part] [list of the missing code numbers], e.g. "The QR code you just scanned is part of a set of 3 codes. Please press continue to scan the remaining codes. Codes still missing: 2, 3". */
 "newExperimentQRCodesMissing1" = "The QR code you just scanned is part of a set of";
+/* Second part of a message shown when an experiment is split over several QR codes, placed after the total number of codes and followed by the numbers of the codes still missing. See newExperimentQRCodesMissing1 for the full sentence. "Continue" means continuing the scan; the alert's only button is OK. */
 "newExperimentQRCodesMissing2" = "codes. Please press continue to scan the remaining codes. Codes still missing:";
+/* Error shown when the data read from a QR code is damaged (the checksum does not match). */
 "newExperimentQRBadCRC" = "Invalid checksum. This means that either the QR code is bad or something went wrong while scanning it.";
+/* Title of the error alert when an experiment could not be received from a Bluetooth device. Also used as the start of the error message when sending a request to the device failed, followed by a technical reason in English in brackets. */
 "newExperimentBTReadErrorTitle" = "Bluetooth experiment error.";
+/* Error shown when the experiment a Bluetooth device sent to the phone arrived incomplete or damaged. A technical reason in English is appended in brackets. */
 "newExperimentBTReadErrorCorrupted" = "The transmitted experiment data is corrupted.";
+/* Title of an alert showing a QR code of the web address of remote access, opened by the QR code icon next to the address in the bar at the bottom of an experiment. Scanning it with another device opens the experiment in that device's web browser. */
 "showQRCodeForRemoteURL" = "QR code to access the URL";
+/* Not used by the iOS app at the moment; translating it does no harm. Message of a generic error, shown when no more specific explanation is available. */
 "generalErrorDialog" = "An error has occurred.";
+/* Title of the dialog shown when a file or QR code contains several experiments at once. */
 "open_zip_title" = "Opening a set of experiments";
+/* Text of the dialog shown when a file contains several experiments. A list of the experiments follows below; "collection" is the user's list on the main screen. */
 "open_zip_dialog_instructions" = "This resource contains multiple experiments. You can either pick one to open it and optionally save it to your collection or use the button below to save them all to your collection at once.";
+/* Button that adds all offered experiments to the user's collection at once. */
 "open_save_all" = "Save all";
+/* Title of the dialog listing the experiments phyphox has for a Bluetooth device the user selected after a scan. */
 "open_bluetooth_assets_title" = "Experiments for Bluetooth device";
+/* Text of the dialog listing the experiments phyphox has for a selected Bluetooth device. The list follows below. */
 "open_bluetooth_assets" = "The following experiments for your device are available from phyphox. You can either just open and use them or add them all to your collection to easily access them from the main menu.";
+/* Not used by the iOS app at the moment; translating it does no harm. Name of the Bluetooth Low Energy (BLE) technology. "Bluetooth Low Energy" is a technical name and usually stays in English. */
 "bluetooth" = "Bluetooth Low Energy";
+/* Title of the alert that lists Bluetooth devices found by a scan, so the user can choose one. */
 "bt_pick_device" = "Please pick a device.";
+/* Shown in the alert listing Bluetooth devices while the scan is running. A device id may be appended in brackets. */
 "bt_scanning_generic" = "Scanning for Bluetooth devices…";
+/* First part of the text shown while scanning for Bluetooth devices, followed by a device name in quotes and then bt_scanning_specific2: Scanning for Bluetooth devices with "phyphox" in their name… */
 "bt_scanning_specific1" = "Scanning for Bluetooth devices with";
+/* Second part of the text shown while scanning, placed after a device name in quotes. See bt_scanning_specific1. */
 "bt_scanning_specific2" = "in their name…";
+/* Shown below a Bluetooth device in the scan list when phyphox has no experiment for it. */
 "bt_device_not_supported" = "No experiment available.";
+/* Not used by the iOS app (the explanation concerns Android only); translating it does no harm. */
 "bt_location_explanation" = "Android requires a location permission for Bluetooth scans as the result could be used to derive location information. We will now request these permissions. You need to grant them in order to do a Bluetooth scan.";
+/* First part of an error message, followed by a technical identifier (UUID) and then bt_exception_uuid2: "Characteristic with UUID 1234… not found." A characteristic is a data channel of a Bluetooth Low Energy device; use the established technical term of your language or keep it. */
 "bt_exception_uuid" = "Characteristic with UUID";
+/* Second part of an error message, placed after a UUID. See bt_exception_uuid. */
 "bt_exception_uuid2" = "not found.";
+/* Error shown in an alert when Bluetooth is switched off on the phone. */
 "bt_exception_disabled" = "Bluetooth is disabled. Please enable bluetooth and try again.";
+/* Error shown in an alert when the connection to a Bluetooth device could not be opened. A technical reason in English may be appended. */
 "bt_exception_connection" = "Bluetooth connection could not be opened.";
+/* Error shown in an alert when the Bluetooth device an experiment needs could not be found. */
 "bt_exception_notfound" = "Bluetooth device not found.";
+/* Error shown when the app could not read which functions (services) a Bluetooth device offers. A technical reason in English may be appended in brackets. */
 "bt_exception_services" = "Services could not be discovered.";
+/* Not used by the iOS app at the moment; translating it does no harm. Starts a line appended to Bluetooth error messages that names the device: [this text] address "…" name "…". */
 "bt_exception_device" = "Error for the device with";
+/* Not used by the iOS app at the moment; translating it does no harm. Word inserted in the line naming a Bluetooth device in error messages, followed by the device's hardware address in quotes. See bt_exception_device. */
 "bt_exception_device_address" = "address";
+/* Not used by the iOS app at the moment; translating it does no harm. Word inserted in the line naming a Bluetooth device in error messages, followed by the device's name in quotes. See bt_exception_device. */
 "bt_exception_device_name" = "name";
+/* Not used by the iOS app at the moment; translating it does no harm. Error that the experiment file contains an invalid value for the attribute "rate" of a Bluetooth input. Keep "rate" in English: it is the attribute name in the file. */
 "bt_exception_rate" = "Invalid value for \"rate\".";
+/* First part of an error message, followed by a technical identifier (UUID) and then bt_exception_notification_enable: "The notification for the characteristic with the UUID 1234… could not be enabled." Notifications let a Bluetooth device push new values to the phone. */
 "bt_exception_notification" = "The notification for the characteristic with the UUID";
+/* Second part of an error message, placed after a UUID. See bt_exception_notification. */
 "bt_exception_notification_enable" = "could not be enabled.";
+/* Second part of an error message, placed after a UUID: "The notification for the characteristic with the UUID 1234… could not be disabled again." Shown when the app could not tell a Bluetooth device to stop pushing new values. See bt_exception_notification. */
 "bt_exception_notification_disable" = "could not be disabled again.";
+/* Not used by the iOS app at the moment; translating it does no harm. First part of an error message, followed by a technical identifier (UUID) and then bt_exception_notification_fail. */
 "bt_exception_notification_fail_enable" = "Turning on notifications for the Characteristic with the UUID";
+/* Not used by the iOS app at the moment; translating it does no harm. Second part of an error message, placed after a UUID. See bt_exception_notification_fail_enable. */
 "bt_exception_notification_fail" = "was not successful.";
+/* Not used by the iOS app at the moment; translating it does no harm. First part of an error message, followed by a Bluetooth characteristic identifier and bt_exception_config2. */
 "bt_exception_config" = "The value for the characteristic";
+/* Not used by the iOS app at the moment; translating it does no harm. Second part of an error message, placed after a Bluetooth characteristic identifier. */
 "bt_exception_config2" = "could not be set.";
+/* Error shown in an alert when the measurement is started but a Bluetooth device it needs is not connected. */
 "bt_exception_no_connection" = "The Bluetooth device is not connected. Experiment can not be started.";
+/* Not used by the iOS app at the moment; translating it does no harm. Error that the connection to a Bluetooth device was lost during an experiment. */
 "bt_exception_disconnected" = "The Bluetooth device has been disconnected.";
+/* Not used by the iOS app at the moment; translating it does no harm. Generic error when something went wrong with a Bluetooth device and no more specific message is available. */
 "bt_default_error_message" = "There is an error with the Bluetooth device.";
+/* Error message, followed by a technical identifier (UUID): sending a value to a Bluetooth device failed. A characteristic is a data channel of a Bluetooth Low Energy device; use the established technical term of your language or keep it. */
 "bt_error_writing" = "Error while writing characteristic with UUID";
+/* Error message, followed by a technical identifier (UUID): reading a value from a Bluetooth device failed. A characteristic is a data channel of a Bluetooth Low Energy device; use the established technical term of your language or keep it. */
 "bt_error_reading" = "Error while reading characteristic with UUID";
+/* Not used by the iOS app at the moment; translating it does no harm. Error while discovering the services of a Bluetooth device. */
 "bt_error_discovering" = "Error while discovering the services of the bluetooth device.";
+/* Error shown when the experiment a Bluetooth device should send to the phone did not arrive in time. A technical reason in English is appended in brackets. */
 "bt_fail_reading" = "The reading operation was not successful.";
+/* Not used by the iOS app at the moment; translating it does no harm. Error that sending a value to a Bluetooth device failed. */
 "bt_fail_writing" = "The writing operation was not successful.";
+/* Note in the alert listing Bluetooth devices during a scan. "more info" quotes the button; use the same words as your translation of bt_more_info_link_button. */
 "bt_more_info_link_text" = "If your device is not supported, pick \"more info\" to learn more about the flexible Bluetooth Low Energy support in phyphox on our website.";
+/* Button in the alert listing Bluetooth devices that opens the page about Bluetooth support on the phyphox website. */
 "bt_more_info_link_button" = "More info";
+/* Web address opened by "More info" in the alert listing Bluetooth devices. Keep the URL unless phyphox.org has a version of this page in your language. */
 "bt_more_info_link_url" = "https://phyphox.org/ble";
+/* Title of the privacy notice shown before an experiment sends data to a server on the network (for example a school's data collection). */
 "networkPrivacyWarning" = "Privacy warning";
+/* Button label (not a web address) in the privacy notice of network experiments: opens the privacy policy of the experiment's author. */
 "networkVisitPrivacyURL" = "Privacy policy";
+/* Text of the privacy notice shown before a network experiment starts. It is followed by a bullet list of the data that may be sent (the strings networkPrivacyUniqueID, networkPrivacySensorData, …). */
 "networkPrivacyInfo" = "This experiment uses a network connection, which means that experiment data can be transmitted to a network service. You can find more details by clicking the privacy policy button below, which will take you to a website with a privacy policy provided by the creator of this experiment. If the network service is not a local device, you should be aware that phyphox may transmit the following information if you start this experiment:";
+/* Item in the bullet list of the network privacy notice: an anonymous id is sent that lets the server recognise data from this phone. */
 "networkPrivacyUniqueID" = "An id that is unique to this device and the network service, which allows to match all data sent from this device through this experiment configuration.";
+/* Item in the bullet list of the network privacy notice, followed by a comma-separated list of sensor names. */
 "networkPrivacySensorData" = "Data from the following sensors:";
+/* Item in the bullet list of the network privacy notice: audio from the microphone may be sent. */
 "networkPrivacySensorMicrophone" = "Recordings or data derived from recordings from the microphone.";
+/* Item in the bullet list of the network privacy notice: location data may be sent. */
 "networkPrivacySensorLocation" = "Location data (GPS data or similar).";
+/* Item in the bullet list of the network privacy notice: the phone model and app version may be sent. */
 "networkPrivacyDeviceInfo" = "Detailed information about the model of your device and/or the version of phyphox.";
+/* Item in the bullet list of the network privacy notice, followed by a comma-separated list of sensor names whose technical details (range, resolution, …) may be sent. */
 "networkPrivacySensorInfo" = "Technical details about the following sensors:";
+/* Heading in the timed run dialog above the switches that turn the acoustic signals (beeps) on or off. */
 "timedRunBeeps" = "Acoustic signals";
+/* Switch in the timed run dialog: a beep every second while waiting for the delayed start. */
 "beeperCountdown" = "Countdown sounds";
+/* Switch in the timed run dialog: a beep when the measurement starts. */
 "beeperStart" = "Start sound";
+/* Switch in the timed run dialog: a short beep every second while the measurement is running. */
 "beeperRunning" = "Running sounds";
+/* Switch in the timed run dialog: a beep when the measurement stops. */
 "beeperStop" = "Stop sound";
+/* Button in the timed run dialog that turns all acoustic signals on. */
 "activate_all" = "Activate all";
+/* Option in the camera selection of the depth sensor controls: the camera on the screen side of the phone. */
 "cameraFrontFacing" = "Front facing camera";
+/* Option in the camera selection of the depth sensor controls: the main camera on the back of the phone. */
 "cameraBackFacing" = "Back facing camera";
+/* Button in the timed run dialog that turns all acoustic signals off. */
 "deactivate_all" = "Deactivate all";
+/* Label of the button in the depth sensor (LiDAR/ToF) controls that chooses how the distances inside the selected region are combined into one value (shown as "Aggregation mode: Average"), and title of the menu it opens. */
 "depthAggregationMode" = "Aggregation mode";
+/* Message in the menu "Aggregation mode" of the depth sensor (LiDAR/ToF) controls, above the options Closest, Average and Weighted. */
 "depthAggregationModePrompt" = "Select the method to aggregate depth information within the selected region.";
+/* Option in the menu "Aggregation mode" of the depth sensor controls: use the closest distance in the selected region. Also shown on the button after "Aggregation mode: ". Short. */
 "depthAggregationModeClosest" = "Closest";
+/* Option in the menu "Aggregation mode" of the depth sensor controls: use the average distance in the selected region. Also shown on the button after "Aggregation mode: ". Short. */
 "depthAggregationModeAverage" = "Average";
+/* Option in the menu "Aggregation mode" of the depth sensor controls: use an average weighted by the sensor's confidence in each distance. Also shown on the button after "Aggregation mode: ". Short. */
 "depthAggregationModeWeighted" = "Weighted";
+/* Title of the warning shown before an experiment that makes the flashlight blink quickly. */
 "warning_photosensitivity" = "Photosensitivity Warning";
+/* Warning shown before an experiment that makes the flashlight blink quickly (e.g. a stroboscope). Keep the line breaks. */
 "warning_photosensitivity_message" = "This experiment may produce high-frequency light pulses. It may trigger discomfort or seizures for individuals with photosensitive epilepsy. \n\nAvoid staring directly at the light source.";
+/* Title of a warning shown when the phone gets too warm while the flashlight is used by an experiment. */
 "device_overheating" = "Device Overheating";
+/* Shown when the phone gets too warm while an experiment uses the flashlight; the app has switched the flashlight off. */
 "device_heating_serious" = "The device is getting very warm. The flashlight has been turned off to cool down.";
+/* Button in the camera settings of the spectroscopy experiment that opens the dialog to choose how the spectrum lies in the camera image. Keep it short. */
 "spectrum_orientation" = "Orientation";
+/* Title of the settings dialog of the spectroscopy (camera spectrum) analysis. */
 "spectrum_analysis_setting" = "Spectrum Analysis Settings";
+/* Question in the spectroscopy settings dialog: does the spectrum (the rainbow of colours seen through the diffraction grating) run along the long or the short side of the camera image? */
 "which_spectrum_orientation" = "What is your device's orientation in regard to the spectrum?";
+/* Option in the spectroscopy settings: the phone is held upright (portrait) relative to the spectrum. */
 "portrait_orientation" = "Portrait";
+/* Option in the spectroscopy settings: the phone is held sideways (landscape) relative to the spectrum. */
 "landscape_orientation" = "Landscape";
+/* Entry in the help menu of the main screen (the "i" icon at the top left). Opens the phyphox page of the iOS Settings app. */
 "settings" = "Settings";
+/* State of the automatic exposure in the camera settings of an experiment: switched off. Very short. */
 "off" = "Off";
+/* State of the automatic exposure in the camera settings of an experiment: switched on. Very short. */
 "on" = "On";
+/* Label of the button in the camera preview that switches between front and back camera, while the back camera is used. Keep it very short. */
 "cameraBack" = "Back";
+/* Label of the button in the camera preview that switches between front and back camera, while the front (screen side) camera is used. Keep it very short. */
 "cameraFront" = "Front";
+/* Label of the camera zoom control in the camera settings (the zoom factor is shown next to it). Keep it very short. */
 "cameraZoom" = "Zoom";
+/* Shown in the camera settings of an experiment in place of a value (ISO, shutter speed, exposure, aperture) that has not been determined yet. Short. */
 "notSet" = "Not set";
+/* Not used by the iOS app at the moment; translating it does no harm. Means the live camera preview. */
 "preview" = "Preview";
+/* White balance option in the camera settings: the camera adjusts colours automatically. Keep it very short (segmented button). */
 "wb_auto" = "Auto";
+/* White balance option in the camera settings: the current colour correction is frozen. Keep it very short (segmented button). */
 "wb_locked" = "Locked";
+/* White balance option in the camera settings: the user sets a colour temperature in kelvin. Keep it very short (segmented button). */
 "wb_temperature" = "Temperature";
+/* Label of the tint slider in the camera's white balance settings (shift between green and magenta), followed by the value. */
 "wb_tint" = "Tint";
+/* Title of an alert shown when an experiment needs the microphone but phyphox is not allowed to use it. Short title. */
 "permission_microphone_required" = "Microphone required";
+/* Message of the alert "Microphone required", shown when the user has denied phyphox access to the microphone. Use the names of the iOS Settings app in your language for the path; "->" separates the steps. */
 "permission_microphone_denied" = "This experiment requires access to the Microphone, but the access has been denied. Please enable access to the microphone in Settings->Privacy->Microphone";
+/* Message of the alert "Microphone required", shown when access to the microphone is blocked by a restriction (Screen Time, for example set by parents or a school). Use the names of the iOS Settings app in your language for the path; "->" separates the steps. */
 "permission_microphone_restricted" = "This experiment requires access to the Microphone, but the access has been restricted. Please enable access to the microphone in Settings->Screen Time->Restrictions->Microphone";
+/* Title of an alert shown when an experiment needs the location (GPS) but phyphox is not allowed to use it. Short title. */
 "permission_location_required" = "Location/GPS required";
+/* Message of the alert "Location/GPS required", shown when the user has denied phyphox access to the location. Use the names of the iOS Settings app in your language for the path; "->" separates the steps. */
 "permission_location_denied" = "This experiment requires access to the location (GPS), but the access has been denied. Please enable access to the location in Settings->Privacy->Location Services";
+/* Message of the alert "Location/GPS required", shown when access to the location is blocked by a restriction (Screen Time, for example set by parents or a school). Use the names of the iOS Settings app in your language for the path; "->" separates the steps. */
 "permission_location_restricted" = "This experiment requires access to the location (GPS), but the access has been restricted. Please enable access to the location in Settings->Screen Time->Restrictions->Location Services";
+/* Title of an alert shown when an experiment needs motion data (the "Motion & Fitness" permission of iOS, used for example for the barometer) but phyphox is not allowed to use it. Short title. */
 "permission_motion_required" = "Motion/fitness required";
+/* Message of the alert "Motion/fitness required", shown when the user has denied phyphox access to motion data. Use the names of the iOS Settings app in your language for the path; "->" separates the steps. */
 "permission_motion_denied" = "This experiment requires access to motion data, but the access has been denied. Please enable the Motion and Fitness permission in Settings->Privacy->Motion and Fitness";
+/* Message of the alert "Motion/fitness required", shown when access to motion data is blocked by a restriction. Use the names of the iOS Settings app in your language for the path; "->" separates the steps. */
 "permission_motion_restricted" = "This experiment requires access to motion data, but the access has been restricted. Please enable Motion and Fitness in Settings->Privacy->Motion and Fitness";
+/* Title of an alert shown when an experiment needs the camera but phyphox is not allowed to use it. Short title. */
 "permission_camera_required" = "Camera required";
+/* Message of the alert "Camera required", shown when the user has denied phyphox access to the camera. Use the names of the iOS Settings app in your language for the path; "->" separates the steps. */
 "permission_camera_denied" = "This experiment requires access to the camera, but the access has been denied. Please enable access to the camera in Settings->Privacy->Camera";
+/* Message of the alert "Camera required", shown when access to the camera is blocked by a restriction (Screen Time, for example set by parents or a school). Use the names of the iOS Settings app in your language for the path; "->" separates the steps. */
 "permission_camera_restricted" = "This experiment requires access to the camera, but the access has been restricted. Please enable access to the camera in Settings->Screen Time->Restrictions->Allowed features->Camera";
+/* Not used by the iOS app at the moment (the phyphox page of the iOS Settings app takes this text from the separate settings component); translating it does no harm. Setting for the units in which values are shown. */
 "settingsUnitSystem" = "Unit system";
+/* Not used by the iOS app at the moment (the phyphox page of the iOS Settings app takes this text from the separate settings component); translating it does no harm. Description of the unit system setting. */
 "settingsUnitSystemDetail" = "Show units as defined by the experiment or converted to a unit system; tap a unit in the experiment to change it individually.";
+/* Not used by the iOS app at the moment (the phyphox page of the iOS Settings app takes this text from the separate settings component); translating it does no harm. Option of the unit system setting: show the units the author of each experiment chose. */
 "settingsUnitSystemExperiment" = "As defined by the experiment";
+/* Heading in the unit picker (opened by tapping a unit in an experiment) above metric (SI) units such as m, m/s, Pa. Also used in the remote-access web interface. Should match the option "Metric (SI)" of the unit system setting in the settings component. */
 "settingsUnitSystemMetric" = "Metric (SI)";
+/* Heading in the unit picker (opened by tapping a unit in an experiment) above imperial / US customary units such as ft, mph, psi. Also used in the remote-access web interface. Should match the option "Imperial / US customary" of the unit system setting in the settings component. */
 "settingsUnitSystemImperial" = "Imperial / US customary";
+/* Title of the dialog that opens when the user taps a unit in an experiment (for example "m/s" next to a value) to choose another unit. Also used in the remote web interface. */
 "unit_dialog_title" = "Unit";
+/* Appended in brackets to the unit the experiment's author chose, in the unit picker: "m/s (default)". Lower case. Also used in the remote web interface. */
 "unit_dialog_experiment_default" = "default";
+/* Heading in the unit picker above units that are neither metric nor imperial (e.g. "g" for multiples of Earth's gravity). Also used in the remote web interface. */
 "unit_dialog_other" = "Other";
 /* Units: the symbols shown for unit references (@id) and the [[unit_short_id]] placeholders. Keep the Latin symbols
    unless your national standard or school practice prescribes native designations (as in Russian or Ukrainian);
    a few entries (rpm, arb. unit) are language-dependent abbreviations rather than symbols. */
+/* Abbreviation of "arbitrary unit": a quantity measured on a scale without a physical unit (e.g. the raw amplitude of a sound recording). Shown after numbers and on graph axes. This is a language-dependent abbreviation, not a symbol: translate it. */
 "common_unit_short_arbitrary_unit" = "arb. unit";
+/* Symbol of the unit second (time), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_second" = "s";
+/* Symbol of the unit millisecond, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_milli_second" = "ms";
+/* Symbol of the unit hertz (frequency), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_hertz" = "Hz";
+/* Symbol of the unit microtesla (magnetic field), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_micro_tesla" = "µT";
+/* Symbol of the unit lux (illuminance), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_lux" = "lx";
+/* Symbol of the unit degree (angle), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_degree" = "°";
+/* Symbol of the unit degree Celsius (temperature), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_degree_celsius" = "°C";
+/* Symbol of the unit metre, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_meter" = "m";
+/* Symbol of the unit nanometre, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_nano_meter" = "nm";
+/* Symbol of the unit micrometre, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_micro_meter" = "µm";
+/* Symbol of the unit millimetre, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_milli_meter" = "mm";
+/* Symbol of the unit centimetre, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_centi_meter" = "cm";
+/* Symbol of the unit kilometre, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_kilo_meter" = "km";
+/* Symbol of the unit metre per second (velocity), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_meter_per_second" = "m/s";
+/* Symbol of the unit kilometre per hour, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_kilo_meter_per_hour" = "km/h";
+/* Symbol of the unit metre per second squared (acceleration), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_meter_per_square_second" = "m/s²";
+/* Symbol of the unit radian per second (angular velocity), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_radian_per_second" = "rad/s";
+/* Symbol of the unit hectopascal (pressure), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_hecto_pascal" = "hPa";
+/* Symbol of the unit decibel (sound level), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_decibel" = "dB";
+/* Symbol of the unit percent, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_percent" = "%";
+/* Symbol of the unit microsecond, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_micro_second" = "µs";
+/* Symbol of the unit minute (time), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_minute" = "min";
+/* Symbol of the unit hour, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_hour" = "h";
+/* Symbol of the unit kilohertz, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_kilo_hertz" = "kHz";
+/* Symbol of the unit per minute (rate, e.g. heartbeats), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_per_minute" = "1/min";
+/* Symbol of the unit inch, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_inch" = "in";
+/* Symbol of the unit foot, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_foot" = "ft";
+/* Symbol of the unit yard, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_yard" = "yd";
+/* Symbol of the unit mile, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_mile" = "mi";
+/* Symbol of the unit foot per second, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_foot_per_second" = "ft/s";
+/* Symbol of the unit mile per hour, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_mile_per_hour" = "mph";
+/* Symbol of the unit foot per second squared (acceleration), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_foot_per_square_second" = "ft/s²";
+/* Symbol of the unit standard gravity (acceleration as a multiple of Earth's gravity, 1 g = 9.81 m/s²), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_standard_gravity" = "g";
+/* Symbol of the unit degree per second (angular velocity), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_degree_per_second" = "°/s";
+/* Abbreviation of "revolutions per minute" (rotation rate), shown after numbers and offered in the unit picker. A language-dependent abbreviation rather than a symbol: use the one customary in your language (e.g. U/min in German). */
 "common_unit_short_revolution_per_minute" = "rpm";
+/* Symbol of the unit radian (angle), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_radian" = "rad";
+/* Symbol of the unit millitesla, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_milli_tesla" = "mT";
+/* Symbol of the unit tesla (magnetic field), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_tesla" = "T";
+/* Symbol of the unit gauss (magnetic field), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_gauss" = "G";
+/* Symbol of the unit foot-candle (illuminance), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_foot_candle" = "fc";
+/* Symbol of the unit pascal (pressure), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_pascal" = "Pa";
+/* Symbol of the unit kilopascal, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_kilo_pascal" = "kPa";
+/* Symbol of the unit millibar, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_milli_bar" = "mbar";
+/* Symbol of the unit bar (pressure), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_bar" = "bar";
+/* Symbol of the unit inch of mercury (pressure), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_inch_of_mercury" = "inHg";
+/* Symbol of the unit pound per square inch (pressure), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_psi" = "psi";
+/* Symbol of the unit kelvin (temperature), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_kelvin" = "K";
+/* Symbol of the unit degree Fahrenheit (temperature), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). */
 "common_unit_short_degree_fahrenheit" = "°F";
+/* Symbol of the physical quantity time, used as a short axis label in graphs of the bundled experiments, e.g. "t (s)". Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_time" = "t";
+/* Symbol of the physical quantity angular velocity, used as a short axis label in graphs of the bundled experiments, e.g. "ω (rad/s)". Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_angular_velocity" = "ω";
+/* Symbol of the physical quantity magnetic flux density (magnetic field), used as a short axis label in graphs of the bundled experiments, e.g. "B (µT)". Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_magnetic_field" = "B";
+/* Symbol of the physical quantity illuminance, used as a short axis label in graphs of the bundled experiments, e.g. "Ev (lx)". Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_illuminance" = "Ev";
+/* Symbol of the physical quantity acceleration, used as a short axis label in graphs of the bundled experiments, e.g. "a (m/s²)". Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_acceleration" = "a";
+/* Symbol of the physical quantity amplitude, used as a short axis label in graphs of the bundled experiments. Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_amplitude" = "A";
+/* Symbol of the physical quantity height, used as a short axis label in graphs of the bundled experiments, e.g. "h (m)". Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_height" = "h";
+/* Symbol of the physical quantity velocity, used as a short axis label in graphs of the bundled experiments, e.g. "v (m/s)". Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_velocity" = "v";
+/* Symbol of the physical quantity pressure, used as a short axis label in graphs of the bundled experiments, e.g. "p (hPa)". Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_pressure" = "p";
+/* Symbol of the physical quantity gravitational acceleration, used as a short axis label in graphs of the bundled experiments, e.g. "g (m/s²)". Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_earth_acceleration" = "g";
+/* Symbol of the physical quantity distance, used as a short axis label in graphs of the bundled experiments, e.g. "d (m)". Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_distance" = "d";
+/* Abbreviation of "sound pressure level", used as a short axis label in the bundled audio experiments, e.g. "SPL (dB)". Use the abbreviation customary in your language or keep SPL. */
 "common_quantity_short_sound_pressure_level" = "SPL";
+/* Symbol of the physical quantity latitude (GPS), used as a short axis label in graphs of the bundled experiments, e.g. "φ (°)". Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_latitude" = "φ";
+/* Symbol of the physical quantity longitude (GPS), used as a short axis label in graphs of the bundled experiments, e.g. "λ (°)". Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_longitude" = "λ";
+/* Symbol of the physical quantity altitude (GPS), used as a short axis label in graphs of the bundled experiments, e.g. "z (m)". Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_altitude" = "z";
+/* Symbol of the physical quantity luminance, used as a short axis label in graphs of the bundled experiments. Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_luminance" = "Lv";
+/* Symbol of the physical quantity luma (brightness of a camera image), used as a short axis label in graphs of the bundled experiments. Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_luma" = "Y'";
+/* Symbol of the physical quantity wavelength, used as a short axis label in graphs of the bundled experiments, e.g. "λ (nm)". Use the letter customary in physics teaching in your language; usually keep the international symbol. */
 "common_quantity_short_wavelength" = "λ";
+/* The word "percent", available to experiment files as the placeholder [[quantity_percentage]] for labels. Not used by the bundled experiments at the moment. */
 "common_quantity_percentage" = "Percent";
+/* Abbreviation of the compass direction north, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° N". Use the abbreviation customary in your language (e.g. O for east in German). */
 "common_direction_short_north" = "N";
+/* Abbreviation of the compass direction south, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° S". Use the abbreviation customary in your language (e.g. O for east in German). */
 "common_direction_short_south" = "S";
+/* Abbreviation of the compass direction east, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° E". Use the abbreviation customary in your language (e.g. O for east in German). */
 "common_direction_short_east" = "E";
+/* Abbreviation of the compass direction west, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° W". Use the abbreviation customary in your language (e.g. O for east in German). */
 "common_direction_short_west" = "W";
+/* Abbreviation of the compass direction north-east, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° NE". Use the abbreviation customary in your language (e.g. O for east in German). */
 "common_direction_short_north_east" = "NE";
+/* Abbreviation of the compass direction south-east, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° SE". Use the abbreviation customary in your language (e.g. O for east in German). */
 "common_direction_short_south_east" = "SE";
+/* Abbreviation of the compass direction north-west, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° NW". Use the abbreviation customary in your language (e.g. O for east in German). */
 "common_direction_short_north_west" = "NW";
+/* Abbreviation of the compass direction south-west, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° SW". Use the abbreviation customary in your language (e.g. O for east in German). */
 "common_direction_short_south_west" = "SW";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_a2" = "A2";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_bb2" = "A#2 / Bb2";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_b2" = "B2";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_a3" = "A3";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_bb3" = "A#3 / Bb3";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_b3" = "B3";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_c3" = "C3";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_db3" = "C#3 / Db3";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_d3" = "D3";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_eb3" = "D#3 / Eb3";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_e3" = "E3";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_f3" = "F3";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_gb3" = "F#3 / Gb3";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_g3" = "G3";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_ab3" = "G#3 / Ab3";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_a4" = "A4";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_bb4" = "A#4 / Bb4";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_b4" = "B4";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_c4" = "C4";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_db4" = "C#4 / Db4";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_d4" = "D4";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_eb4" = "D#4 / Eb4";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_e4" = "E4";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_f4" = "F4";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_gb4" = "F#4 / Gb4";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_g4" = "G4";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_ab4" = "G#4 / Ab4";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_a5" = "A5";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_bb5" = "A#5 / Bb5";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_b5" = "B5";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_c5" = "C5";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_db5" = "C#5 / Db5";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_d5" = "D5";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_eb5" = "D#5 / Eb5";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_e5" = "E5";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_f5" = "F5";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_gb5" = "F#5 / Gb5";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_g5" = "G5";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_ab5" = "G#5 / Ab5";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_a6" = "A6";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_bb6" = "A#6 / Bb6";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_b6" = "B6";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_c6" = "C6";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_db6" = "C#6 / Db6";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_d6" = "D6";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_eb6" = "D#6 / Eb6";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_e6" = "E6";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_f6" = "F6";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_gb6" = "F#6 / Gb6";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_g6" = "G6";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_ab6" = "G#6 / Ab6";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_a7" = "A7";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_bb7" = "A#7 / Bb7";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_b7" = "B7";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_c7" = "C7";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_db7" = "C#7 / Db7";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_d7" = "D7";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_eb7" = "D#7 / Eb7";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_e7" = "E7";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_f7" = "F7";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_gb7" = "F#7 / Gb7";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. */
 "common_musical_note_g7" = "G7";
+/* Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. */
 "common_musical_note_ab7" = "G#7 / Ab7";
 
 /* Accessibility labels for the two ends of a range slider */
 /* Read by VoiceOver for the left handle of a slider that selects a range (two handles). Short label. */
 "rangeSliderLowerValue" = "Lower value";
+/* Read by VoiceOver for the right handle of a slider that selects a range (two handles). Short label. */
 "rangeSliderUpperValue" = "Upper value";
