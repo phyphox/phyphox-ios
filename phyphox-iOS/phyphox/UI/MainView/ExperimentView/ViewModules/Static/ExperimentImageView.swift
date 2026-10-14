@@ -8,36 +8,59 @@
 
 import Foundation
 
-final class ExperimentImageView: UIView, DescriptorBoundViewModule {
+final class ExperimentImageView: UIView, DescriptorBoundViewModule, ResizingViewModule {
     let descriptor: ImageViewDescriptor
     let fontScale = UIFont.preferredFont(forTextStyle: .footnote).pointSize
     var image: UIImage?
     var imageView: UIView
+    var onResize: (() -> Void)?
+
+    //lightSrc/darkSrc swap the file with the interface mode (file format 1.21), so it is loaded again on a mode change
+    private let resourceFolder: URL?
+    private(set) var shownSrc: String
 
     private let sideMargins:CGFloat = 10.0
     private let verticalMargins:CGFloat = 10.0
     
     required init?(descriptor: ImageViewDescriptor, resourceFolder: URL?) {
         self.descriptor = descriptor
+        self.resourceFolder = resourceFolder
         
-        if let file = Experiment.resolveResource(descriptor.src, in: resourceFolder) {
-            image = UIImage(contentsOfFile: file.path)
-        }
-
-        if let image = image {
-            let iv = UIImageView(image: image)
-            imageView = iv
-        } else {
-            let tv = UITextView()
-            tv.text = "Image not available"
-            imageView = tv
-        }
+        shownSrc = descriptor.src(dark: ExperimentImageView.isDarkMode)
+        image = ExperimentImageView.loadImage(shownSrc, in: resourceFolder)
+        imageView = ExperimentImageView.makeImageView(image)
         
         super.init(frame: .zero)
         
         addSubview(imageView)
         
-        applyFilter()
+        applyMode()
+    }
+
+    private static func loadImage(_ src: String, in resourceFolder: URL?) -> UIImage? {
+        guard let file = Experiment.resolveResource(src, in: resourceFolder) else { return nil }
+        return UIImage(contentsOfFile: file.path)
+    }
+
+    //A file that cannot be opened shows "Image not available" - there is no fallback to src
+    private static func makeImageView(_ image: UIImage?) -> UIView {
+        if let image = image {
+            return UIImageView(image: image)
+        } else {
+            let tv = UITextView()
+            tv.text = "Image not available"
+            return tv
+        }
+    }
+
+    private static var isDarkMode: Bool {
+        if SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE {
+            return false
+        } else if SettingBundleHelper.getAppMode() == Utility.DARK_MODE {
+            return true
+        } else {
+            return UIScreen.main.traitCollection.userInterfaceStyle == .dark
+        }
     }
     
     func applyGivenFilter(filter: ImageViewElementDescriptor.Filter) {
@@ -59,18 +82,25 @@ final class ExperimentImageView: UIView, DescriptorBoundViewModule {
         }
     }
     
-    func applyFilter() {
-        if SettingBundleHelper.getAppMode() == Utility.LIGHT_MODE {
-            applyGivenFilter(filter: descriptor.lightFilter)
-        } else if SettingBundleHelper.getAppMode() == Utility.DARK_MODE {
-            applyGivenFilter(filter: descriptor.darkFilter)
-        } else {
-            if UIScreen.main.traitCollection.userInterfaceStyle == .dark {
-                applyGivenFilter(filter: descriptor.darkFilter)
-            } else {
-                applyGivenFilter(filter: descriptor.lightFilter)
+    func applyMode() {
+        let dark = ExperimentImageView.isDarkMode
+        let src = descriptor.src(dark: dark)
+        if src != shownSrc {
+            shownSrc = src
+            image = ExperimentImageView.loadImage(src, in: resourceFolder)
+            imageView.removeFromSuperview()
+            imageView = ExperimentImageView.makeImageView(image)
+            addSubview(imageView)
+            //The box follows the image shown, which may have another aspect ratio. A view group places its children in
+            //its own layoutSubviews, which an unchanged group size would not trigger.
+            var ancestor: UIView? = self
+            while let view = ancestor, !(view is UITableViewCell) {
+                view.setNeedsLayout()
+                ancestor = view.superview
             }
+            onResize?()
         }
+        applyGivenFilter(filter: dark ? descriptor.darkFilter : descriptor.lightFilter)
     }
 
     @available(*, unavailable)
@@ -98,7 +128,7 @@ final class ExperimentImageView: UIView, DescriptorBoundViewModule {
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         if self.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-            applyFilter()
+            applyMode()
         }
     }
 }

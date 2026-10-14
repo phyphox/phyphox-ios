@@ -428,7 +428,7 @@ final class PhyphoxElementHandler: ResultElementHandler, LookupElementHandler {
             
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "image")
             
-            return ImageViewDescriptor(visibilityBuffer: visibilityBuffer,  src: descriptor.src, scale: descriptor.scale, darkFilter: descriptor.darkFilter, lightFilter: descriptor.lightFilter)
+            return ImageViewDescriptor(visibilityBuffer: visibilityBuffer,  src: descriptor.src, lightSrc: descriptor.lightSrc, darkSrc: descriptor.darkSrc, scale: descriptor.scale, darkFilter: descriptor.darkFilter, lightFilter: descriptor.lightFilter)
         case .info(let descriptor):
             
             let visibilityBuffer = try getVisibilityBuffer(visibilityKey: descriptor.visibility, buffers: buffers, context: "info")

@@ -11,6 +11,9 @@ import Foundation
 struct ImageViewElementDescriptor {
     let visibility: String
     let src: String
+    //A file per interface mode instead of src (file format 1.21), nil when absent or empty
+    let lightSrc: String?
+    let darkSrc: String?
     let scale: CGFloat
     
     let darkFilter: Filter
@@ -30,6 +33,8 @@ final class ImageViewElementHandler: ResultElementHandler, ChildlessElementHandl
         case visibility
         case scale
         case src
+        case lightSrc
+        case darkSrc
         case darkFilter
         case lightFilter
     }
@@ -42,12 +47,14 @@ final class ImageViewElementHandler: ResultElementHandler, ChildlessElementHandl
         let visibility: String = attributes.optionalString(for: .visibility) ?? ""
 
         let src = try attributes.string(for: .src)
+        let lightSrc = attributes.optionalString(for: .lightSrc).flatMap { $0.isEmpty ? nil : $0 }
+        let darkSrc = attributes.optionalString(for: .darkSrc).flatMap { $0.isEmpty ? nil : $0 }
         
         let darkFilter: ImageViewElementDescriptor.Filter = try attributes.optionalValue(for: .darkFilter) ?? .none
         
         let lightFilter: ImageViewElementDescriptor.Filter = try attributes.optionalValue(for: .lightFilter) ?? .none
 
-        results.append(.image(ImageViewElementDescriptor(visibility: visibility, src: src, scale: scale, darkFilter: darkFilter, lightFilter: lightFilter)))
+        results.append(.image(ImageViewElementDescriptor(visibility: visibility, src: src, lightSrc: lightSrc, darkSrc: darkSrc, scale: scale, darkFilter: darkFilter, lightFilter: lightFilter)))
     }
 
     func nextResult() throws -> ViewElementDescriptor {

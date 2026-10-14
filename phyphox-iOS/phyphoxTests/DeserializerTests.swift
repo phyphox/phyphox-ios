@@ -2943,7 +2943,7 @@ final class ContainerIntakeTests: XCTestCase {
     }
 
     ///The RGBA bytes of an image, so two of them can be compared regardless of how they were made
-    private static func pixels(of image: UIImage) -> [UInt8]? {
+    static func pixels(of image: UIImage) -> [UInt8]? {
         guard let cgImage = image.cgImage else { return nil }
         let width = cgImage.width, height = cgImage.height
         var bytes = [UInt8](repeating: 0, count: width * height * 4)
@@ -2991,6 +2991,179 @@ final class ContainerIntakeTests: XCTestCase {
     }
 }
 
+
+//lightSrc and darkSrc (file format 1.21, rule image-mode-src) over fixtures/containers/mode-resources.zip, whose
+//expected colours are listed in fixtures/containers/README.md: plain.png grey, light.png red, dark.png blue
+final class ImageModeSrcTests: XCTestCase {
+    private var directory: URL!
+    private var saved: [URL] = []
+    private var previousMode: Any?
+    private let appMode = SettingBundleHelper.UserDefaultKeys.APP_MODE.rawValue
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        directory = FileManager.default.temporaryDirectory.appendingPathComponent("image-mode-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        previousMode = UserDefaults.standard.object(forKey: appMode)
+    }
+
+    override func tearDownWithError() throws {
+        UserDefaults.standard.set(previousMode, forKey: appMode)
+        for url in saved {
+            try? FileManager.default.removeItem(at: url)
+        }
+        try? FileManager.default.removeItem(at: directory)
+        try super.tearDownWithError()
+    }
+
+    ///The experiment of mode-resources.zip, unpacked the way the intake unpacks it
+    private func experimentFromTheContainer() throws -> Experiment {
+        let fixtures = try DocsCorpus.docsDirectory("fixtures/containers", notTestedNotice: "images per interface mode")
+        let url = fixtures.appendingPathComponent("mode-resources.zip")
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw XCTSkip("the phyphox-docs checkout has no fixtures/containers/mode-resources.zip")
+        }
+        let files = try ExperimentsCollectionViewController.extractContainer(at: url, to: directory.appendingPathComponent("extracted"))
+        return try ExperimentSerialization.readExperimentFromURL(try XCTUnwrap(files.first))
+    }
+
+    private func setMode(_ mode: String) {
+        UserDefaults.standard.set(mode, forKey: appMode)
+    }
+
+    private func imageViews(of experiment: Experiment) throws -> [ExperimentImageView] {
+        let collection = try XCTUnwrap(experiment.viewDescriptors?.first)
+        return ExperimentViewModuleFactory.createViews(collection, resourceFolder: experiment.resourceFolder)
+            .compactMap { $0.view as? ExperimentImageView }
+    }
+
+    ///The RGB of the (single-pixel) image an element shows, nil for "Image not available"
+    private func shownColor(_ view: ExperimentImageView) -> [UInt8]? {
+        guard let image = (view.imageView as? UIImageView)?.image else { return nil }
+        return ContainerIntakeTests.pixels(of: image).map { Array($0.prefix(3)) }
+    }
+
+    private func writePNG(_ name: String, width: Int, height: Int) throws {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let image = UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format).image { context in
+            UIColor.green.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        }
+        try XCTUnwrap(image.pngData()).write(to: directory.appendingPathComponent(name))
+    }
+
+    // phyphox-test: view-image-mode-src
+    func testEveryNamedFileIsAResource() throws {
+        let experiment = try experimentFromTheContainer()
+        XCTAssertEqual(Set(experiment.resources), ["plain.png", "light.png", "dark.png"],
+                       "the files named only by lightSrc and darkSrc are resources as well")
+        for name in ["plain.png", "light.png", "dark.png"] {
+            XCTAssertNotNil(experiment.resolveResource(name), "\(name) came out of the archive")
+        }
+
+        //Saving to the collection copies every resource
+        try experiment.saveLocally(quiet: true, presenter: nil)
+        let folder = try XCTUnwrap(experiment.localResourceFolder)
+        saved = [try XCTUnwrap(experiment.source), folder]
+        for name in ["plain.png", "light.png", "dark.png"] {
+            XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent(name).path), "\(name) is saved along")
+        }
+    }
+
+    // phyphox-test: view-image-mode-src
+    func testEachModeShowsItsFileWithItsFilter() throws {
+        let experiment = try experimentFromTheContainer()
+
+        setMode(Utility.LIGHT_MODE)
+        XCTAssertEqual(try imageViews(of: experiment).map(shownColor), [[255, 0, 0], [128, 128, 128], [128, 128, 128]],
+                       "light: lightSrc where given, src otherwise")
+
+        setMode(Utility.DARK_MODE)
+        XCTAssertEqual(try imageViews(of: experiment).map(shownColor), [[0, 0, 255], [0, 0, 255], [255, 255, 0]],
+                       "dark: darkSrc, and darkFilter applies to it")
+    }
+
+    // phyphox-test: view-image-mode-src
+    func testAModeChangeSwapsTheFileAndTheBox() throws {
+        try writePNG("wide.png", width: 4, height: 1)
+        try writePNG("tall.png", width: 1, height: 2)
+        let descriptor = ImageViewDescriptor(visibilityBuffer: nil, src: "wide.png", darkSrc: "tall.png", scale: 1.0, darkFilter: .none, lightFilter: .none)
+
+        setMode(Utility.LIGHT_MODE)
+        let view = try XCTUnwrap(ExperimentImageView(descriptor: descriptor, resourceFolder: directory))
+        var resized = 0
+        view.onResize = { resized += 1 }
+        let width = CGSize(width: 220, height: 1000)
+        XCTAssertEqual(view.sizeThatFits(width).height, 200 / 4 + 20)
+
+        setMode(Utility.DARK_MODE)
+        view.applyMode()
+        XCTAssertEqual(view.shownSrc, "tall.png")
+        XCTAssertEqual(view.sizeThatFits(width).height, 200 * 2 + 20, "the box follows the image shown")
+        XCTAssertEqual(resized, 1, "and the row is laid out again")
+
+        view.applyMode()
+        XCTAssertEqual(resized, 1, "no relayout without a change of the file")
+
+        setMode(Utility.LIGHT_MODE)
+        view.applyMode()
+        XCTAssertEqual(view.shownSrc, "wide.png")
+        XCTAssertEqual(view.sizeThatFits(width).height, 200 / 4 + 20)
+    }
+
+    // phyphox-test: view-image-mode-src
+    func testAMissingModeFileDoesNotFallBackToSrc() throws {
+        try writePNG("plain.png", width: 1, height: 1)
+        let descriptor = ImageViewDescriptor(visibilityBuffer: nil, src: "plain.png", darkSrc: "doesnotexist.png", scale: 1.0, darkFilter: .none, lightFilter: .none)
+
+        setMode(Utility.DARK_MODE)
+        let view = try XCTUnwrap(ExperimentImageView(descriptor: descriptor, resourceFolder: directory))
+        XCTAssertNil(view.image)
+        XCTAssertTrue(view.imageView is UITextView, "\"Image not available\" in the mode it affects")
+
+        setMode(Utility.LIGHT_MODE)
+        view.applyMode()
+        XCTAssertNotNil(view.image, "the other mode shows src")
+        XCTAssertTrue(view.imageView is UIImageView)
+        XCTAssertTrue(view.imageView.superview === view, "the swapped view is in place")
+    }
+
+    // phyphox-test: view-image-mode-src
+    func testEmptyAlternativesCountAsAbsent() throws {
+        let experiment = try DocumentParser(documentHandler: PhyphoxDocumentHandler()).parse(stream: InputStream(data: Data("""
+        <phyphox version="1.21">
+            <title>t</title><category>c</category>
+            <views><view label="v">
+                <image src="plain.png" lightSrc="" darkSrc="" />
+                <image src="plain.png" lightSrc="light.png" darkSrc="plain.png" />
+            </view></views>
+        </phyphox>
+        """.utf8)))
+        let images = try XCTUnwrap(experiment.viewDescriptors?.first?.views.compactMap { $0 as? ImageViewDescriptor })
+        XCTAssertEqual(images.count, 2)
+        XCTAssertNil(images[0].lightSrc)
+        XCTAssertNil(images[0].darkSrc)
+        XCTAssertEqual(images[0].resources, ["plain.png"])
+        XCTAssertEqual(images[1].src(dark: false), "light.png")
+        XCTAssertEqual(images[1].src(dark: true), "plain.png")
+        XCTAssertEqual(images[1].resources, ["plain.png", "light.png"], "named once each")
+    }
+
+    // phyphox-test: view-image-mode-src
+    func testTheWebInterfaceMarkup() {
+        //Android's ImageElement.createViewHTML, documented in the webinterface readme ("Image elements")
+        let plain = ImageViewDescriptor(visibilityBuffer: nil, src: "pic.png", scale: 1.0, darkFilter: .invert, lightFilter: .none)
+        XCTAssertEqual(plain.generateViewHTMLWithID(2),
+                       "<div class=\"imageElement\" id=\"element2\"><img style=\"width: 100.0%\" class=\"lightFilter_none darkFilter_invert\" src=\"res?src=pic.png\"></div>",
+                       "without an alternative, no data attributes")
+
+        let modes = ImageViewDescriptor(visibilityBuffer: nil, src: "pic.png", darkSrc: "pic dark.png", scale: 1.0, darkFilter: .none, lightFilter: .none)
+        XCTAssertEqual(modes.generateViewHTMLWithID(2),
+                       "<div class=\"imageElement\" id=\"element2\"><img style=\"width: 100.0%\" class=\"lightFilter_none darkFilter_none\" src=\"res?src=pic.png\" data-light-src=\"res?src=pic.png\" data-dark-src=\"res?src=pic%20dark.png\"></div>",
+                       "both choices, resolved to src where absent and encoded like src")
+    }
+}
 
 //Saving an experiment whose resource folder is left over from an interrupted save or delete: insisting on creating
 //it threw after the experiment file had been copied, saving it without resources and telling the user nothing
