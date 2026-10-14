@@ -10,7 +10,7 @@ import XCTest
 
 // phyphox-test: ble-name-regex-match
 //Rule ble-name-regex (phyphox-docs, spec/rules.yml): nameRegex has to match the whole device name, case-sensitively,
-//name stays a substring test, both have to hold when given, and a pattern that does not compile refuses the file.
+//name stays a substring test, both see the name with surrounding whitespace stripped, both have to hold when given, and a pattern that does not compile refuses the file.
 //Mirrors Android's BluetoothNameFilterTest.
 final class BluetoothNameFilterTests: XCTestCase {
 
@@ -34,6 +34,15 @@ final class BluetoothNameFilterTests: XCTestCase {
 
         //The whole name has to match even when an earlier alternative matches a prefix of it (Java's matches())
         XCTAssertTrue(try BluetoothNameFilter(name: nil, regex: "a|ab").matches("ab"))
+    }
+
+    func testSurroundingWhitespaceIsStrippedBeforeMatching() throws {
+        let filter = try BluetoothNameFilter(name: nil, regex: "phyphox:m( \\d+)?")
+        XCTAssertTrue(filter.matches("phyphox:m 131\n")) //as the phyphox:m advertises itself
+        XCTAssertTrue(filter.matches(" phyphox:m 131 \t"))
+        XCTAssertFalse(filter.matches("phyphox:m  131")) //inner whitespace is part of the name
+        XCTAssertTrue(BluetoothNameFilter(name: "phyphox:m 131").matches("phyphox:m 131\n"))
+        XCTAssertFalse(BluetoothNameFilter(name: "131 ").matches("phyphox:m 131\n"))
     }
 
     func testMatchingIsCaseSensitive() throws {

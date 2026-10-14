@@ -8,7 +8,8 @@
 import Foundation
 
 ///The name criteria of a bluetooth element: `name` is a substring test, `nameRegex` has to match the whole device
-///name (rule ble-name-regex in phyphox-docs). Every criterion given has to hold. Equality is by the two pattern strings.
+///name (rule ble-name-regex in phyphox-docs). Both see the name with surrounding whitespace stripped. Every criterion given
+///has to hold. Equality is by the two pattern strings.
 struct BluetoothNameFilter: Equatable {
     let name: String?
     let regex: String?
@@ -38,7 +39,8 @@ struct BluetoothNameFilter: Equatable {
         return (name ?? "") == "" && pattern == nil
     }
 
-    func matches(_ deviceName: String) -> Bool {
+    func matches(_ reportedName: String) -> Bool {
+        let deviceName = reportedName.trimmingCharacters(in: .whitespacesAndNewlines) //Devices pad their names, e.g. the phyphox:m with a trailing newline
         if let name = name, name != "", !deviceName.contains(name) {
             return false
         }
