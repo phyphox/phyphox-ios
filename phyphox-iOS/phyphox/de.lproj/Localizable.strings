@@ -430,3 +430,7 @@
 "spectrum_orientation" = "Ausrichtung";
 "remoteServerPortInUseTitle" = "Konnte Fernzugriff nicht aktivieren";
 "remoteServerPortInUse" = "Der Fernzugriff konnte nicht aktiviert werden, da der Port bereits von einer anderen App auf diesem Gerät verwendet wird. Beende die App, die den Port verwendet, oder lege in den phyphox-Einstellungen einen anderen Port fest.";
+"graph_no_data" = "Keine Daten";
+"graph_no_valid_data" = "Keine gültigen Daten";
+"graph_no_data_in_range" = "Keine Daten im Bereich";
+"applyZoomQuestionTitle" = "Diese Ansicht beibehalten?";
