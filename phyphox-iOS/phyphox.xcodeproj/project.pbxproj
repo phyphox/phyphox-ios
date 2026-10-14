@@ -1460,6 +1460,7 @@
 				6B7BF7761C130425007408FB /* Sources */,
 				6B7BF7771C130425007408FB /* Frameworks */,
 				6B7BF7781C130425007408FB /* Resources */,
+				A1FA9A2F2E9E0F0000000001 /* Strip webinterface tests */,
 				6B7BF7AB1C130436007408FB /* ShellScript */,
 				6B7BF7E51C131FE1007408FB /* Embed Frameworks */,
 			);
@@ -1642,6 +1643,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		A1FA9A2F2E9E0F0000000001 /* Strip webinterface tests */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Strip webinterface tests";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# The folder reference copies the whole submodule, including test/node_modules from the browser suite\nrm -rf \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/phyphox-webinterface/test\"\n";
+		};
 		6B7BF7AB1C130436007408FB /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
