@@ -434,3 +434,8 @@
 "graph_no_valid_data" = "Keine gültigen Daten";
 "graph_no_data_in_range" = "Keine Daten im Bereich";
 "applyZoomQuestionTitle" = "Diese Ansicht beibehalten?";
+"applyZoomQuestion" = "Du hast hineingezoomt. Soll das Diagramm weiterhin diesen Ausschnitt anzeigen, wenn du zurückkehrst?";
+"applyZoomActionReset" = "Zoom zurücksetzen";
+"applyZoomActionKeep" = "Diesen Ausschnitt beibehalten";
+"applyZoomActionFollow" = "Beibehalten und neuen Daten folgen";
+"applyZoomMoreOptions" = "Weitere Optionen…";
