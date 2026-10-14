@@ -5026,6 +5026,59 @@ final class FFTRealInputTests: XCTestCase {
     }
 }
 
+//dft/idft take vDSP at its own lengths (24, 40, ...) and Bluestein's algorithm elsewhere; both must match the direct sum
+final class DFTFastPathTests: XCTestCase {
+    private func reference(_ re: [Double], _ im: [Double], inverse: Bool) -> ([Double], [Double]) {
+        let n = re.count
+        let sign = inverse ? 1.0 : -1.0
+        var outRe = [Double](repeating: 0.0, count: n)
+        var outIm = outRe
+        for k in 0..<n {
+            for j in 0..<n {
+                let angle = sign * 2.0 * Double.pi * Double((k*j) % n) / Double(n)
+                outRe[k] += re[j] * cos(angle) - im[j] * sin(angle)
+                outIm[k] += re[j] * sin(angle) + im[j] * cos(angle)
+            }
+        }
+        return (outRe, outIm)
+    }
+
+    private func transform<T: FFTAnalysis>(_ type: T.Type, _ re: [Double], _ im: [Double]) throws -> ([Double], [Double]) {
+        let reIn = try DataBuffer(name: "re", size: 0, baseContents: [], static: false)
+        let imIn = try DataBuffer(name: "im", size: 0, baseContents: [], static: false)
+        let reOut = try DataBuffer(name: "outre", size: 0, baseContents: [], static: false)
+        let imOut = try DataBuffer(name: "outim", size: 0, baseContents: [], static: false)
+        let module = try T(
+            inputs: [.buffer(buffer: reIn, data: MutableDoubleArray(data: re), usedAs: "re", keep: true),
+                     .buffer(buffer: imIn, data: MutableDoubleArray(data: im), usedAs: "im", keep: true)],
+            outputs: [.buffer(buffer: reOut, data: MutableDoubleArray(data: []), usedAs: "re", append: false),
+                      .buffer(buffer: imOut, data: MutableDoubleArray(data: []), usedAs: "im", append: false)],
+            additionalAttributes: .empty)
+        module.update()
+        return (reOut.toArray(), imOut.toArray())
+    }
+
+    func testMatchesDirectSumAtEveryLength() throws {
+        for n in Array(2...130) + [240, 384, 960, 1000, 1023] {
+            let re = (0..<n).map { sin(1.3 * Double($0) + 0.2) + Double(($0 * 7919) % 101) / 50.0 - 1.0 }
+            let im = (0..<n).map { 0.5 * cos(0.7 * Double($0)) }
+            for inverse in [false, true] {
+                let expected = reference(re, im, inverse: inverse)
+                let actual = inverse ? try transform(IDFTAnalysis.self, re, im) : try transform(DFTAnalysis.self, re, im)
+                XCTAssertEqual(actual.0.count, n, "N in, N out at N = \(n)")
+                XCTAssertEqual(actual.1.count, n)
+                //Default normalization: backward, so idft carries 1/N
+                let factor = inverse ? 1.0 / Double(n) : 1.0
+                let tolerance = 1e-9 * Double(n)
+                for k in 0..<min(n, actual.0.count, actual.1.count) {
+                    XCTAssertEqual(actual.0[k], factor * expected.0[k], accuracy: tolerance, "re[\(k)] at N = \(n), inverse \(inverse)")
+                    XCTAssertEqual(actual.1[k], factor * expected.1[k], accuracy: tolerance, "im[\(k)] at N = \(n), inverse \(inverse)")
+                }
+            }
+        }
+    }
+}
+
 //The x output of autocorrelation is optional like on Android; min/max without it filter the implicit 0,1,2,... ramp
 final class AutocorrelationOmittedXOutputTests: XCTestCase {
     //Autocorrelation of [1,2,3,4]: displacement i yields sum(y[j]*y[j+i])/(count-i)

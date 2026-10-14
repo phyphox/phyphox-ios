@@ -70,7 +70,8 @@ func nextFFTSize(_ c: Int, minN: Int = 3) -> Int {
 
 //The Fourier modules fft, ifft, dft and idft (phyphox-docs rule fourier-transform-conventions): one slot layout, one kernel
 //convention and one normalization attribute. fft/ifft run on vDSP, which only supports lengths f*2^n and therefore zero-pads
-//every other length (fft-non-power-of-two-input, permanent); dft/idft are the exact transform for any length.
+//every other length (fft-non-power-of-two-input, permanent); dft/idft are the exact transform for any length, on vDSP where
+//it supports the length and via Bluestein's algorithm elsewhere, so both are O(N log N).
 class FFTAnalysis: AutoClearingExperimentAnalysisModule {
     private static let reInSlot = AnalysisIOSlot(name: "re", asRequired: false, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 1, maxCount: 1)
     private static let imInSlot = AnalysisIOSlot(name: "im", asRequired: true, repeatOffset: -1, valueAllowed: false, emptyAllowed: false, minCount: 0, maxCount: 1)
@@ -83,7 +84,7 @@ class FFTAnalysis: AutoClearingExperimentAnalysisModule {
 
     //Kernel sign: forward exp(-2*pi*i*k*n/N), inverse exp(+2*pi*i*k*n/N)
     class var inverse: Bool { return false }
-    //Exact for any length (direct sum) instead of vDSP's padded f*2^n lengths
+    //Exact for any length instead of vDSP's padded f*2^n lengths
     class var exact: Bool { return false }
 
     //Which direction carries the 1/N factor, named as in NumPy
@@ -151,56 +152,18 @@ class FFTAnalysis: AutoClearingExperimentAnalysisModule {
             realOutputArray = [realInput.data[0]]
             imagOutputArray = [hasImagInBuffer ? imagInput!.data[0] : 0.0]
         }
-        else if Self.exact {
-            (realOutputArray, imagOutputArray) = directTransform(count: bufferCount)
-        }
         else {
-            let count = vDSP_Length(nextFFTSize(bufferCount))
-            let countI = Int(count)
-            
-            var realInputArray = realInput.data
-            var imagInputArray = (hasImagInBuffer ? imagInput!.data : [Double](repeating: 0.0, count: countI))
-            
-            //Fill arrays if needed
-            let realOffset = countI-realInputArray.count
-            
-            if realOffset > 0 {
-                realInputArray.append(contentsOf: [Double](repeating: 0.0, count: realOffset))
-            }
-            
-            let imagOffset = countI-imagInputArray.count
-            
-            if imagOffset > 0 {
-                imagInputArray.append(contentsOf: [Double](repeating: 0.0, count: imagOffset))
-            }
-            
-            //Run DFT
-            realOutputArray = [Double](repeating: 0.0, count: countI)
-            imagOutputArray = realOutputArray
-            
-            //For now we recreate the DFT setup each time as it fixes some crashes.
-            //Jonas noted before, that to fast calling of the DFT leads to crashes when reusing the setup, but I (Sebastian) was not able to reproduce this
-            //Instead, I found that destroying the setup in deinit can lead to a crash as this is not thread safe and even if it was, the destruction might occur inbetween seting up the setup and actually executing the DFT
-            //I would suggest reusing the setup for performance but make deinit thread safe, so it can only be called when analysis has been completed. However, for now the performance seems to be sufficient and memory allocation is no bottleneck whatsoever. So, let's stick to the clumsy, yet stable method for now.
-            //vDSP documents a minimum length of 8 but accepts 1, 2 and 4 (iOS 26.5); a rejected size yields empty output
-            if let dftSetup = vDSP_DFT_zop_CreateSetupD(nil, count, Self.inverse ? .INVERSE : .FORWARD) {
-                vDSP_DFT_ExecuteD(dftSetup, realInputArray, imagInputArray, &realOutputArray, &imagOutputArray)
-                vDSP_DFT_DestroySetupD(dftSetup)
-
-                //vDSP's transform is unscaled in both directions; N is the length actually transformed
-                var factor = normalization.factor(count: countI, inverse: Self.inverse)
-                if factor != 1.0 {
-                    vDSP_vsmulD(realOutputArray, 1, &factor, &realOutputArray, 1, count)
-                    vDSP_vsmulD(imagOutputArray, 1, &factor, &imagOutputArray, 1, count)
-                }
-            }
-            else {
-                realOutputArray = []
-                imagOutputArray = []
-            }
-
             //Real input is treated as complex with zero imaginary part and the full (mirrored) spectrum is returned,
-            //matching Android, so real and complex FFTs of the same length behave identically
+            //matching Android, so real and complex FFTs of the same length behave identically.
+            //dft/idft are exact on vDSP at its own lengths and via Bluestein's algorithm at every other length; fft/ifft zero-pad
+            let count = Self.exact ? bufferCount : nextFFTSize(bufferCount)
+            let re = Self.resized(realInput.data, to: count)
+            let im = Self.resized(imagInput?.data ?? [], to: count)
+            let result = Self.vDSPTransform(re, im, inverse: Self.inverse) ?? (Self.exact ? Self.bluesteinTransform(re, im, inverse: Self.inverse) : ([], []))
+            //vDSP's transform is unscaled in both directions; N is the length actually transformed
+            let factor = normalization.factor(count: count, inverse: Self.inverse)
+            realOutputArray = Self.scaled(result.re, by: factor)
+            imagOutputArray = Self.scaled(result.im, by: factor)
         }
 
         if let realOutput = realOutput {
@@ -218,41 +181,80 @@ class FFTAnalysis: AutoClearingExperimentAnalysisModule {
         }
     }
 
-    //The exact transform of the first `count` samples as a direct O(N^2) sum over a twiddle table of N entries,
-    //exp(sign*2*pi*i*k*n/N) = table[(k*n) mod N]. Fine for phone-sized buffers; Bluestein's algorithm would be the faster option.
-    private func directTransform(count: Int) -> ([Double], [Double]) {
-        let re = realInput.data
-        let im = hasImagInBuffer ? imagInput!.data : nil
-        let sign = Self.inverse ? 1.0 : -1.0
-        let factor = normalization.factor(count: count, inverse: Self.inverse)
+    private static func resized(_ array: [Double], to count: Int) -> [Double] {
+        return array.count >= count ? Array(array.prefix(count)) : array + [Double](repeating: 0.0, count: count - array.count)
+    }
 
-        var cosTable = [Double](repeating: 0.0, count: count)
-        var sinTable = [Double](repeating: 0.0, count: count)
-        for i in 0..<count {
-            let angle = sign * 2.0 * Double.pi * Double(i) / Double(count)
-            cosTable[i] = cos(angle)
-            sinTable[i] = sin(angle)
+    private static func scaled(_ array: [Double], by factor: Double) -> [Double] {
+        return factor == 1.0 ? array : vDSP.multiply(factor, array)
+    }
+
+    //Unscaled transform at the input's own length, nil if vDSP does not support that length
+    private static func vDSPTransform(_ re: [Double], _ im: [Double], inverse: Bool) -> (re: [Double], im: [Double])? {
+        //For now we recreate the DFT setup each time as it fixes some crashes.
+        //Jonas noted before, that to fast calling of the DFT leads to crashes when reusing the setup, but I (Sebastian) was not able to reproduce this
+        //Instead, I found that destroying the setup in deinit can lead to a crash as this is not thread safe and even if it was, the destruction might occur inbetween seting up the setup and actually executing the DFT
+        //I would suggest reusing the setup for performance but make deinit thread safe, so it can only be called when analysis has been completed. However, for now the performance seems to be sufficient and memory allocation is no bottleneck whatsoever. So, let's stick to the clumsy, yet stable method for now.
+        //vDSP documents a minimum length of 8 but accepts 1, 2 and 4 (iOS 26.5)
+        guard let setup = vDSP_DFT_zop_CreateSetupD(nil, vDSP_Length(re.count), inverse ? .INVERSE : .FORWARD) else {
+            return nil
+        }
+        defer { vDSP_DFT_DestroySetupD(setup) }
+        var outRe = [Double](repeating: 0.0, count: re.count)
+        var outIm = outRe
+        vDSP_DFT_ExecuteD(setup, re, im, &outRe, &outIm)
+        return (outRe, outIm)
+    }
+
+    //Bluestein's algorithm: the unscaled transform of any length N as a circular convolution with the chirp
+    //w_k = exp(sign*i*pi*k^2/N), using 2kn = k^2 + n^2 - (k-n)^2, computed by vDSP at a supported length M >= 2N-1
+    private static func bluesteinTransform(_ re: [Double], _ im: [Double], inverse: Bool) -> (re: [Double], im: [Double]) {
+        let n = re.count
+        let m = nextFFTSize(max(2*n - 1, 8)) //8 is vDSP's documented minimum
+        let sign = inverse ? 1.0 : -1.0
+
+        var wRe = [Double](repeating: 0.0, count: n)
+        var wIm = [Double](repeating: 0.0, count: n)
+        for k in 0..<n {
+            let angle = sign * Double.pi * Double((k*k) % (2*n)) / Double(n) //k^2 mod 2N keeps the angle precise
+            wRe[k] = cos(angle)
+            wIm[k] = sin(angle)
         }
 
-        var outRe = [Double](repeating: 0.0, count: count)
-        var outIm = [Double](repeating: 0.0, count: count)
-        for k in 0..<count {
-            var sumRe = 0.0
-            var sumIm = 0.0
-            var index = 0
-            for n in 0..<count {
-                let c = cosTable[index]
-                let s = sinTable[index]
-                let xIm = im?[n] ?? 0.0
-                sumRe += re[n] * c - xIm * s
-                sumIm += re[n] * s + xIm * c
-                index += k
-                if index >= count {
-                    index -= count
-                }
+        //a = x*w, b = conj(w) placed symmetrically around index 0 of the circular buffer
+        var aRe = [Double](repeating: 0.0, count: m)
+        var aIm = aRe
+        var bRe = aRe
+        var bIm = aRe
+        for k in 0..<n {
+            aRe[k] = re[k] * wRe[k] - im[k] * wIm[k]
+            aIm[k] = re[k] * wIm[k] + im[k] * wRe[k]
+            bRe[k] = wRe[k]
+            bIm[k] = -wIm[k]
+            if k > 0 {
+                bRe[m-k] = wRe[k]
+                bIm[m-k] = -wIm[k]
             }
-            outRe[k] = factor * sumRe
-            outIm[k] = factor * sumIm
+        }
+
+        guard let a = vDSPTransform(aRe, aIm, inverse: false), let b = vDSPTransform(bRe, bIm, inverse: false) else {
+            return ([], [])
+        }
+        for i in 0..<m {
+            aRe[i] = a.re[i] * b.re[i] - a.im[i] * b.im[i]
+            aIm[i] = a.re[i] * b.im[i] + a.im[i] * b.re[i]
+        }
+        guard let conv = vDSPTransform(aRe, aIm, inverse: true) else {
+            return ([], [])
+        }
+
+        //X_k = w_k * conv_k, with 1/M undoing the unscaled inverse transform
+        var outRe = [Double](repeating: 0.0, count: n)
+        var outIm = [Double](repeating: 0.0, count: n)
+        let scale = 1.0 / Double(m)
+        for k in 0..<n {
+            outRe[k] = scale * (wRe[k] * conv.re[k] - wIm[k] * conv.im[k])
+            outIm[k] = scale * (wRe[k] * conv.im[k] + wIm[k] * conv.re[k])
         }
         return (outRe, outIm)
     }
