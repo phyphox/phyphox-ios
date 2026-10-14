@@ -362,3 +362,4 @@
 "depthAggregationModeWeighted" = "Weighted";
 "sensorGravity" = "Gravedad";
 "sensorCamera" = "Camara";
+"clear_data_question_select" = "¿Borrar los datos grabados y los siguientes elementos opcionales?";
