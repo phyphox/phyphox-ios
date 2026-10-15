@@ -3890,8 +3890,8 @@ final class CrosscorrelationTests: XCTestCase {
 
     func testAgainstPlainSumReference() throws {
         //the offline plain-sum reference: the vDSP result must match sums computed naively
-        let a = (0..<200).map { sin(Double($0) * 0.37) + 0.5 * cos(Double($0) * 0.11) }
-        let b = (0..<50).map { sin(Double($0) * 0.29) - 0.3 * cos(Double($0) * 0.53) }
+        let a: [Double] = (0..<200).map { (i: Int) -> Double in sin(Double(i) * 0.37) + 0.5 * cos(Double(i) * 0.11) }
+        let b: [Double] = (0..<50).map { (i: Int) -> Double in sin(Double(i) * 0.29) - 0.3 * cos(Double(i) * 0.53) }
 
         let result = try runCrosscorrelation(a, b)
         XCTAssertEqual(result.count, 150)
@@ -5060,8 +5060,13 @@ final class DFTFastPathTests: XCTestCase {
 
     func testMatchesDirectSumAtEveryLength() throws {
         for n in Array(2...130) + [240, 384, 960, 1000, 1023] {
-            let re = (0..<n).map { sin(1.3 * Double($0) + 0.2) + Double(($0 * 7919) % 101) / 50.0 - 1.0 }
-            let im = (0..<n).map { 0.5 * cos(0.7 * Double($0)) }
+            //Split up, Xcode 26 cannot type-check the one-line closure in reasonable time
+            let re: [Double] = (0..<n).map { (i: Int) -> Double in
+                let wave: Double = sin(1.3 * Double(i) + 0.2)
+                let jitter: Double = Double((i * 7919) % 101) / 50.0
+                return wave + jitter - 1.0
+            }
+            let im: [Double] = (0..<n).map { (i: Int) -> Double in 0.5 * cos(0.7 * Double(i)) }
             for inverse in [false, true] {
                 let expected = reference(re, im, inverse: inverse)
                 let actual = inverse ? try transform(IDFTAnalysis.self, re, im) : try transform(DFTAnalysis.self, re, im)
