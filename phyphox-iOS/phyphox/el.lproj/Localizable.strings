@@ -160,7 +160,7 @@
 "open_save_all" = "Αποθήκευση όλων";
 "open_bluetooth_assets_title" = "Πειράματα για συσκευή Bluetooth";
 "open_bluetooth_assets" = "Τα επόμενα πειράματα για τη συσκευή σας είναι διαθέσιμα από το phyphox. Μπορείτε είτε απλά να τα ανοίξετε και να τα χρησιμοποιήσετε είτε να τα προσθέσετε όλα στη συλλογή σας ώστε να έχετε εύκολη πρόσβαση σ' αυτά από το κυρίως μενού.";
-"bluetooth" = "Bluetooth χαμηλής ενέργειας";
+"bluetooth" = "Bluetooth Low Energy";
 "bt_pick_device" = "Παρακαλώ επιλέξτε συσκευή.";
 "bt_scanning_generic" = "Ανίχνευση για συσκευές Bluetooth…";
 "bt_scanning_specific1" = "Ανίχνευση για συσκευές Βluetooth με";
@@ -177,7 +177,7 @@
 "bt_exception_device_address" = "διεύθυνση";
 "bt_exception_device_name" = "όνομα";
 "bt_exception_rate" = "Άκυρη τιμή ρυθμού.";
-"bt_exception_notification" = "Eιδοποίηση για το Χαρακτηριστικό με UUID";
+"bt_exception_notification" = "Η ειδοποίηση για το χαρακτηριστικό με UUID";
 "bt_exception_notification_enable" = "δεν μπόρεσε να ενεργοποιηθεί.";
 "bt_exception_notification_disable" = "δεν μπόρεσε να απενεργοποιηθεί ξανά.";
 "bt_exception_notification_fail_enable" = "Ενεργοποίηση των ειδοποιήσεων για το Χαρακτηριστικό με UUID";
@@ -413,3 +413,15 @@
 "common_quantity_short_wavelength" = "λ";
 "remoteServerPortInUseTitle" = "Δεν μπόρεσε να ενεργοποιηθεί η απομακρυσμένη πρόσβαση";
 "remoteServerPortInUse" = "Η απομακρυσμένη πρόσβαση δεν επιτυγχάνεται γιατί η θύρα χρησιμοποιείται ήδη από άλλη εφαρμογή. Σταματήστε την εφαρμογή που χρησιμοποιεί τη θύρα ή ορίστε μια διαφορετική θύρα από τις ρυθμίσεις του phyphox.";
+"graph_no_data" = "χωρίς δεδομένα";
+"graph_no_valid_data" = "Μη έγκυρα δεδομένα";
+"graph_no_data_in_range" = "Δεν υπάρχουν δεδομένα στο διάστημα";
+"applyZoomQuestionTitle" = "Διατήρηση αυτής της προβολής;";
+"applyZoomQuestion" = "Έχετε κάνει zoom. Θέλετε επιστρέφοντας το διάγραμμα να δείχνει αυτό το τμήμα;";
+"applyZoomActionReset" = "Ακύρωση zoom";
+"applyZoomActionKeep" = "Διατήρηση αυτού του τμήματος";
+"applyZoomActionFollow" = "Διατήρηση και παρακολούθηση νέων δεδομένων";
+"applyZoomMoreOptions" = "Περισσότερες επιλογές…";
+"applyZoomAlsoApply" = "Εφαρμογή σε άλλα διαγράμματα με…";
+"applyZoomTargetThis" = "μόνο στο παρόν διάγραμμα";
+"applyZoomTargetSameData" = "τα ίδια δεδομένα";
