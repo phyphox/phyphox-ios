@@ -435,3 +435,5 @@
 "settingsUnitSystemExperiment" = "Όπως έχει οριστεί στο πείραμα";
 "settingsUnitSystemMetric" = "Διεθνές Σύστημα (SI)";
 "settingsUnitSystemImperial" = "Imperial / US customary";
+"unit_dialog_title" = "Μονάδα";
+"unit_dialog_experiment_default" = "προκαθορισμένη";
