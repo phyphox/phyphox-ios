@@ -34,4 +34,12 @@
 "leave_experiment" = "خروج از آزمایش";
 "leave_experiment_question" = "آیا میخواهید از این آزمایش خارج شوید و معلومات دخیره شده را حذف کنید؟";
 "leave" = "خروج";
-"timed_stop" = "توقف آزمایش درحال اجرا";
+"timed_stop" = "توقف اندازه گیری زمان";
+"timed_start" = "شروع اندازه گیری زمان";
+"loadingTitle" = "در حال آماده شدن";
+"loadingText" = "در حال آماده شدن آزمایش…";
+"loadingBluetoothConnectionText" = "در حال اتصال به دستگاه بلوتوث …";
+"timedRunDialogTitle" = "اندازه گیری زمان";
+"timedRunStartDelay" = "زمان انتظار تا شروع (ثانیه)";
+"timedRunStopDelay" = "مدت آزمایش (ثانیه)";
+"export" = "ذخیره معلومات در فایل";
