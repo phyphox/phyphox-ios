@@ -1,1 +1,13 @@
-
+"app_name" = "phyphox";
+"action_settings" = "تنظیمات";
+"title_activity_experiment" = "phyphox";
+"experimentsPhyphoxOrg" = "ایده ها و دستورالعمل های ازمایش";
+"experimentsPhyphoxOrgURL" = "http://phyphox.org/experiments";
+"faqPhyphoxOrg" = "سوالات مکرر";
+"faqPhyphoxOrgURL" = "http://phyphox.org/faq";
+"generalErrorDialog" = "خطا رخ داده است.";
+"help" = "کمک و معلومات";
+"deviceInfo" = "مشخصات دستگاه";
+"copyToClipboard" = "کاپی کردن متن";
+"deviceInfoCopied" = "مشخصات دستگاه کاپی شد.";
+"warning" = "هشدار";
