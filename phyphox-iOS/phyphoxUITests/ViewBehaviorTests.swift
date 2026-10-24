@@ -268,19 +268,15 @@ final class ViewBehaviorTests: XCTestCase {
 
     private func type(_ value: Double, into field: XCUIElement, in app: XCUIApplication) {
         XCTAssertTrue(field.waitForExistence(timeout: 5), "the field is on screen")
-        field.tap()
-        field.press(forDuration: 1.0)
-        if app.menuItems["Select All"].waitForExistence(timeout: 2) {
-            app.menuItems["Select All"].tap()
+        //Delete keys from the right edge: a long press no longer reliably offers "Select All" (iOS 26)
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
+        if let current = field.value as? String, !current.isEmpty {
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
         }
         let text = value == value.rounded() ? String(Int(value)) : String(value)
         field.typeText(text)
 
-        //Commit: the field writes on the keyboard's done/return
-        if app.buttons["Done"].exists {
-            app.buttons["Done"].tap()
-        } else {
-            field.typeText("\n")
-        }
+        //Commit: the field writes on the OK of the keyboard toolbar
+        app.buttons["OK"].tap()
     }
 }

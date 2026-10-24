@@ -154,11 +154,9 @@ final class UnitConversionUITests: XCTestCase {
         XCTAssertEqual(field.value as? String, "1.64042", "the field shows the value in feet, six significant digits")
         XCTAssertTrue(unitText("edit.unit", "ft", in: app).exists)
 
-        field.tap()
-        field.press(forDuration: 1.0)
-        if app.menuItems["Select All"].waitForExistence(timeout: 2) {
-            app.menuItems["Select All"].tap()
-        }
+        //Delete keys from the right edge: a long press no longer reliably offers "Select All" (iOS 26)
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "1.64042".count))
         field.typeText("1")
         app.buttons["OK"].tap()
         expectBuffer("length", toEqual: [0.3048], "the typed value arrives in the buffer converted back to metres")
