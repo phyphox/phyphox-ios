@@ -146,7 +146,7 @@ class NetworkConnection: NetworkServiceRequestCallback, NetworkDiscoveryCallback
         if let privacyURL = privacyURL {
             alert.addAction(UIAlertAction(title: localize("networkVisitPrivacyURL"), style: .default, handler: { _ in
                 if let url = URL(string: privacyURL) {
-                    UIApplication.shared.openURL(url)
+                    UIApplication.shared.open(url)
                 }
             }))
         }
