@@ -106,8 +106,10 @@ final class GraphSnapshotTests: XCTestCase {
         let directory = try DocsCorpus.docsDirectory("fixtures/views", notTestedNotice: "graph snapshots")
         var rendered = 0
 
-        //One window for the whole run: the GL views only draw once they are in a visible window
-        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 834, height: 1200))
+        //One window for the whole run: the GL views only draw once they are in a visible window, which needs the host app's scene
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.first as? UIWindowScene, "the host app has no window scene")
+        let window = UIWindow(windowScene: scene)
+        window.frame = CGRect(x: 0, y: 0, width: 834, height: 1200)
         window.isHidden = false
         window.makeKeyAndVisible()
         defer { window.isHidden = true }

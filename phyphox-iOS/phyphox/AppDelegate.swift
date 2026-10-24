@@ -64,10 +64,11 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     var mainNavViewController: ScalableViewController!
     var experimentsCollectionViewController: ExperimentsCollectionViewController!
 
-    func initApp(url: URL?) -> Bool {
+    //Called from SceneDelegate: iOS 27 refuses to launch an app built against its SDK without the scene lifecycle
+    func initApp(windowScene: UIWindowScene, url: URL?) -> Bool {
         KeyboardTracker.startTracking()
 
-        window = UIWindow(frame: UIScreen.main.bounds)
+        window = UIWindow(windowScene: windowScene)
         window!.tintColor = UIColor(named: "textColor")
 
         UILabel.appearance().adjustsFontForContentSizeCategory = true
@@ -91,69 +92,17 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
 
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        return initApp(url: launchOptions?[.url] as? URL)
+    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+        let configuration = UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+        configuration.delegateClass = SceneDelegate.self
+        return configuration
     }
-    
-    func application(_ application: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-        
+
+    func openURL(_ url: URL) {
         cleanInbox(url.lastPathComponent)
-        return experimentsCollectionViewController.launchExperimentByURL(url, chosenPeripheral: nil)
-    }
-    
-    func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
-        cleanInbox(url.lastPathComponent)
-        return experimentsCollectionViewController.launchExperimentByURL(url, chosenPeripheral: nil)
+        _ = experimentsCollectionViewController.launchExperimentByURL(url, chosenPeripheral: nil)
     }
 
-    func applicationWillResignActive(_ application: UIApplication) {
-        
-        NotificationCenter.default.post(name: .resignActiveNotification, object: nil)
-        
-        
-        //Original implementation below by Jonas. Should be re-enabled at some point as it "usually" nicely leaves the measurement running in the background.
-        //Unfortunately, this does not work for every input (audio!) and sometimes the experiment is interrupted nevertheless, leading to a gap / jump in the data, sometimes even to a crash.
-        //So, for now we will choose the "uncool" solution and stop the experiment whenever we lose focus as this behaviour is reliable and can be anticipated by the user.
-        
-        /*
-        var id = UIBackgroundTaskInvalid
-        
-        id = UIApplication.sharedApplication().beginBackgroundTaskWithName("task") {
-            if id != UIBackgroundTaskInvalid {
-                UIApplication.sharedApplication().endBackgroundTask(id)
-                
-                if UIApplication.sharedApplication().applicationState == .Background {
-                    NSNotificationCenter.defaultCenter().postNotificationName(EndBackgroundMotionSessionNotification, object: nil)
-                }
-            }
-        }*/
-        
-        // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
-        // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
-    }
-
-    func applicationDidEnterBackground(_ application: UIApplication) {
-        // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-        // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-    }
-
-    func applicationWillEnterForeground(_ application: UIApplication) {
-        // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-        NotificationCenter.default.post(name: .experimentsReloadedNotification, object: nil)
-    }
-
-    func applicationDidBecomeActive(_ application: UIApplication) {
-        SettingBundleHelper.registerDefaults()
-        SettingBundleHelper.setAppMode(window: window)
-        NotificationCenter.default.post(name: .didBecomeActiveNotification, object: nil)
-        
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-    }
-
-    func applicationWillTerminate(_ application: UIApplication) {
-        // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
-    }
-    
     var lockPortrait: Bool = false
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
         if lockPortrait {
@@ -176,5 +125,63 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         } catch {
             
         }
+    }
+}
+
+//With the scene lifecycle, UIKit sends URLs and activation changes here instead of to the AppDelegate
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
+
+    private var appDelegate: AppDelegate {
+        return UIApplication.shared.delegate as! AppDelegate
+    }
+
+    func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
+        guard let windowScene = scene as? UIWindowScene else { return }
+        let url = connectionOptions.urlContexts.first?.url
+        _ = appDelegate.initApp(windowScene: windowScene, url: url)
+        window = appDelegate.window
+        //A URL that launched the app arrives here and not in scene(_:openURLContexts:)
+        if let url = url {
+            appDelegate.openURL(url)
+        }
+    }
+
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        guard let url = URLContexts.first?.url else { return }
+        appDelegate.openURL(url)
+    }
+
+    func sceneWillResignActive(_ scene: UIScene) {
+        
+        NotificationCenter.default.post(name: .resignActiveNotification, object: nil)
+        
+        
+        //Original implementation below by Jonas. Should be re-enabled at some point as it "usually" nicely leaves the measurement running in the background.
+        //Unfortunately, this does not work for every input (audio!) and sometimes the experiment is interrupted nevertheless, leading to a gap / jump in the data, sometimes even to a crash.
+        //So, for now we will choose the "uncool" solution and stop the experiment whenever we lose focus as this behaviour is reliable and can be anticipated by the user.
+        
+        /*
+        var id = UIBackgroundTaskInvalid
+        
+        id = UIApplication.sharedApplication().beginBackgroundTaskWithName("task") {
+            if id != UIBackgroundTaskInvalid {
+                UIApplication.sharedApplication().endBackgroundTask(id)
+                
+                if UIApplication.sharedApplication().applicationState == .Background {
+                    NSNotificationCenter.defaultCenter().postNotificationName(EndBackgroundMotionSessionNotification, object: nil)
+                }
+            }
+        }*/
+    }
+
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        NotificationCenter.default.post(name: .experimentsReloadedNotification, object: nil)
+    }
+
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        SettingBundleHelper.registerDefaults()
+        SettingBundleHelper.setAppMode(window: window)
+        NotificationCenter.default.post(name: .didBecomeActiveNotification, object: nil)
     }
 }
