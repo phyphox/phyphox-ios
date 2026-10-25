@@ -34,6 +34,11 @@ class ScalableViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    //The status bar style is per screen (UIViewControllerBasedStatusBarAppearance), so ask the hosted one
+    override var childForStatusBarStyle: UIViewController? {
+        return vc
+    }
+
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         

@@ -23,6 +23,11 @@ class MainNavigationViewController: UINavigationController {
         //barTintColor is set per view controller...
     }
 
+    //Each screen picks its status bar style: the experiment page's orange bar needs light content, the list follows the appearance
+    override var childForStatusBarStyle: UIViewController? {
+        return topViewController
+    }
+
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
     }

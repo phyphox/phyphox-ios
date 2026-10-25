@@ -229,6 +229,11 @@ final class ExperimentPageViewController: UIViewController, UIPageViewController
         }
     }
     
+    //White on the orange bar in light and dark appearance alike
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
+    }
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         

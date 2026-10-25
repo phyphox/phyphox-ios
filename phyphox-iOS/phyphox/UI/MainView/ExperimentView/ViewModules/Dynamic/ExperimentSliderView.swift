@@ -42,7 +42,7 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
     }
 
     var dynamicLabelHeight = 0.0
-    private var textFieldWidth: CGFloat = 100.0
+    private let textFieldWidth: CGFloat = 100.0
 
     let uiSlider: UISlider
     let rangeSlider = RangeSlider(frame: CGRectZero)
@@ -228,11 +228,10 @@ final class ExperimentSliderView: UIView, DynamicViewModule, DescriptorBoundView
             sliderContainerYValue = bounds.height / 2.0
             sliderContainerYValue = sliderContainerYValue + 10.0
             
-            if(descriptor.type == SliderType.Range){
-                textFieldWidth *= 1.25
-            }
+            //Wider for the two values of a range; per layout, as scaling the stored width grew the field on every pass
+            let valueWidth = descriptor.type == SliderType.Range ? textFieldWidth * 1.25 : textFieldWidth
             
-            sliderValue.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0, y: (bounds.height - h2)/2.0 - 12.0) , size: CGSize(width: textFieldWidth, height: h2))
+            sliderValue.frame = CGRect(origin: CGPoint(x: (bounds.width + spacing)/2.0, y: (bounds.height - h2)/2.0 - 12.0) , size: CGSize(width: valueWidth, height: h2))
             let measuredWidthOfLabel = Utility.measureWidthOfText(label.text ?? "-")
             let labelOffset = (((bounds.width ) / 2.0) - measuredWidthOfLabel) / 2.0
             label.frame = CGRect(origin: CGPoint(x: labelOffset , y: (bounds.height - dynamicLabelHeight)/2.0 - 12.0) , size: CGSize(width: w, height: dynamicLabelHeight))
