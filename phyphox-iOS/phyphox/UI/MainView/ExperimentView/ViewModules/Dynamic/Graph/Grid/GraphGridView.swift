@@ -263,6 +263,8 @@ final class GraphGridView: UIView {
         let descPrecisionX = Int((isZScale ? descriptor?.zPrecision : descriptor?.xPrecision) ?? -1)
         let descPrecisionY = Int(descriptor?.yPrecision ?? -1)
         let suppressScientificNotation = descriptor?.suppressScientificNotation ?? false
+        //Once per layout, not per label: layout runs on every graph update and each read goes to UserDefaults
+        let labelSize = SettingBundleHelper.getGraphSettingLabelSize() * 0.85
 
         var xSpace = CGFloat(0.0)
         var ySpace = CGFloat(0.0)
@@ -275,7 +277,7 @@ final class GraphGridView: UIView {
                 label.textColor = UIColor(named: "textColor")
 
                 label.text = GraphGridView.formatTicLabel(line.absoluteValue, ticPrecision: line.precision, descriptorPrecision: descPrecisionX, suppressScientificNotation: suppressScientificNotation, isTime: descriptor?.timeOnX ?? false, systemTimeOffset: grid.systemTimeOffsetX)
-                label.font = label.font.withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.85)
+                label.font = label.font.withSize(labelSize)
                 label.sizeToFit()
 
                 ySpace = max(ySpace, label.frame.size.height)
@@ -289,7 +291,7 @@ final class GraphGridView: UIView {
                     label.textColor = UIColor(named: "textColor")
 
                     label.text = GraphGridView.formatTicLabel(line.absoluteValue, ticPrecision: line.precision, descriptorPrecision: descPrecisionY, suppressScientificNotation: suppressScientificNotation, isTime: descriptor?.timeOnY ?? false, systemTimeOffset: grid.systemTimeOffsetY)
-                    label.font = label.font.withSize(SettingBundleHelper.getGraphSettingLabelSize() * 0.85)
+                    label.font = label.font.withSize(labelSize)
                     label.sizeToFit()
 
                     xSpace = max(xSpace, label.frame.size.width)
