@@ -360,3 +360,4 @@
 "depthAggregationModeAverage" = "Average";
 "sensorDepth" = "Depth (LiDAR)";
 "depthAggregationModeWeighted" = "Weighted";
+"clear_data_question_select" = "確定要清除已記錄的數據及以下選用項目嗎？";
