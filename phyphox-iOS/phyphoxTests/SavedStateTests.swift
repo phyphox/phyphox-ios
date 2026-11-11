@@ -371,6 +371,20 @@ final class SavedStateTests: XCTestCase {
         XCTAssertEqual(try ExperimentSerialization.readExperimentFromURL(folder).stateTitle, "After, with \"quotes\"")
     }
 
+    //A legacy state from the collection without a CRC32 resource folder: the move of that folder used to throw after the
+    //file was already rewritten, so the user saw an error and a stale list
+    func testRenamingALegacyStateWithoutResourceFolder() throws {
+        let url = work.appendingPathComponent("legacy.phyphox")
+        try FileManager.default.copyItem(at: try docsFile("corpus/generated", "events-state.phyphox", notice: "renaming a legacy state"), to: url)
+        let experiment = try ExperimentSerialization.readExperimentFromURL(url)
+        experiment.local = true
+        let resourceFolder = try XCTUnwrap(experiment.resourceFolder)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: resourceFolder.path), "precondition: no resource folder")
+
+        try ExperimentManager.shared.renameExperiment(experiment, newTitle: "Renamed")
+        XCTAssertEqual(try ExperimentSerialization.readExperimentFromURL(url).stateTitle, "Renamed")
+    }
+
     // phyphox-test: saved-state-write
     func testTheEntryNameRule() {
         var taken = Set<String>()

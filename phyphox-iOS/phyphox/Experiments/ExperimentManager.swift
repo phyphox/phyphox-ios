@@ -65,15 +65,16 @@ final class ExperimentManager {
         }
         let oldResFolder = experiment.resourceFolder
         try LegacyStateSerializer.renameStateFile(customTitle: newTitle, file: source)
-        if let oldResFolder = oldResFolder, let inputStream = InputStream(url: source) {
+        //The file is renamed from here on, so the list has to show it even if moving the resource folder fails
+        defer { reloadUserExperiments() }
+        //Most legacy states reference no resources, so their CRC32 folder (and often Experiments itself) does not exist
+        if let oldResFolder = oldResFolder, FileManager.default.fileExists(atPath: oldResFolder.path), let inputStream = InputStream(url: source) {
             let newCRC32 = CRC32InputStream(inputStream).crcValue
             let newResFolder = customExperimentsURL.appendingPathComponent(String(newCRC32, radix: 16))
 
             print("Also renaming resource folder from \(oldResFolder.lastPathComponent) to \(newResFolder.lastPathComponent)")
             try FileManager.default.moveItem(at: oldResFolder, to: newResFolder)
         }
-        reloadUserExperiments()
-        
     }
 
     let filteredServices: [String] = [CBUUID(string: "0x1812").uuid128String]
