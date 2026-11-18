@@ -5,10 +5,11 @@
   Created by Sebastian Kuhlen on 17.09.16.
   Copyright © 2016 RWTH Aachen. All rights reserved.
 */
-"NSLocationWhenInUseUsageDescription" = "phyphox nyní zaznamenává data o vaší pozici. Tato data jsou analyzována v závislosti na vybraném experimentu a budou z této aplikace exportována pouze v případě, že si tuto možnost zvolíte použitím funkce exportovat.";
-"NSMicrophoneUsageDescription" = "phyphox nyní zaznamenává zvuk z mikrofonu. Tato data jsou analyzována v závislosti na vybraném experimentu a budou z této aplikace exportována pouze v případě, že si tuto možnost zvolíte použitím funkce exportovat.";
-"NSPhotoLibraryAddUsageDescription" = "phyphox může ukládat screenshoty do vašeho fotoalba pokud použijete možnost \"Sdílet screenshot\" v menu experimentu.";
-"NSMotionUsageDescription" = "phyphox odečítá hodnoty ze senzorů vašeho mobilního zařízení a používá je k fyzikálním experimentům.";
-"NSCameraUsageDescription" = "phyphox používá kameru ke snímání QR kódů, které lze použít k přidání vlastních konfigurací experimentů. Používá se také při experimentech s hloubkovými senzory (LiDAR/ToF) k měření vzdálenosti a zobrazení náhledu oblasti zájmu.";
-"NSBluetoothPeripheralUsageDescription" = "phyphox umí číst z externích senzorů Bluetooth a zapisovat data do externích zařízení Bluetooth. Více informací o této funkci a podporovaných zařízeních najdete na adrese http://phyphox.org/ble.";
-"NSBluetoothAlwaysUsageDescription" = "phyphox umí číst z externích senzorů Bluetooth a zapisovat data do externích zařízení Bluetooth. Více informací o této funkci a podporovaných zařízeních najdete na adrese http://phyphox.org/ble.";
+NSLocationWhenInUseUsageDescription = "phyphox nyní zaznamenává data o vaší pozici. Tato data jsou analyzována v závislosti na vybraném experimentu a budou z této aplikace exportována pouze v případě, že si tuto možnost zvolíte použitím funkce exportovat.";
+NSMicrophoneUsageDescription = "phyphox nyní zaznamenává zvuk z mikrofonu. Tato data jsou analyzována v závislosti na vybraném experimentu a budou z této aplikace exportována pouze v případě, že si tuto možnost zvolíte použitím funkce exportovat.";
+NSPhotoLibraryAddUsageDescription = "phyphox může ukládat screenshoty do vašeho fotoalba pokud použijete možnost \"Sdílet screenshot\" v menu experimentu.";
+NSMotionUsageDescription = "phyphox odečítá hodnoty ze senzorů vašeho mobilního zařízení a používá je k fyzikálním experimentům.";
+NSCameraUsageDescription = "phyphox používá kameru ke snímání QR kódů, které lze použít k přidání vlastních konfigurací experimentů. Používá se také při experimentech s hloubkovými senzory (LiDAR/ToF) k měření vzdálenosti a zobrazení náhledu oblasti zájmu.";
+NSBluetoothPeripheralUsageDescription = "phyphox umí číst z externích senzorů Bluetooth a zapisovat data do externích zařízení Bluetooth. Více informací o této funkci a podporovaných zařízeních najdete na adrese http://phyphox.org/ble.";
+NSBluetoothAlwaysUsageDescription = "phyphox umí číst z externích senzorů Bluetooth a zapisovat data do externích zařízení Bluetooth. Více informací o této funkci a podporovaných zařízeních najdete na adrese http://phyphox.org/ble.";
+NSLocalNetworkUsageDescription = "phyphox přistupuje k tvé místní síti, když se načítá konfigurace experimentu ze zařízení ve tvé síti, když experiment čte data z místních zařízení nebo jim data odesílá (například měřicímu hardwaru připojenému přes Wi-Fi nebo MQTT brokeru) a když je povolen vzdálený přístup pro ovládání experimentu z webového prohlížeče.";
