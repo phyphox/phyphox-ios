@@ -248,12 +248,14 @@
 "url_invalid" = "Invalid URL";
 /* Message of the alert "Invalid URL" (url_invalid). Some entries in the experiment list are not experiments but links to a web page; this one has no valid web address. */
 "url_invalid_msg" = "This experiment is just a link, but no valid URL was found.";
-/* Message of an alert titled "Warning" (warning) when an experiment could not be downloaded from a web address (QR code or link) because the phone has no internet connection. The alert offers "Try again" (tryagain). */
-"download_error_offline" = "The experiment could not be downloaded because this device is not connected to the internet.";
-/* Message of an alert titled "Warning" (warning) when the server of an experiment's web address (QR code or link) did not answer or does not exist. %@ is replaced by the server name, for example "phyphox.org". */
-"download_error_unreachable" = "Could not reach %@.";
-/* Message of an alert titled "Warning" (warning) when an experiment could not be downloaded from a web address (QR code or link) for another reason, for example because the link no longer exists. A second line with technical details for support follows it, not translated. */
-"download_error_generic" = "The experiment could not be downloaded.";
+/* Title of the alert shown when an experiment could not be downloaded from a web address, for example from a scanned QR code or a link. The alert offers "Try again" (tryagain). */
+"downloadErrorTitle" = "Could not load experiment";
+/* Message of the alert "Could not load experiment" (downloadErrorTitle) when the phone has no internet connection. */
+"downloadErrorOffline" = "The experiment could not be downloaded because this device is not connected to the internet.";
+/* Message of the alert "Could not load experiment" (downloadErrorTitle) when the server did not answer or its name was not found. The server's name (for example phyphox.org) is appended after a space. */
+"downloadErrorUnreachable" = "The experiment could not be downloaded because this server could not be reached:";
+/* Message of the alert "Could not load experiment" (downloadErrorTitle) for any other reason, for example because the file no longer exists on the server. A technical description of the problem follows on a separate line. */
+"downloadErrorGeneral" = "The experiment could not be downloaded.";
 /* Not used by the iOS app at the moment; translating it does no harm. Label of the field for the title of a saved experiment state. */
 "save_state_title" = "Title";
 /* Button in the "Save experiment state" alert that saves the state to the user's collection on the main screen. Keep it short. */

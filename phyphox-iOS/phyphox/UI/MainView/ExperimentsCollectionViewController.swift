@@ -957,29 +957,34 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         return result
     }
 
-    ///phyphox:// falls back from https to http, except after errors http cannot fix: offline or the host does not resolve
+    ///phyphox:// falls back from https to http, except after errors http cannot fix: offline, the host does not resolve or
+    ///the server already answered over https with an error status (as on Android, PhyphoxFile.httpFallbackCanHelp)
     static func httpFallbackCanHelp(after error: Error) -> Bool {
+        if error is ExperimentDownloadError {
+            return false
+        }
         guard let code = (error as? URLError)?.code else {
             return true
         }
         return ![.notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff, .cannotFindHost, .dnsLookupFailed].contains(code)
     }
 
-    ///Plain message for a failed download, nil for errors that did not come from downloading
+    ///Plain message for a failed download, nil for errors that did not come from downloading. Same strings and layout as
+    ///Android's PhyphoxFile.downloadErrorMessage
     static func downloadErrorMessage(for error: Error, host: String) -> String? {
         if case ExperimentDownloadError.httpStatus(let status) = error {
-            return localize("download_error_generic") + "\n" + "HTTP \(status) (\(HTTPURLResponse.localizedString(forStatusCode: status)))"
+            return localize("downloadErrorGeneral") + "\n\nHTTP \(status)"
         }
         guard let urlError = error as? URLError else {
             return nil
         }
         switch urlError.code {
         case .notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff:
-            return localize("download_error_offline")
+            return localize("downloadErrorOffline")
         case .cannotFindHost, .dnsLookupFailed, .timedOut, .cannotConnectToHost:
-            return String(format: localize("download_error_unreachable"), host)
+            return localize("downloadErrorUnreachable") + " " + host
         default:
-            return localize("download_error_generic") + "\n" + urlError.localizedDescription
+            return localize("downloadErrorGeneral") + "\n\n" + urlError.localizedDescription
         }
     }
 
@@ -1214,8 +1219,10 @@ print("\(url)")
         url.stopAccessingSecurityScopedResource()
         
         if experimentLoadingError != nil {
+            var title = localize("warning")
             let message: String
             if let downloadMessage = ExperimentsCollectionViewController.downloadErrorMessage(for: experimentLoadingError!, host: url.host ?? url.absoluteString) {
+                title = localize("downloadErrorTitle")
                 message = downloadMessage
             } else if let sError = experimentLoadingError as? SerializationError {
                 let detail: String
@@ -1240,7 +1247,7 @@ print("\(url)")
             
             
             let alertBuilder = UIAlertController.PhyphoxUIAlertBuilder()
-                .title(title: localize("warning"))
+                .title(title: title)
                 .message(message: message)
                 .preferredStyle(style: .alert)
             if url.scheme == "phyphox" || url.scheme == "http" || url.scheme == "https" {

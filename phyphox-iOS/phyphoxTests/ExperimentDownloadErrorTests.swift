@@ -10,7 +10,7 @@ import XCTest
 @testable import phyphox
 
 //A failed experiment download names its cause (offline, unreachable host, HTTP status) instead of NSCocoaErrorDomain 256,
-//and phyphox:// skips the http fallback where http cannot help
+//and phyphox:// skips the http fallback where http cannot help. Strings and rules as on Android (DownloadErrorMessageTest)
 final class ExperimentDownloadErrorTests: XCTestCase {
 
     //Answers every request with what `respond` returns: a status and body, or an error
@@ -68,8 +68,7 @@ final class ExperimentDownloadErrorTests: XCTestCase {
         }
         XCTAssertEqual(status, 404)
         let message = ExperimentsCollectionViewController.downloadErrorMessage(for: error, host: "example.org")
-        XCTAssertEqual(message?.components(separatedBy: "\n").first, localize("download_error_generic"))
-        XCTAssertTrue(message?.contains("404") ?? false)
+        XCTAssertEqual(message, localize("downloadErrorGeneral") + "\n\nHTTP 404")
     }
 
     func testURLErrorReachesTheMessage() {
@@ -77,7 +76,7 @@ final class ExperimentDownloadErrorTests: XCTestCase {
             return XCTFail("An offline download must fail")
         }
         XCTAssertEqual((error as? URLError)?.code, .notConnectedToInternet)
-        XCTAssertEqual(ExperimentsCollectionViewController.downloadErrorMessage(for: error, host: "example.org"), localize("download_error_offline"))
+        XCTAssertEqual(ExperimentsCollectionViewController.downloadErrorMessage(for: error, host: "example.org"), localize("downloadErrorOffline"))
     }
 
     func testMessages() {
@@ -85,15 +84,13 @@ final class ExperimentDownloadErrorTests: XCTestCase {
             ExperimentsCollectionViewController.downloadErrorMessage(for: URLError(code), host: "example.org")
         }
         for code in [URLError.Code.notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff] {
-            XCTAssertEqual(message(code), localize("download_error_offline"), "\(code)")
+            XCTAssertEqual(message(code), localize("downloadErrorOffline"), "\(code)")
         }
         for code in [URLError.Code.cannotFindHost, .dnsLookupFailed, .timedOut, .cannotConnectToHost] {
-            XCTAssertEqual(message(code), String(format: localize("download_error_unreachable"), "example.org"), "\(code)")
-            XCTAssertTrue(message(code)?.contains("example.org") ?? false, "\(code)")
+            XCTAssertEqual(message(code), localize("downloadErrorUnreachable") + " example.org", "\(code)")
         }
         let other = message(.secureConnectionFailed)
-        XCTAssertEqual(other?.components(separatedBy: "\n").first, localize("download_error_generic"))
-        XCTAssertEqual(other?.components(separatedBy: "\n").count, 2, "The technical detail goes on a second line")
+        XCTAssertEqual(other, localize("downloadErrorGeneral") + "\n\n" + URLError(.secureConnectionFailed).localizedDescription, "The technical detail goes on a separate line")
 
         //Errors that did not come from a download keep the old message
         XCTAssertNil(ExperimentsCollectionViewController.downloadErrorMessage(for: SerializationError.invalidFilePath, host: "example.org"))
@@ -106,6 +103,7 @@ final class ExperimentDownloadErrorTests: XCTestCase {
         for code in [URLError.Code.timedOut, .cannotConnectToHost, .secureConnectionFailed, .serverCertificateUntrusted] {
             XCTAssertTrue(ExperimentsCollectionViewController.httpFallbackCanHelp(after: URLError(code)), "\(code)")
         }
-        XCTAssertTrue(ExperimentsCollectionViewController.httpFallbackCanHelp(after: ExperimentsCollectionViewController.ExperimentDownloadError.httpStatus(404)))
+        //The server answered over https, http would not get a better answer
+        XCTAssertFalse(ExperimentsCollectionViewController.httpFallbackCanHelp(after: ExperimentsCollectionViewController.ExperimentDownloadError.httpStatus(404)))
     }
 }
