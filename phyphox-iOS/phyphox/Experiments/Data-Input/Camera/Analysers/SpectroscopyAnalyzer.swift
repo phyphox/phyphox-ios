@@ -42,7 +42,7 @@ class SpectroscopyAnalyzer: AnalyzingModule {
     var spectrumStartIndex: Int = 0
     //Spectrum pixels the kernel actually computed; less than dispersionWidth when the selection exceeds the frame
     var computedWidth: Int = 0
-    var analysisOrientation: SpectrumOrientation = .landscape
+    var analysisOrientation: SpectrumOrientation = .portrait
 
     init(result: DataBuffer?, xAxis: DataBuffer?, linearRed: DataBuffer? = nil, linearGreen: DataBuffer? = nil, linearBlue: DataBuffer? = nil) {
         self.xAxis = xAxis

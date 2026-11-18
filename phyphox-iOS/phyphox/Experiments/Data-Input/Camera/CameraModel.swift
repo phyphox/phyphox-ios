@@ -238,7 +238,7 @@ final class CameraModel {
     var feature: CameraFeature = CameraFeature.PHOTOMETRIC
 
     //User-selected orientation of the device relative to the spectrum in spectroscopy experiments
-    var spectrumOrientation: SpectrumOrientation = .landscape
+    var spectrumOrientation: SpectrumOrientation = .portrait
 
     private let service = CameraService()
     var cameraSettingsModel : CameraSettingsModel

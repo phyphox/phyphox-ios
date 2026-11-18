@@ -160,7 +160,7 @@ final class ExperimentCameraUIView: UIView, CameraGUIDelegate, ResizableViewModu
     static let controlSpectrumOrientationHeight = 50.0
     
     var spectrumOrientation: SpectrumOrientation {
-        cameraModelOwner?.cameraModel?.spectrumOrientation ?? .landscape
+        cameraModelOwner?.cameraModel?.spectrumOrientation ?? .portrait
     }
     
     required init?(descriptor: CameraViewDescriptor) {

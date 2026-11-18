@@ -487,6 +487,12 @@ final class CameraAnalyzerMathTests: XCTestCase {
         }
     }
 
+    //Spectroscopy starts in portrait (CameraModel.spectrumOrientation); the analyzer is created before the user picks an
+    //orientation, so its own default has to match, or the first measurement is read along the wrong axis
+    func testSpectroscopyStartsInPortrait() {
+        XCTAssertEqual(SpectroscopyAnalyzer(result: nil, xAxis: nil).analysisOrientation, .portrait)
+    }
+
     func testSpectraFollowTheSpectrumAxis() throws {
         //A red ramp along the texture width over constant green: the landscape orientation (spectrum along x) resolves it
         //into one value per column, the portrait one averages every row to the same flat spectrum
@@ -579,17 +585,18 @@ final class CameraAnalyzerMathTests: XCTestCase {
             XCTAssertEqual(d(name), v(name), accuracy: 1e-9, "\(name) ignores the exposure factor")
         }
 
-        //Spectroscopy: the linear triple and luminance are spectra as long as pixelPosition, the rest stays scalar
+        //Spectroscopy: the linear triple and luminance are spectra as long as pixelPosition, the rest stays scalar. The
+        //default portrait orientation reads along the texture height
         let spectroscopy = try measure(feature: .SPECTROSCOPY, settings: Self.unitExposure)
-        XCTAssertEqual(spectroscopy["pixelPosition"]?.count, Self.W)
+        XCTAssertEqual(spectroscopy["pixelPosition"]?.count, Self.H)
         for name in ["luminance", "linearRed", "linearGreen", "linearBlue"] {
-            XCTAssertEqual(spectroscopy[name]?.count, Self.W, "\(name) is a spectrum as long as pixelPosition")
+            XCTAssertEqual(spectroscopy[name]?.count, Self.H, "\(name) is a spectrum as long as pixelPosition")
         }
         for name in ["luma", "red", "green", "blue", "hue", "saturation", "value"] {
             XCTAssertEqual(spectroscopy[name]?.count, 1, "\(name) stays one value per frame under spectroscopy")
             XCTAssertEqual(spectroscopy[name]?.first ?? .nan, v(name), accuracy: 1e-9, "\(name) does not depend on the feature")
         }
-        for i in stride(from: 0, to: Self.W, by: 37) {
+        for i in stride(from: 0, to: Self.H, by: 37) {
             let s = { (name: String) in spectroscopy[name]?[i] ?? .nan }
             XCTAssertEqual(s("luminance"), Self.WR * s("linearRed") + Self.WG * s("linearGreen") + Self.WB * s("linearBlue"), accuracy: 1e-5, "luminance identity at pixel \(i)")
         }
