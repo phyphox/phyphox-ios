@@ -255,6 +255,7 @@ class AnalyzingRenderer {
             
             if self.measuring {
                 for analysingModule in analysingModules {
+                    (analysingModule as? SpectroscopyAnalyzer)?.cameraPosition = isMirroredCamera ? .front : .back
                     analysingModule.update(selectionArea: cameraSpecificSelectionArea,
                                            metalCommandBuffer: analysisCommandBuffer,
                                            cameraImageTextureY: textureY,

@@ -305,12 +305,13 @@ final class CameraAnalyzerMathTests: XCTestCase {
         return analyzer
     }
 
-    private func spectra(_ orientation: SpectrumOrientation, roi: CGRect = full, settings: CameraSettingsModel = unitExposure) throws -> [String: [Double]] {
+    private func spectra(_ orientation: SpectrumOrientation, camera: AVCaptureDevice.Position = .back, roi: CGRect = full, settings: CameraSettingsModel = unitExposure) throws -> [String: [Double]] {
         let names = ["luminance", "pixelPosition", "linearRed", "linearGreen", "linearBlue"]
         var buffers: [String: DataBuffer] = [:]
         for name in names { buffers[name] = try buffer(name) }
         let module = SpectroscopyAnalyzer(result: buffers["luminance"], xAxis: buffers["pixelPosition"], linearRed: buffers["linearRed"], linearGreen: buffers["linearGreen"], linearBlue: buffers["linearBlue"])
         module.setAnalysisOrientation(orientation: orientation)
+        module.cameraPosition = camera
         try run(module, roi: roi, settings: settings)
         return buffers.mapValues { $0.toArray() }
     }
@@ -495,7 +496,8 @@ final class CameraAnalyzerMathTests: XCTestCase {
 
     func testSpectraFollowTheSpectrumAxis() throws {
         //A red ramp along the texture width over constant green: the landscape orientation (spectrum along x) resolves it
-        //into one value per column, the portrait one averages every row to the same flat spectrum
+        //into one value per column, the portrait one averages every row to the same flat spectrum. The back camera numbers
+        //landscape pixels from the texture's last column (testPixelPositionFollowsThePreview), so value i is column W-1-i
         let W = Self.W, H = Self.H
         let frame = Frame(width: W, height: H) { x, _ in (UInt8(x * 255 / (W - 1)), 100, 0) }
         try present(frame)
@@ -512,14 +514,14 @@ final class CameraAnalyzerMathTests: XCTestCase {
         for i in 0..<W {
             XCTAssertEqual(r("pixelPosition", i), Double(i), accuracy: 1e-9, "pixel position")
             //Every row of a column is the same colour, so the column mean is that pixel's value
-            let c = frame.rgb(i, 0)
+            let c = frame.rgb(W - 1 - i, 0)
             XCTAssertEqual(r("linearRed", i), factor * Self.linearize(c.r), accuracy: tolerance, "linearRed at column \(i)")
             XCTAssertEqual(r("linearGreen", i), factor * Self.linearize(c.g), accuracy: tolerance, "linearGreen at column \(i)")
             XCTAssertEqual(r("linearBlue", i), factor * Self.linearize(c.b), accuracy: tolerance, "linearBlue at column \(i)")
             XCTAssertLessThan(abs(r("linearBlue", i)), 3e-3, "no blue up to the chroma quantization")
             XCTAssertEqual(r("luminance", i), factor * Self.luminance(c), accuracy: tolerance, "luminance at column \(i)")
         }
-        XCTAssertGreaterThan(r("linearRed", W - 1), r("linearRed", 0) + 1.0, "the red spectrum rises along the ramp")
+        XCTAssertGreaterThan(r("linearRed", 0), r("linearRed", W - 1) + 1.0, "the ramp rises towards the phone's bottom, against pixelPosition")
 
         let flat = try spectra(.portrait, settings: settings)
         XCTAssertEqual(flat["pixelPosition"]?.count, H, "one value per row")
@@ -528,13 +530,51 @@ final class CameraAnalyzerMathTests: XCTestCase {
             XCTAssertEqual(flat["linearRed"]?[j] ?? .nan, rowMean, accuracy: factor * Self.texturedTolerance, "linearRed at row \(j)")
         }
 
-        //A region: the spectrum covers exactly its columns, pixelPosition counts from the region's first column
+        //A region: the spectrum covers exactly its columns, pixelPosition stays absolute and counts from the region's last
+        //column (the one nearest the phone's bottom)
         let region = CGRect(x: 0.2, y: 0.45, width: 0.6, height: 0.1)
         let part = try spectra(.landscape, roi: region, settings: settings)
         let columns = frame.columns(region)
         XCTAssertEqual(part["pixelPosition"]?.count, columns.count)
-        XCTAssertEqual(part["pixelPosition"]?.first ?? .nan, Double(columns.lowerBound), accuracy: 1e-9)
+        XCTAssertEqual(part["pixelPosition"]?.first ?? .nan, Double(W - columns.upperBound), accuracy: 1e-9)
+        XCTAssertEqual(part["pixelPosition"]?.last ?? .nan, Double(W - 1 - columns.lowerBound), accuracy: 1e-9)
         XCTAssertEqual(part["luminance"]?.count, columns.count)
+    }
+
+    //pixelPosition follows the preview as on Android, for both cameras: it grows towards the right of the portrait preview
+    //(portrait) and towards the top of the phone (landscape). The portrait preview shows texture x downwards and texture y
+    //leftwards, mirrored to rightwards for the front camera, so pixel 0 is the last column in landscape and the last (back)
+    //or first (front) row in portrait. Observed on devices 2026-11 as reversed for the back camera in both orientations.
+    func testPixelPositionFollowsThePreview() throws {
+        XCTAssertTrue(SpectroscopyAnalyzer.reversesPixelIndex(orientation: .landscape, cameraPosition: .back))
+        XCTAssertTrue(SpectroscopyAnalyzer.reversesPixelIndex(orientation: .portrait, cameraPosition: .back))
+        XCTAssertTrue(SpectroscopyAnalyzer.reversesPixelIndex(orientation: .landscape, cameraPosition: .front))
+        XCTAssertFalse(SpectroscopyAnalyzer.reversesPixelIndex(orientation: .portrait, cameraPosition: .front))
+
+        //Red rises along texture x, green along texture y, so either orientation reads a monotonic spectrum
+        let W = Self.W, H = Self.H
+        let frame = Frame(width: W, height: H) { x, y in (UInt8(x * 255 / (W - 1)), UInt8(y * 255 / (H - 1)), 0) }
+        try present(frame)
+        //Channel that rises along the texture axis, and whether pixel 0 sits at that axis' far end
+        let cases: [(SpectrumOrientation, AVCaptureDevice.Position, String, Int, Bool)] = [
+            (.landscape, .back, "linearRed", W, true),
+            (.landscape, .front, "linearRed", W, true),
+            (.portrait, .back, "linearGreen", H, true),
+            (.portrait, .front, "linearGreen", H, false),
+        ]
+        for (orientation, camera, channel, n, fromFarEnd) in cases {
+            let label = "\(orientation), \(camera == .front ? "front" : "back")"
+            let result = try spectra(orientation, camera: camera)
+            XCTAssertEqual(result["pixelPosition"] ?? [], (0..<n).map(Double.init), "pixelPosition ascends over the whole axis, \(label)")
+            let values = result[channel] ?? []
+            XCTAssertEqual(values.count, n, label)
+            guard let first = values.first, let last = values.last else { continue }
+            if fromFarEnd {
+                XCTAssertGreaterThan(first, last + 0.5, "pixel 0 is the texture axis' far end, \(label)")
+            } else {
+                XCTAssertLessThan(first + 0.5, last, "pixel 0 is the texture axis' start, \(label)")
+            }
+        }
     }
 
     //The value-level contract of the colour channels (test-matrix row camera-color-channels), through the renderer's own

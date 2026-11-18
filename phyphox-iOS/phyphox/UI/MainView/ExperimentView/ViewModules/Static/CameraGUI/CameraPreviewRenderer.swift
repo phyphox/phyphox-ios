@@ -243,13 +243,8 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
     func updateImagePlane() {
         cameraOrientation = cameraModelOwner?.cameraModel?.cameraSettingsModel.cameraPosition
         interfaceOrientation = currentInterfaceOrientation()
-        displayToCameraTransform = transformForInterfaceOrientation(interfaceOrientation)
-        let cameraSpecificTransform = if cameraOrientation == .front {
-            //Image of fron facing camera needs to be mirrored for intuitive use
-            displayToCameraTransform.concatenating(CGAffineTransform(1.0, 0.0, 0.0, -1.0, 0.0, 1.0))
-        } else {
-            displayToCameraTransform
-        }
+        displayToCameraTransform = CameraPreviewRenderer.transformForInterfaceOrientation(interfaceOrientation)
+        let cameraSpecificTransform = CameraPreviewRenderer.previewToTextureTransform(interfaceOrientation: interfaceOrientation, cameraPosition: cameraOrientation)
         let vertexData = imagePlaneVertexBuffer.contents().assumingMemoryBound(to: Float.self)
         for index in 0...3 {
             let textureCoordIndex = 4 * index + 2
@@ -268,7 +263,18 @@ class CameraPreviewRenderer: NSObject, MTKViewDelegate {
             ?? .portrait
     }
 
-    func transformForInterfaceOrientation(_ orientation: UIInterfaceOrientation) -> CGAffineTransform {
+    //Maps preview coordinates (0...1, origin top left) to camera texture coordinates, as the preview draws the texture.
+    //Also numbers the spectroscopy pixels (SpectroscopyAnalyzer.reversesPixelIndex), so they follow what the user sees
+    static func previewToTextureTransform(interfaceOrientation: UIInterfaceOrientation, cameraPosition: AVCaptureDevice.Position?) -> CGAffineTransform {
+        let transform = transformForInterfaceOrientation(interfaceOrientation)
+        if cameraPosition == .front {
+            //Image of fron facing camera needs to be mirrored for intuitive use
+            return transform.concatenating(CGAffineTransform(1.0, 0.0, 0.0, -1.0, 0.0, 1.0))
+        }
+        return transform
+    }
+
+    static func transformForInterfaceOrientation(_ orientation: UIInterfaceOrientation) -> CGAffineTransform {
         switch orientation {
         case .portrait:
             return CGAffineTransform(a: 0.0, b: -1.0, c: 1.0, d: 0.0, tx: 0.0, ty: 1.0)

@@ -6,6 +6,8 @@
 //  Copyright © 2025 RWTH Aachen. All rights reserved.
 //
 
+import AVFoundation
+
 //One spectrum per mapped output - luminance and, since file format 1.21, linearRed/linearGreen/linearBlue - all along the
 //same pixelPosition axis: one compute pass per spectrum with its channel weights, written together so the lengths match.
 class SpectroscopyAnalyzer: AnalyzingModule {
@@ -43,6 +45,11 @@ class SpectroscopyAnalyzer: AnalyzingModule {
     //Spectrum pixels the kernel actually computed; less than dispersionWidth when the selection exceeds the frame
     var computedWidth: Int = 0
     var analysisOrientation: SpectrumOrientation = .portrait
+    //Set by the renderer for every frame; with the orientation it decides which end of the texture axis is pixel 0
+    var cameraPosition: AVCaptureDevice.Position = .back
+    //Texture size along the dispersion axis and whether the pixels are numbered from its other end, both for the analyzed frame
+    private var dispersionTextureSize: Int = 0
+    private var reversedIndex = false
 
     init(result: DataBuffer?, xAxis: DataBuffer?, linearRed: DataBuffer? = nil, linearGreen: DataBuffer? = nil, linearBlue: DataBuffer? = nil) {
         self.xAxis = xAxis
@@ -100,11 +107,14 @@ class SpectroscopyAnalyzer: AnalyzingModule {
             //The kernel clamps the selection to the texture; restrict the read-back to the computed range (like Android
             //crops its output) so a selection exceeding the frame cannot leak stale values from the reused output buffer
             computedWidth = min(dispersionWidth, max(0, min(Int(selectionState.x2), cameraImageTextureY.width) - Int(selectionState.x1)))
+            dispersionTextureSize = cameraImageTextureY.width
         } else {
             dispersionWidth = selectedHeightForAnalysis
             spectrumStartIndex = Int(selectionState.y1)
             computedWidth = min(dispersionWidth, max(0, min(Int(selectionState.y2), cameraImageTextureY.height) - Int(selectionState.y1)))
+            dispersionTextureSize = cameraImageTextureY.height
         }
+        reversedIndex = SpectroscopyAnalyzer.reversesPixelIndex(orientation: analysisOrientation, cameraPosition: cameraPosition)
 
         // Ensure dimensions are valid to prevent crashes
         guard dispersionWidth > 0 else {
@@ -154,10 +164,13 @@ class SpectroscopyAnalyzer: AnalyzingModule {
         let exposureFactor = pow(2.0, Double(cameraSettings.currentApertureValue))/2.0 * 100.0/Double(cameraSettings.currentIso) * (1.0/60.0)/(Double(cameraSettings.currentShutterSpeed.value)/Double(cameraSettings.currentShutterSpeed.timescale))
 
         //Fresh arrays assigned in one go: writeToBuffers may still read the previous frame's arrays on the data queue
+        //Kernel output index of the i-th value; reversed, the values run backwards so pixelPosition still ascends
+        let outputIndex = { (i: Int) in self.reversedIndex ? self.computedWidth - 1 - i : i }
         var xValues = [Double](repeating: 0.0, count: computedWidth)
         for i in 0..<computedWidth {
             //Absolute pixel position along the dispersion axis (like Android), so a calibration survives moving the area
-            xValues[i] = Double(spectrumStartIndex + i)
+            let texturePixel = spectrumStartIndex + outputIndex(i)
+            xValues[i] = Double(reversedIndex ? dispersionTextureSize - 1 - texturePixel : texturePixel)
         }
         latestxAxis = xValues
 
@@ -169,7 +182,7 @@ class SpectroscopyAnalyzer: AnalyzingModule {
             let valuePointer = buffer.contents().bindMemory(to: Float.self, capacity: computedWidth)
             var results = [Double](repeating: 0.0, count: computedWidth)
             for i in 0..<computedWidth {
-                results[i] = Double(valuePointer[i]) * exposureFactor
+                results[i] = Double(valuePointer[outputIndex(i)]) * exposureFactor
             }
             spectrum.latestResults = results
         }
@@ -182,6 +195,17 @@ class SpectroscopyAnalyzer: AnalyzingModule {
             spectrum.result.replaceValues(spectrum.latestResults)
         }
 
+    }
+
+    //pixelPosition follows the preview as the user sees it, as on Android: it grows towards the right of the portrait preview
+    //(portrait) or towards the top of the phone (landscape). Derived from the transform the preview draws the texture with,
+    //front-camera mirror included; the interface orientation is fixed to portrait, so a calibration does not flip when the
+    //device rotates.
+    static func reversesPixelIndex(orientation: SpectrumOrientation, cameraPosition: AVCaptureDevice.Position) -> Bool {
+        let textureToPreview = CameraPreviewRenderer.previewToTextureTransform(interfaceOrientation: .portrait, cameraPosition: cameraPosition).inverted()
+        //One step along the texture's dispersion axis, in preview coordinates (y grows downwards)
+        let step = (orientation == .landscape ? CGSize(width: 1, height: 0) : CGSize(width: 0, height: 1)).applying(textureToPreview)
+        return orientation == .landscape ? step.height > 0 : step.width < 0
     }
 
     func setAnalysisOrientation(orientation: SpectrumOrientation){
