@@ -933,6 +933,56 @@ final class ExperimentsCollectionViewController: CollectionViewController, Exper
         return fileType
     }
 
+    ///A download that reached the server but was answered with an error status (e.g. 404 for a deleted share link)
+    enum ExperimentDownloadError: Error {
+        case httpStatus(Int)
+    }
+
+    ///Downloads an experiment from an http(s) URL. Still synchronous (launchExperimentByURL returns its result), but unlike
+    ///Data(contentsOf:) it keeps the URLError and the HTTP status, so the alert can name the actual cause
+    static func downloadExperimentData(from url: URL, session: URLSession = .shared) -> Result<Data, Error> {
+        let semaphore = DispatchSemaphore(value: 0)
+        var result: Result<Data, Error> = .failure(URLError(.unknown))
+        session.dataTask(with: URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData)) { data, response, error in
+            if let error = error {
+                result = .failure(error)
+            } else if let status = (response as? HTTPURLResponse)?.statusCode, !(200..<300).contains(status) {
+                result = .failure(ExperimentDownloadError.httpStatus(status))
+            } else {
+                result = .success(data ?? Data())
+            }
+            semaphore.signal()
+        }.resume()
+        semaphore.wait()
+        return result
+    }
+
+    ///phyphox:// falls back from https to http, except after errors http cannot fix: offline or the host does not resolve
+    static func httpFallbackCanHelp(after error: Error) -> Bool {
+        guard let code = (error as? URLError)?.code else {
+            return true
+        }
+        return ![.notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff, .cannotFindHost, .dnsLookupFailed].contains(code)
+    }
+
+    ///Plain message for a failed download, nil for errors that did not come from downloading
+    static func downloadErrorMessage(for error: Error, host: String) -> String? {
+        if case ExperimentDownloadError.httpStatus(let status) = error {
+            return localize("download_error_generic") + "\n" + "HTTP \(status) (\(HTTPURLResponse.localizedString(forStatusCode: status)))"
+        }
+        guard let urlError = error as? URLError else {
+            return nil
+        }
+        switch urlError.code {
+        case .notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff:
+            return localize("download_error_offline")
+        case .cannotFindHost, .dnsLookupFailed, .timedOut, .cannotConnectToHost:
+            return String(format: localize("download_error_unreachable"), host)
+        default:
+            return localize("download_error_generic") + "\n" + urlError.localizedDescription
+        }
+    }
+
     ///What is done with what an archive turned out to hold
     enum ContainerDispatch: Equatable {
         ///The one experiment it carries is opened right away
@@ -1055,8 +1105,17 @@ print("\(url)")
         let tmp = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("temp.phyphox")
         
         _ = url.startAccessingSecurityScopedResource()
-        
-        //TODO: Replace all instances of Data(contentsOf:...) with non-blocking requests
+
+        //Keeps a downloaded experiment in tmp, as InputStream/XMLParser only handles URLs to local files properly
+        func storeDownload(_ data: Data) throws {
+            fileType = ExperimentsCollectionViewController.detectFileType(data: data)
+            if fileType == .phyphox || fileType == .zip {
+                try data.write(to: tmp, options: .atomic)
+                finalURL = tmp
+            }
+        }
+
+        //TODO: Replace all instances of Data(contentsOf:...) and downloadExperimentData with non-blocking requests
         if url.scheme == "phyphox", url.absoluteString.hasPrefix("phyphox://asset=") {
             //phyphox://asset=<url-encoded path> opens a bundled experiment (transferring-experiments.md in phyphox-docs), mirrored on
             //Android (ExperimentListActivity.handleIntent). Raw string: URLComponents normalizes the host's case, corrupting the path
@@ -1071,30 +1130,22 @@ print("\(url)")
             }
         }
         else if url.scheme == "phyphox" {
-            //phyphox:// allow to retreive the experiment via https or http. Try both.
+            //phyphox:// allow to retreive the experiment via https or http. Try both, but report the https error,
+            //as the user never asked for http
             if var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
                 components.scheme = "https"
+                var httpsError: Error?
                 do {
-                    let data = try Data(contentsOf: components.url!)
-                    fileType = ExperimentsCollectionViewController.detectFileType(data: data)
-                    if fileType == .phyphox || fileType == .zip {
-                        try data.write(to: tmp, options: .atomic)
-                        finalURL = tmp
-                    }
+                    try storeDownload(ExperimentsCollectionViewController.downloadExperimentData(from: components.url!).get())
                 } catch {
+                    httpsError = error
                 }
-                if fileType == .unknown {
+                if fileType == .unknown && (httpsError.map(ExperimentsCollectionViewController.httpFallbackCanHelp) ?? true) {
                     components.scheme = "http"
-                    do {
-                        let data = try Data(contentsOf: components.url!)
-                        fileType = ExperimentsCollectionViewController.detectFileType(data: data)
-                        if fileType == .phyphox || fileType == .zip {
-                            try data.write(to: tmp, options: .atomic)
-                            finalURL = tmp
-                        }
-                    } catch let error {
-                        experimentLoadingError = error
-                    }
+                    try? storeDownload(ExperimentsCollectionViewController.downloadExperimentData(from: components.url!).get())
+                }
+                if fileType == .unknown, let httpsError = httpsError {
+                    experimentLoadingError = httpsError
                 }
             }
             else {
@@ -1102,14 +1153,9 @@ print("\(url)")
             }
         }
         else if url.scheme == "http" || url.scheme == "https" {
-            //Specific http or https. We need to download it first as InputStream/XMLParser only handles URLs to local files properly. (See todo above)
+            //Specific http or https
             do {
-                let data = try Data(contentsOf: url)
-                fileType = ExperimentsCollectionViewController.detectFileType(data: data)
-                if fileType == .phyphox || fileType == .zip {
-                    try data.write(to: tmp, options: .atomic)
-                    finalURL = tmp
-                }
+                try storeDownload(ExperimentsCollectionViewController.downloadExperimentData(from: url).get())
             } catch let error {
                 experimentLoadingError = error
             }
@@ -1169,32 +1215,36 @@ print("\(url)")
         
         if experimentLoadingError != nil {
             let message: String
-            if let sError = experimentLoadingError as? SerializationError {
+            if let downloadMessage = ExperimentsCollectionViewController.downloadErrorMessage(for: experimentLoadingError!, host: url.host ?? url.absoluteString) {
+                message = downloadMessage
+            } else if let sError = experimentLoadingError as? SerializationError {
+                let detail: String
                 switch sError {
                 case .emptyData:
-                    message = "Empty data."
+                    detail = "Empty data."
                 case .genericError(let emessage):
-                    message = emessage
+                    detail = emessage
                 case .invalidExperimentFile(let emessage):
-                    message = "Invalid experiment file. \(emessage)"
+                    detail = "Invalid experiment file. \(emessage)"
                 case .invalidFilePath:
-                    message = "Invalid file path"
+                    detail = "Invalid file path"
                 case .newExperimentFileVersion(let phyphoxFormat, let fileFormat):
-                    message = "New phyphox file format \(fileFormat) found. Your phyphox version supports up to \(phyphoxFormat) and might be outdated."
+                    detail = "New phyphox file format \(fileFormat) found. Your phyphox version supports up to \(phyphoxFormat) and might be outdated."
                 case .writeFailed:
-                    message = "Write failed."
+                    detail = "Write failed."
                 }
+                message = "Could not load experiment: \(detail)"
             } else {
-                message = String(describing: experimentLoadingError!)
+                message = "Could not load experiment: \(String(describing: experimentLoadingError!))"
             }
             
             
             let alertBuilder = UIAlertController.PhyphoxUIAlertBuilder()
                 .title(title: localize("warning"))
-                .message(message: "Could not load experiment: \(message)")
+                .message(message: message)
                 .preferredStyle(style: .alert)
             if url.scheme == "phyphox" || url.scheme == "http" || url.scheme == "https" {
-                //iOS' local network permission prompt fails the first request asynchronously, so offer a retry
+                //iOS' local network permission prompt fails the first request asynchronously, so offer a retry (also the way on after going online)
                 _ = alertBuilder.addActionWithTitle(localize("tryagain"), style: .default, handler: { [weak self] _ in
                     _ = self?.launchExperimentByURL(url, chosenPeripheral: chosenPeripheral, acceptPartialZip: acceptPartialZip)
                 })
