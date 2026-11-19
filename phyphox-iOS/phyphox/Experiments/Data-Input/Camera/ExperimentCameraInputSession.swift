@@ -58,7 +58,10 @@ class ExperimentCameraInputSession: NSObject, CameraModelOwner {
         cameraModel?.aeStrategy = aeStrategy
         cameraModel?.aeFPSTarget = aeFPSTarget
         cameraModel?.feature = feature
-        
+
+        //Only now: configureSession runs on the session queue and finds the camera through cameraModel
+        cameraModel?.configure()
+
         sessionInitialized = true
     }
     

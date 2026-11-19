@@ -258,8 +258,6 @@ final class CameraModel {
         self.analyzingRenderer = AnalyzingRenderer(inFlightSemaphore: service.inFlightSemaphore)
         
         cameraSettingsModel = CameraSettingsModel(service: service)
-                
-        configure()
     }
     
     func getTextureProvider() -> CameraMetalTextureProvider? {
