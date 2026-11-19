@@ -326,6 +326,7 @@
 		8A5A0194000000000000AB14 /* SavedStateCollectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0195000000000000AB15 /* SavedStateCollectionTests.swift */; };
 		8A5A0198000000000000AB18 /* BluetoothCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A0199000000000000AB19 /* BluetoothCommandTests.swift */; };
 		8A5A01A1000000000000AAB1 /* BluetoothNameFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A01A0000000000000AAB0 /* BluetoothNameFilterTests.swift */; };
+		8A5A01B1000000000000AAB1 /* BluetoothAutoConnectTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A01B0000000000000AAB0 /* BluetoothAutoConnectTests.swift */; };
 		8A5A018B000000000000AA9B /* ExclusiveNavigationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5A018A000000000000AA9A /* ExclusiveNavigationUITests.swift */; };
 /* End PBXBuildFile section */
 
@@ -728,6 +729,7 @@
 		8A5A0195000000000000AB15 /* SavedStateCollectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedStateCollectionTests.swift; sourceTree = "<group>"; };
 		8A5A0199000000000000AB19 /* BluetoothCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothCommandTests.swift; sourceTree = "<group>"; };
 		8A5A01A0000000000000AAB0 /* BluetoothNameFilterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothNameFilterTests.swift; sourceTree = "<group>"; };
+		8A5A01B0000000000000AAB0 /* BluetoothAutoConnectTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothAutoConnectTests.swift; sourceTree = "<group>"; };
 		8A5A018A000000000000AA9A /* ExclusiveNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExclusiveNavigationUITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1411,6 +1413,7 @@
 				8A5A0193000000000000AB13 /* SavedStateTests.swift */,
 				8A5A0199000000000000AB19 /* BluetoothCommandTests.swift */,
 				8A5A01A0000000000000AAB0 /* BluetoothNameFilterTests.swift */,
+				8A5A01B0000000000000AAB0 /* BluetoothAutoConnectTests.swift */,
 				8A5A0184000000000000AA94 /* WhiteBalanceMathTests.swift */,
 				A1FA9A2E2E42BB0100000002 /* full-skeleton.phyphox */,
 				A1FA9A2E2E42BB0100000005 /* translated-links.phyphox */,
@@ -1984,6 +1987,7 @@
 				8A5A0192000000000000AB12 /* SavedStateTests.swift in Sources */,
 				8A5A0198000000000000AB18 /* BluetoothCommandTests.swift in Sources */,
 				8A5A01A1000000000000AAB1 /* BluetoothNameFilterTests.swift in Sources */,
+				8A5A01B1000000000000AAB1 /* BluetoothAutoConnectTests.swift in Sources */,
 				8A5A0185000000000000AA95 /* WhiteBalanceMathTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

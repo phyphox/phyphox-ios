@@ -14,6 +14,8 @@ import UIKit
 //  -phyphoxRemote             enables remote access for the session like the confirmed menu toggle (Android: debug.phyphox.remote)
 //  -phyphoxRemotePort <n>     serves remote access on this port instead of the configured one
 //  -phyphoxBleConnect <name>  scans for that device and loads the experiment it offers, left NOT started (Android: bleDevice)
+//  -phyphoxBleAutoConnect     every <bluetooth> block behaves as if it had autoConnect="true": the first device passing its
+//                             filters is taken without the pick list (ble-sensors lab suite)
 //  -phyphoxAutoConfirm        confirms the informational notices on open (network privacy, photosensitivity), declines the save offer
 //  -phyphoxAssumeSensors      treats every sensor iOS could have as present and suppresses the simulator's camera loading error
 //                             (store screenshot system; Android: debug.phyphox.assumeSensors)
@@ -42,6 +44,9 @@ enum AutomationLaunchOptions {
 
     ///The Bluetooth device to take an experiment from, for the compatibility suite
     static let bluetoothDeviceName: String? = value(after: "-phyphoxBleConnect")
+
+    ///Whether every experiment Bluetooth device should connect to the first matching device without a pick list (a var for the tests)
+    static var bleAutoConnect = arguments.contains("-phyphoxBleAutoConnect")
 
     ///Whether every sensor the device could have should be treated as available (store screenshot system)
     static let assumeSensors = arguments.contains("-phyphoxAssumeSensors")

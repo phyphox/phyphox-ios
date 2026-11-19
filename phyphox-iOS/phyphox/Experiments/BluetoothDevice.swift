@@ -152,7 +152,8 @@ class ExperimentBluetoothDevice: BluetoothScan, DeviceIsChosenDelegate {
         hud.textLabel.text = localize("loadingTitle")
         hud.detailTextLabel.text = localize("loadingBluetoothConnectionText")
         
-        super.init(scanDirectly: false, nameFilter: nameFilter, filterByUUID: uuid, checkExperiments: false, autoConnect: autoConnect)
+        //-phyphoxBleAutoConnect (AutomationLaunchOptions) forces autoConnect for an unattended lab run, any matching unit will do
+        super.init(scanDirectly: false, nameFilter: nameFilter, filterByUUID: uuid, checkExperiments: false, autoConnect: autoConnect || AutomationLaunchOptions.bleAutoConnect)
     }
     
     public func prepareForStart() -> Bool {
