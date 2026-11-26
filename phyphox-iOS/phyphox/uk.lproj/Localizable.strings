@@ -371,3 +371,4 @@
 "cameraFrontFacing" = "Фронтальна камера";
 "cameraBackFacing" = "Основна камера";
 "clear_data_question_select" = "Очистити записані дані та зазначені нижче додаткові параметри?";
+"warning_photosensitivity" = "Обережно: яскраві спалахи та миготіння";
